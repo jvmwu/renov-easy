@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>手机号验证 - 装修易</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../styles/design-system.css" />
+    <style>
+      .phone-auth-container {
+        min-height: 100vh;
+        background: var(--background-color);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .nav-bar {
+        background: var(--surface-color);
+        padding: var(--spacing-md) var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        box-shadow: var(--shadow-sm);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .nav-back-btn {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        font-size: 20px;
+        cursor: pointer;
+        padding: var(--spacing-sm);
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .nav-back-btn:hover {
+        background: rgba(0, 122, 255, 0.1);
+      }
+
+      .nav-title {
+        font-size: var(--font-size-headline);
+        font-weight: 600;
+        color: var(--text-primary);
+        flex: 1;
+      }
+
+      .phone-auth-content {
+        flex: 1;
+        padding: var(--spacing-xxxl) var(--spacing-lg) var(--spacing-lg);
+        display: flex;
+        flex-direction: column;
+        max-width: 400px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .instruction-text {
+        text-align: center;
+        margin-bottom: var(--spacing-xxxl);
+      }
+
+      .instruction-text h2 {
+        font-size: var(--font-size-large-title);
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .instruction-text p {
+        font-size: var(--font-size-body);
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      .phone-input-section {
+        margin-bottom: var(--spacing-xxxl);
+      }
+
+      .phone-input-container {
+        display: flex;
+        background: var(--surface-color);
+        border: 2px solid var(--text-tertiary);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: all 0.2s ease;
+      }
+
+      .phone-input-container:focus-within {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+      }
+
+      .country-selector {
+        display: flex;
+        align-items: center;
+        padding: var(--spacing-lg);
+        background: var(--background-color);
+        border-right: 1px solid var(--text-tertiary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 80px;
+        justify-content: center;
+        gap: var(--spacing-sm);
+      }
+
+      .country-selector:hover {
+        background: rgba(0, 122, 255, 0.05);
+      }
+
+      .country-code {
+        font-size: var(--font-size-body);
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .phone-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: var(--spacing-lg);
+        font-size: var(--font-size-body);
+        color: var(--text-primary);
+        background: transparent;
+      }
+
+      .phone-input::placeholder {
+        color: var(--text-secondary);
+      }
+
+      .input-error {
+        border-color: var(--warning-color) !important;
+        box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.1) !important;
+      }
+
+      .error-message {
+        color: var(--warning-color);
+        font-size: var(--font-size-footnote);
+        margin-top: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+
+      .send-code-btn {
+        width: 100%;
+        margin-bottom: var(--spacing-xl);
+      }
+
+      .send-code-btn:disabled {
+        background: var(--text-tertiary);
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .alternative-auth {
+        margin-top: auto;
+        text-align: center;
+      }
+
+      .divider-text {
+        color: var(--text-secondary);
+        font-size: var(--font-size-footnote);
+        margin-bottom: var(--spacing-lg);
+        position: relative;
+      }
+
+      .divider-text::before,
+      .divider-text::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 30%;
+        height: 1px;
+        background: var(--text-tertiary);
+      }
+
+      .divider-text::before {
+        left: 0;
+      }
+
+      .divider-text::after {
+        right: 0;
+      }
+
+      .social-buttons-row {
+        display: flex;
+        justify-content: center;
+        gap: var(--spacing-lg);
+      }
+
+      .social-btn-small {
+        width: 56px;
+        height: 56px;
+        border: 2px solid var(--text-tertiary);
+        border-radius: 50%;
+        background: var(--surface-color);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+
+      .social-btn-small:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .social-btn-small.apple-btn:hover {
+        background: #000;
+        color: white;
+        border-color: #000;
+      }
+
+      .social-btn-small.google-btn:hover {
+        background: #4285f4;
+        color: white;
+        border-color: #4285f4;
+      }
+
+      .social-btn-small.facebook-btn:hover {
+        background: #1877f2;
+        color: white;
+        border-color: #1877f2;
+      }
+
+      /* 加载状态 */
+      .loading {
+        position: relative;
+        color: transparent !important;
+      }
+
+      .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        color: white;
+      }
+
+      @keyframes spin {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      /* 动画效果 */
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .phone-auth-content > * {
+        animation: slideInUp 0.6s ease-out;
+      }
+
+      .phone-auth-content > *:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      .phone-auth-content > *:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+
+      .phone-auth-content > *:nth-child(4) {
+        animation-delay: 0.3s;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device-screen">
+      <div class="phone-auth-container">
+        <!-- 导航栏 -->
+        <div class="nav-bar">
+          <button class="nav-back-btn" onclick="goBack()">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <h1 class="nav-title">手机号验证</h1>
+        </div>
+
+        <!-- 主要内容 -->
+        <div class="phone-auth-content">
+          <!-- 说明文字 -->
+          <div class="instruction-text">
+            <h2>输入手机号</h2>
+            <p>我们将发送验证码到您的手机</p>
+          </div>
+
+          <!-- 手机号输入区域 -->
+          <div class="phone-input-section">
+            <div class="phone-input-container" id="phoneInputContainer">
+              <div class="country-selector" onclick="showCountrySelector()">
+                <span class="country-code" id="countryCode">+86</span>
+                <i class="fas fa-chevron-down" style="font-size: 12px; color: var(--text-secondary);"></i>
+              </div>
+              <input 
+                type="tel" 
+                class="phone-input" 
+                id="phoneInput"
+                placeholder="请输入手机号"
+                maxlength="11"
+                oninput="validatePhone()"
+                onkeydown="handleKeyDown(event)"
+              />
+            </div>
+            <div class="error-message" id="errorMessage" style="display: none;">
+              <i class="fas fa-exclamation-circle"></i>
+              <span id="errorText"></span>
+            </div>
+          </div>
+
+          <!-- 获取验证码按钮 -->
+          <button class="button-primary send-code-btn" id="sendCodeBtn" onclick="sendVerificationCode()" disabled>
+            获取验证码
+          </button>
+
+          <!-- 其他登录方式 -->
+          <div class="alternative-auth">
+            <p class="divider-text">或使用以下方式</p>
+            <div class="social-buttons-row">
+              <button class="social-btn-small apple-btn" onclick="handleSocialLogin('apple')">
+                <i class="fab fa-apple"></i>
+              </button>
+              <button class="social-btn-small google-btn" onclick="handleSocialLogin('google')">
+                <i class="fab fa-google"></i>
+              </button>
+              <button class="social-btn-small facebook-btn" onclick="handleSocialLogin('facebook')">
+                <i class="fab fa-facebook-f"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentCountryCode = '+86';
+      
+      // 返回上一页
+      function goBack() {
+        window.history.back() || (window.location.href = './auth-entry.html');
+      }
+
+      // 验证手机号格式
+      function validatePhone() {
+        const phoneInput = document.getElementById('phoneInput');
+        const sendCodeBtn = document.getElementById('sendCodeBtn');
+        const phoneContainer = document.getElementById('phoneInputContainer');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        const phone = phoneInput.value.trim();
+        
+        // 清除之前的错误状态
+        phoneContainer.classList.remove('input-error');
+        errorMessage.style.display = 'none';
+        
+        // 中国大陆手机号验证
+        if (currentCountryCode === '+86') {
+          const phoneRegex = /^1[3-9]\d{9}$/;
+          
+          if (phone.length === 0) {
+            sendCodeBtn.disabled = true;
+            return;
+          }
+          
+          if (phone.length < 11) {
+            sendCodeBtn.disabled = true;
+            return;
+          }
+          
+          if (!phoneRegex.test(phone)) {
+            showError('请输入正确的手机号码');
+            sendCodeBtn.disabled = true;
+            return;
+          }
+        }
+        
+        // 验证通过
+        sendCodeBtn.disabled = false;
+      }
+
+      // 显示错误信息
+      function showError(message) {
+        const phoneContainer = document.getElementById('phoneInputContainer');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        
+        phoneContainer.classList.add('input-error');
+        errorText.textContent = message;
+        errorMessage.style.display = 'flex';
+      }
+
+      // 处理键盘事件
+      function handleKeyDown(event) {
+        const phoneInput = event.target;
+        
+        // 只允许数字输入
+        if (!/[0-9]/.test(event.key) && 
+            !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+          event.preventDefault();
+        }
+        
+        // 回车键发送验证码
+        if (event.key === 'Enter' && !document.getElementById('sendCodeBtn').disabled) {
+          sendVerificationCode();
+        }
+      }
+
+      // 显示国家代码选择器
+      function showCountrySelector() {
+        // 简化版本，只显示提示
+        alert('目前仅支持中国大陆手机号 (+86)');
+      }
+
+      // 发送验证码
+      function sendVerificationCode() {
+        const phoneInput = document.getElementById('phoneInput');
+        const sendCodeBtn = document.getElementById('sendCodeBtn');
+        const phone = phoneInput.value.trim();
+        
+        if (!phone) {
+          showError('请输入手机号');
+          return;
+        }
+        
+        // 显示加载状态
+        sendCodeBtn.classList.add('loading');
+        sendCodeBtn.disabled = true;
+        
+        // 模拟API调用
+        setTimeout(() => {
+          // 模拟成功发送
+          console.log(`发送验证码到: ${currentCountryCode} ${phone}`);
+          
+          // 存储手机号到本地存储
+          localStorage.setItem('pendingPhone', `${currentCountryCode}${phone}`);
+          localStorage.setItem('pendingPhoneDisplay', `${currentCountryCode} ${phone}`);
+          
+          // 跳转到验证码页面
+          window.location.href = './sms-verification.html';
+        }, 2000);
+      }
+
+      // 处理社交登录
+      function handleSocialLogin(provider) {
+        const providerNames = {
+          'apple': 'Apple',
+          'google': 'Google', 
+          'facebook': 'Facebook'
+        };
+        
+        showNotification(`${providerNames[provider]} 登录功能即将上线！`);
+      }
+
+      // 显示通知
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 16px 24px;
+          border-radius: 8px;
+          font-size: 14px;
+          z-index: 1000;
+          backdrop-filter: blur(10px);
+        `;
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          notification.remove();
+        }, 2000);
+      }
+
+      // 页面加载完成后的初始化
+      document.addEventListener('DOMContentLoaded', function() {
+        const phoneInput = document.getElementById('phoneInput');
+        
+        // 自动聚焦到手机号输入框
+        setTimeout(() => {
+          phoneInput.focus();
+        }, 500);
+        
+        // 清除之前的待验证手机号
+        localStorage.removeItem('pendingPhone');
+        localStorage.removeItem('pendingPhoneDisplay');
+      });
+    </script>
+  </body>
+</html>

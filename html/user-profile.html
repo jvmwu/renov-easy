@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的 - 用户端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./styles/design-system.css" />
+    <style>
+      .profile-header {
+        background: linear-gradient(135deg, #007aff 0%, #5ac8fa 100%);
+        padding: 20px 16px 40px;
+        color: white;
+      }
+
+      .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        object-fit: cover;
+        margin-bottom: 12px;
+      }
+
+      .profile-info {
+        text-align: center;
+      }
+
+      .profile-name {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .profile-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .verified-badge {
+        background: rgba(52, 199, 89, 0.9);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .stats-container {
+        background: white;
+        margin: -20px 16px 20px;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 20px;
+        font-weight: 700;
+        color: #007aff;
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: #8e8e93;
+      }
+
+      .menu-section {
+        background: white;
+        margin: 0 16px 12px;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid #f2f2f7;
+        text-decoration: none;
+        color: #000;
+        transition: background-color 0.2s ease;
+      }
+
+      .menu-item:last-child {
+        border-bottom: none;
+      }
+
+      .menu-item:active {
+        background-color: #f2f2f7;
+      }
+
+      .menu-icon {
+        width: 32px;
+        height: 32px;
+        background: #f2f2f7;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        font-size: 16px;
+      }
+
+      .menu-icon.orders {
+        background: #e3f2fd;
+        color: #007aff;
+      }
+
+      .menu-icon.favorites {
+        background: #ffe8e8;
+        color: #ff3b30;
+      }
+
+      .menu-icon.settings {
+        background: #f0f0f0;
+        color: #8e8e93;
+      }
+
+      .menu-icon.help {
+        background: #e8f5e8;
+        color: #34c759;
+      }
+
+      .menu-content {
+        flex: 1;
+      }
+
+      .menu-title {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+
+      .menu-subtitle {
+        font-size: 13px;
+        color: #8e8e93;
+      }
+
+      .menu-arrow {
+        color: #c7c7cc;
+        font-size: 14px;
+      }
+
+      .menu-badge {
+        background: #ff3b30;
+        color: white;
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-right: 8px;
+        min-width: 18px;
+        text-align: center;
+      }
+
+      .content-area {
+        padding-bottom: 100px;
+      }
+
+      .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 24px 16px 12px;
+        color: #000;
+      }
+
+      /* 订单管理样式 */
+      .order-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 50;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .order-modal.show {
+        display: flex;
+      }
+
+      .order-content {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        max-height: 80vh;
+        border-radius: 16px;
+        overflow: hidden;
+        animation: slideUp 0.3s ease-out;
+      }
+
+      .order-header {
+        background: #007aff;
+        color: white;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .order-title {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 4px;
+      }
+
+      .order-tabs {
+        display: flex;
+        background: #f2f2f7;
+        margin: 0;
+      }
+
+      .order-tab {
+        flex: 1;
+        padding: 12px 8px;
+        text-align: center;
+        background: none;
+        border: none;
+        font-size: 14px;
+        color: #8e8e93;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .order-tab.active {
+        background: white;
+        color: #007aff;
+        font-weight: 600;
+      }
+
+      .order-list {
+        max-height: 50vh;
+        overflow-y: auto;
+        padding: 16px;
+      }
+
+      .order-card {
+        background: white;
+        border: 1px solid #e5e5ea;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+      }
+
+      .order-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .order-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .order-id {
+        font-size: 14px;
+        color: #8e8e93;
+      }
+
+      .order-status {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .status-pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .status-progress {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-completed {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+
+      .order-info {
+        margin-bottom: 12px;
+      }
+
+      .order-type {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .order-address {
+        font-size: 14px;
+        color: #8e8e93;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .order-budget {
+        font-size: 14px;
+        color: #007aff;
+        font-weight: 600;
+      }
+
+      .order-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .action-btn {
+        flex: 1;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary {
+        background: #007aff;
+        color: white;
+        border: none;
+      }
+
+      .btn-secondary {
+        background: #f2f2f7;
+        color: #007aff;
+        border: 1px solid #e5e5ea;
+      }
+
+      .btn-danger {
+        background: #ff3b30;
+        color: white;
+        border: none;
+      }
+
+      .order-detail-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 60;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .order-detail-modal.show {
+        display: flex;
+      }
+
+      .order-detail-content {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        max-height: 85vh;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .order-detail-body {
+        padding: 20px;
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+
+      .detail-section {
+        margin-bottom: 20px;
+      }
+
+      .detail-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #000;
+      }
+
+      .detail-content {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.5;
+      }
+
+      .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .photo-item {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .worker-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .worker-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .worker-details {
+        flex: 1;
+      }
+
+      .worker-name {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+
+      .worker-rating {
+        font-size: 12px;
+        color: #8e8e93;
+      }
+
+      .contact-btn {
+        background: #34c759;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      /* 收藏和设置样式 */
+      .favorites-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 50;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .favorites-modal.show {
+        display: flex;
+      }
+
+      .favorites-content {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        max-height: 80vh;
+        border-radius: 16px;
+        overflow: hidden;
+        animation: slideUp 0.3s ease-out;
+      }
+
+      .favorites-list {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 16px;
+      }
+
+      .worker-card {
+        background: white;
+        border: 1px solid #e5e5ea;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+      }
+
+      .worker-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .worker-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .worker-avatar-large {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .worker-info-large {
+        flex: 1;
+      }
+
+      .worker-name-large {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .worker-specialty {
+        font-size: 14px;
+        color: #8e8e93;
+        margin-bottom: 4px;
+      }
+
+      .worker-rating-large {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
+      }
+
+      .rating-stars {
+        color: #ffd700;
+      }
+
+      .worker-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: #8e8e93;
+      }
+
+      .worker-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .unfavorite-btn {
+        background: #ff3b30;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        flex: 1;
+      }
+
+      .contact-worker-btn {
+        background: #007aff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        flex: 1;
+      }
+
+      .settings-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 50;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .settings-modal.show {
+        display: flex;
+      }
+
+      .settings-content {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        max-height: 85vh;
+        border-radius: 16px;
+        overflow: hidden;
+        animation: slideUp 0.3s ease-out;
+      }
+
+      .settings-body {
+        padding: 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 8px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #e5e5ea;
+        border-radius: 8px;
+        font-size: 16px;
+        background: white;
+        transition: border-color 0.2s ease;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #007aff;
+      }
+
+      .form-input:disabled {
+        background: #f2f2f7;
+        color: #8e8e93;
+      }
+
+      .avatar-upload {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+
+      .current-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .upload-btn {
+        background: #007aff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .settings-section {
+        margin-bottom: 24px;
+      }
+
+      .section-header {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #000;
+      }
+
+      .setting-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #f2f2f7;
+      }
+
+      .setting-item:last-child {
+        border-bottom: none;
+      }
+
+      .setting-label {
+        font-size: 16px;
+        color: #000;
+      }
+
+      .toggle-switch {
+        position: relative;
+        width: 50px;
+        height: 30px;
+        background: #e5e5ea;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .toggle-switch.active {
+        background: #34c759;
+      }
+
+      .toggle-slider {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 26px;
+        height: 26px;
+        background: white;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .toggle-switch.active .toggle-slider {
+        transform: translateX(20px);
+      }
+
+      .save-btn {
+        background: #007aff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device-screen">
+      <div class="safe-area">
+        <!-- 个人信息头部 -->
+        <div class="profile-header">
+          <div class="profile-info">
+            <img
+              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+              alt="用户头像"
+              class="profile-avatar"
+            />
+            <div class="profile-name">张先生</div>
+            <div class="profile-status">
+              <i class="fas fa-shield-alt"></i>
+              <span>已实名认证</span>
+              <div class="verified-badge">
+                <i class="fas fa-check"></i> 已验证
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 统计数据 -->
+        <div class="stats-container">
+          <div class="stat-item">
+            <div class="stat-number">3</div>
+            <div class="stat-label">待接单</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">1</div>
+            <div class="stat-label">施工中</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">8</div>
+            <div class="stat-label">已完成</div>
+          </div>
+        </div>
+
+        <div class="content-area">
+          <!-- 订单管理 -->
+          <div class="menu-section">
+            <a href="#" class="menu-item" onclick="showOrderManagement()">
+              <div class="menu-icon orders">
+                <i class="fas fa-clipboard-list"></i>
+              </div>
+              <div class="menu-content">
+                <div class="menu-title">我的订单</div>
+                <div class="menu-subtitle">查看订单状态和进度</div>
+              </div>
+              <div class="menu-badge">4</div>
+              <i class="fas fa-chevron-right menu-arrow"></i>
+            </a>
+          </div>
+
+          <!-- 收藏和设置 -->
+          <div class="menu-section">
+            <a href="#" class="menu-item" onclick="showFavorites()">
+              <div class="menu-icon favorites">
+                <i class="fas fa-heart"></i>
+              </div>
+              <div class="menu-content">
+                <div class="menu-title">我的收藏</div>
+                <div class="menu-subtitle">收藏的装修工</div>
+              </div>
+              <i class="fas fa-chevron-right menu-arrow"></i>
+            </a>
+
+            <a href="#" class="menu-item" onclick="showSettings()">
+              <div class="menu-icon settings">
+                <i class="fas fa-cog"></i>
+              </div>
+              <div class="menu-content">
+                <div class="menu-title">账户设置</div>
+                <div class="menu-subtitle">个人信息、隐私设置</div>
+              </div>
+              <i class="fas fa-chevron-right menu-arrow"></i>
+            </a>
+          </div>
+
+          <!-- 帮助和支持 -->
+          <div class="menu-section">
+            <a href="#" class="menu-item">
+              <div class="menu-icon help">
+                <i class="fas fa-question-circle"></i>
+              </div>
+              <div class="menu-content">
+                <div class="menu-title">帮助中心</div>
+                <div class="menu-subtitle">常见问题、使用指南</div>
+              </div>
+              <i class="fas fa-chevron-right menu-arrow"></i>
+            </a>
+
+            <a href="#" class="menu-item">
+              <div class="menu-icon help">
+                <i class="fas fa-headset"></i>
+              </div>
+              <div class="menu-content">
+                <div class="menu-title">联系客服</div>
+                <div class="menu-subtitle">在线客服、意见反馈</div>
+              </div>
+              <i class="fas fa-chevron-right menu-arrow"></i>
+            </a>
+          </div>
+
+          <!-- 关于应用 -->
+          <div class="menu-section">
+            <a href="#" class="menu-item">
+              <div class="menu-icon settings">
+                <i class="fas fa-info-circle"></i>
+              </div>
+              <div class="menu-content">
+                <div class="menu-title">关于我们</div>
+                <div class="menu-subtitle">版本 1.0.0</div>
+              </div>
+              <i class="fas fa-chevron-right menu-arrow"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- 底部标签栏 -->
+        <div class="tab-bar">
+          <a href="./user-home.html" class="tab-item">
+            <i class="fas fa-home tab-icon"></i>
+            <span>首页</span>
+          </a>
+          <a href="./user-nearby.html" class="tab-item">
+            <i class="fas fa-map-marker-alt tab-icon"></i>
+            <span>附近</span>
+          </a>
+          <a href="#" class="tab-item active">
+            <i class="fas fa-user tab-icon"></i>
+            <span>我的</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 订单管理模态框 -->
+    <div class="order-modal" id="orderModal">
+      <div class="order-content">
+        <div class="order-header">
+          <div class="order-title">我的订单</div>
+          <button class="close-btn" onclick="closeOrderModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="order-tabs">
+          <button
+            class="order-tab active"
+            onclick="switchOrderTab('pending', this)"
+          >
+            待接单
+          </button>
+          <button class="order-tab" onclick="switchOrderTab('progress', this)">
+            施工中
+          </button>
+          <button class="order-tab" onclick="switchOrderTab('completed', this)">
+            已完成
+          </button>
+        </div>
+        <div class="order-list" id="orderList">
+          <!-- 订单列表将在这里动态加载 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 订单详情模态框 -->
+    <div class="order-detail-modal" id="orderDetailModal">
+      <div class="order-detail-content" id="orderDetailContent">
+        <!-- 订单详情内容将在这里动态加载 -->
+      </div>
+    </div>
+
+    <!-- 收藏列表模态框 -->
+    <div class="favorites-modal" id="favoritesModal">
+      <div class="favorites-content">
+        <div class="order-header">
+          <div class="order-title">我的收藏</div>
+          <button class="close-btn" onclick="closeFavoritesModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="favorites-list" id="favoritesList">
+          <!-- 收藏的装修工列表将在这里动态加载 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div class="settings-modal" id="settingsModal">
+      <div class="settings-content">
+        <div class="order-header">
+          <div class="order-title">账户设置</div>
+          <button class="close-btn" onclick="closeSettingsModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="settings-body">
+          <!-- 头像上传 -->
+          <div class="avatar-upload">
+            <img
+              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+              alt="当前头像"
+              class="current-avatar"
+              id="currentAvatar"
+            />
+            <button class="upload-btn" onclick="uploadAvatar()">
+              <i class="fas fa-camera"></i> 更换头像
+            </button>
+          </div>
+
+          <!-- 个人信息 -->
+          <div class="settings-section">
+            <div class="section-header">个人信息</div>
+            <div class="form-group">
+              <label class="form-label">姓名</label>
+              <input
+                type="text"
+                class="form-input"
+                id="userName"
+                placeholder="请输入姓名"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">手机号</label>
+              <input
+                type="tel"
+                class="form-input"
+                id="userPhone"
+                placeholder="请输入手机号"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">邮箱</label>
+              <input
+                type="email"
+                class="form-input"
+                id="userEmail"
+                placeholder="请输入邮箱"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">常用地址</label>
+              <input
+                type="text"
+                class="form-input"
+                id="userAddress"
+                placeholder="请输入常用地址"
+              />
+            </div>
+          </div>
+
+          <!-- 通知设置 -->
+          <div class="settings-section">
+            <div class="section-header">通知设置</div>
+            <div class="setting-item">
+              <span class="setting-label">接收订单通知</span>
+              <div
+                class="toggle-switch"
+                id="notificationToggle"
+                onclick="toggleSwitch('notificationToggle')"
+              >
+                <div class="toggle-slider"></div>
+              </div>
+            </div>
+            <div class="setting-item">
+              <span class="setting-label">隐私保护</span>
+              <div
+                class="toggle-switch"
+                id="privacyToggle"
+                onclick="toggleSwitch('privacyToggle')"
+              >
+                <div class="toggle-slider"></div>
+              </div>
+            </div>
+            <div class="setting-item">
+              <span class="setting-label">自动接受推荐</span>
+              <div
+                class="toggle-switch"
+                id="autoAcceptToggle"
+                onclick="toggleSwitch('autoAcceptToggle')"
+              >
+                <div class="toggle-slider"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 保存按钮 -->
+          <button class="save-btn" onclick="saveSettings()">
+            <i class="fas fa-save"></i> 保存设置
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 显示订单管理
+      function showOrderManagement() {
+        document.getElementById('orderModal').classList.add('show');
+        loadOrders('pending');
+      }
+
+      // 关闭订单管理
+      function closeOrderModal() {
+        document.getElementById('orderModal').classList.remove('show');
+      }
+
+      // 切换订单标签页
+      function switchOrderTab(status, element) {
+        // 更新标签页状态
+        document.querySelectorAll('.order-tab').forEach(tab => {
+          tab.classList.remove('active');
+        });
+        element.classList.add('active');
+
+        // 加载对应状态的订单
+        loadOrders(status);
+      }
+
+      // 加载订单列表
+      function loadOrders(status) {
+        const orderList = document.getElementById('orderList');
+        orderList.innerHTML =
+          '<div style="text-align: center; padding: 20px; color: #8E8E93;">加载中...</div>';
+
+        // 模拟API调用
+        setTimeout(() => {
+          const orders = getOrdersByStatus(status);
+          renderOrders(orders);
+        }, 500);
+      }
+
+      // 根据状态获取订单数据（模拟数据）
+      function getOrdersByStatus(status) {
+        const allOrders = [
+          {
+            id: 'ORD001',
+            type: '厨房装修',
+            address: '北京市朝阳区望京SOHO',
+            budget: '5-10万',
+            status: 'pending',
+            statusText: '待接单',
+            description: '需要重新装修厨房，包括橱柜、台面、瓷砖等',
+            photos: [
+              'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=150&h=150&fit=crop',
+              'https://images.unsplash.com/photo-1556909045-f7c5c2b4b2b2?w=150&h=150&fit=crop',
+            ],
+            createdAt: '2024-01-15',
+            worker: null,
+          },
+          {
+            id: 'ORD002',
+            type: '卫生间改造',
+            address: '北京市海淀区中关村',
+            budget: '3-5万',
+            status: 'pending',
+            statusText: '待接单',
+            description: '卫生间防水重做，更换洁具',
+            photos: [
+              'https://images.unsplash.com/photo-1620626011761-996317b8d101?w=150&h=150&fit=crop',
+            ],
+            createdAt: '2024-01-18',
+            worker: null,
+          },
+          {
+            id: 'ORD003',
+            type: '客厅装修',
+            address: '北京市东城区王府井',
+            budget: '10-20万',
+            status: 'pending',
+            statusText: '待接单',
+            description: '客厅全面装修，包括吊顶、地板、墙面',
+            photos: [
+              'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=150&h=150&fit=crop',
+              'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=150&h=150&fit=crop',
+              'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=150&h=150&fit=crop',
+            ],
+            createdAt: '2024-01-20',
+            worker: null,
+          },
+          {
+            id: 'ORD004',
+            type: '卧室装修',
+            address: '北京市西城区金融街',
+            budget: '5-10万',
+            status: 'progress',
+            statusText: '施工中',
+            description: '主卧装修，包括衣柜定制',
+            photos: [
+              'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=150&h=150&fit=crop',
+            ],
+            createdAt: '2024-01-10',
+            worker: {
+              name: '李师傅',
+              avatar:
+                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face',
+              rating: 4.8,
+              phone: '138****5678',
+            },
+          },
+          {
+            id: 'ORD005',
+            type: '全屋装修',
+            address: '北京市丰台区丽泽商务区',
+            budget: '20万+',
+            status: 'completed',
+            statusText: '已完成',
+            description: '三居室全屋装修',
+            photos: [
+              'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=150&h=150&fit=crop',
+            ],
+            createdAt: '2023-12-01',
+            completedAt: '2024-01-05',
+            worker: {
+              name: '王师傅',
+              avatar:
+                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
+              rating: 4.9,
+              phone: '139****1234',
+            },
+          },
+        ];
+
+        return allOrders.filter(order => order.status === status);
+      }
+
+      // 渲染订单列表
+      function renderOrders(orders) {
+        const orderList = document.getElementById('orderList');
+
+        if (orders.length === 0) {
+          orderList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #8E8E93;">
+                        <i class="fas fa-clipboard-list" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                        <p>暂无订单</p>
+                    </div>
+                `;
+          return;
+        }
+
+        orderList.innerHTML = orders
+          .map(
+            order => `
+                <div class="order-card">
+                    <div class="order-card-header">
+                        <span class="order-id">订单号: ${order.id}</span>
+                        <span class="order-status status-${order.status}">${
+              order.statusText
+            }</span>
+                    </div>
+                    <div class="order-info">
+                        <div class="order-type">${order.type}</div>
+                        <div class="order-address">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${order.address}
+                        </div>
+                        <div class="order-budget">预算: ${order.budget}</div>
+                    </div>
+                    ${
+                      order.worker
+                        ? `
+                        <div class="worker-info">
+                            <img src="${order.worker.avatar}" alt="装修工头像" class="worker-avatar">
+                            <div class="worker-details">
+                                <div class="worker-name">${order.worker.name}</div>
+                                <div class="worker-rating">
+                                    <i class="fas fa-star" style="color: #FFD700;"></i>
+                                    ${order.worker.rating}
+                                </div>
+                            </div>
+                            <button class="contact-btn" onclick="contactWorker('${order.worker.phone}')">
+                                <i class="fas fa-phone"></i> 联系
+                            </button>
+                        </div>
+                    `
+                        : ''
+                    }
+                    <div class="order-actions">
+                        <button class="action-btn btn-secondary" onclick="showOrderDetail('${
+                          order.id
+                        }')">
+                            查看详情
+                        </button>
+                        ${getOrderActions(order)}
+                    </div>
+                </div>
+            `,
+          )
+          .join('');
+      }
+
+      // 获取订单操作按钮
+      function getOrderActions(order) {
+        switch (order.status) {
+          case 'pending':
+            return `
+                        <button class="action-btn btn-danger" onclick="cancelOrder('${order.id}')">
+                            取消订单
+                        </button>
+                    `;
+          case 'progress':
+            return `
+                        <button class="action-btn btn-primary" onclick="viewProgress('${order.id}')">
+                            查看进度
+                        </button>
+                    `;
+          case 'completed':
+            return `
+                        <button class="action-btn btn-primary" onclick="rateOrder('${order.id}')">
+                            评价
+                        </button>
+                    `;
+          default:
+            return '';
+        }
+      }
+
+      // 显示订单详情
+      function showOrderDetail(orderId) {
+        const allOrders = getOrdersByStatus('pending')
+          .concat(getOrdersByStatus('progress'))
+          .concat(getOrdersByStatus('completed'));
+        const order = allOrders.find(o => o.id === orderId);
+
+        if (!order) return;
+
+        const modal = document.getElementById('orderDetailModal');
+        const content = document.getElementById('orderDetailContent');
+
+        content.innerHTML = `
+                <div class="order-header">
+                    <div class="order-title">订单详情</div>
+                    <button class="close-btn" onclick="closeOrderDetailModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="order-detail-body">
+                    <div class="detail-section">
+                        <div class="detail-title">订单信息</div>
+                        <div class="detail-content">
+                            <p><strong>订单号:</strong> ${order.id}</p>
+                            <p><strong>装修类型:</strong> ${order.type}</p>
+                            <p><strong>预算范围:</strong> ${order.budget}</p>
+                            <p><strong>创建时间:</strong> ${order.createdAt}</p>
+                            ${
+                              order.completedAt
+                                ? `<p><strong>完成时间:</strong> ${order.completedAt}</p>`
+                                : ''
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-title">装修地址</div>
+                        <div class="detail-content">
+                            <i class="fas fa-map-marker-alt" style="color: #FF3B30; margin-right: 8px;"></i>
+                            ${order.address}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <div class="detail-title">需求描述</div>
+                        <div class="detail-content">${order.description}</div>
+                    </div>
+                    
+                    ${
+                      order.photos && order.photos.length > 0
+                        ? `
+                        <div class="detail-section">
+                            <div class="detail-title">现场照片</div>
+                            <div class="photo-grid">
+                                ${order.photos
+                                  .map(
+                                    photo => `
+                                    <div class="photo-item">
+                                        <img src="${photo}" alt="现场照片">
+                                    </div>
+                                `,
+                                  )
+                                  .join('')}
+                            </div>
+                        </div>
+                    `
+                        : ''
+                    }
+                    
+                    ${
+                      order.worker
+                        ? `
+                        <div class="detail-section">
+                            <div class="detail-title">装修工信息</div>
+                            <div class="worker-info">
+                                <img src="${order.worker.avatar}" alt="装修工头像" class="worker-avatar">
+                                <div class="worker-details">
+                                    <div class="worker-name">${order.worker.name}</div>
+                                    <div class="worker-rating">
+                                        <i class="fas fa-star" style="color: #FFD700;"></i>
+                                        ${order.worker.rating} 分
+                                    </div>
+                                </div>
+                                <button class="contact-btn" onclick="contactWorker('${order.worker.phone}')">
+                                    <i class="fas fa-phone"></i> 联系
+                                </button>
+                            </div>
+                        </div>
+                    `
+                        : ''
+                    }
+                </div>
+            `;
+
+        modal.classList.add('show');
+      }
+
+      // 关闭订单详情
+      function closeOrderDetailModal() {
+        document.getElementById('orderDetailModal').classList.remove('show');
+      }
+
+      // 取消订单
+      function cancelOrder(orderId) {
+        if (confirm('确定要取消这个订单吗？取消后无法恢复。')) {
+          // 模拟API调用
+          setTimeout(() => {
+            alert('订单已取消');
+            loadOrders('pending'); // 重新加载待接单列表
+            updateUserStats(); // 更新统计数据
+          }, 500);
+        }
+      }
+
+      // 查看进度
+      function viewProgress(orderId) {
+        alert('查看施工进度功能');
+      }
+
+      // 评价订单
+      function rateOrder(orderId) {
+        alert('评价功能');
+      }
+
+      // 联系装修工
+      function contactWorker(phone) {
+        if (confirm(`是否拨打电话 ${phone}？`)) {
+          window.location.href = `tel:${phone}`;
+        }
+      }
+
+      // 显示收藏列表（占位函数，实际会在后续任务中实现）
+      function showFavorites() {
+        document.getElementById('favoritesModal').classList.add('show');
+        loadFavoriteWorkers();
+      }
+
+      // 显示设置页面（占位函数，实际会在后续任务中实现）
+      function showSettings() {
+        document.getElementById('settingsModal').classList.add('show');
+        loadUserSettings();
+      }
+
+      // 页面加载完成后的初始化
+      document.addEventListener('DOMContentLoaded', function () {
+        // 添加页面加载动画
+        document.body.classList.add('fade-in');
+
+        // 模拟数据加载
+        setTimeout(() => {
+          updateUserStats();
+        }, 500);
+
+        // 点击模态框外部关闭事件监听
+        document
+          .getElementById('orderModal')
+          .addEventListener('click', function (e) {
+            if (e.target === this) {
+              closeOrderModal();
+            }
+          });
+
+        document
+          .getElementById('orderDetailModal')
+          .addEventListener('click', function (e) {
+            if (e.target === this) {
+              closeOrderDetailModal();
+            }
+          });
+
+        document
+          .getElementById('favoritesModal')
+          .addEventListener('click', function (e) {
+            if (e.target === this) {
+              closeFavoritesModal();
+            }
+          });
+
+        document
+          .getElementById('settingsModal')
+          .addEventListener('click', function (e) {
+            if (e.target === this) {
+              closeSettingsModal();
+            }
+          });
+      });
+
+      // 更新用户统计数据
+      function updateUserStats() {
+        // 这里可以从API获取真实数据
+        const stats = {
+          pending: 3,
+          inProgress: 1,
+          completed: 8,
+        };
+
+        // 更新显示
+        const statNumbers = document.querySelectorAll('.stat-number');
+        statNumbers[0].textContent = stats.pending;
+        statNumbers[1].textContent = stats.inProgress;
+        statNumbers[2].textContent = stats.completed;
+
+        // 更新订单徽章
+        const totalActive = stats.pending + stats.inProgress;
+        const badge = document.querySelector('.menu-badge');
+        if (totalActive > 0) {
+          badge.textContent = totalActive;
+          badge.style.display = 'block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      // 关闭收藏列表
+      function closeFavoritesModal() {
+        document.getElementById('favoritesModal').classList.remove('show');
+      }
+
+      // 加载收藏的装修工
+      function loadFavoriteWorkers() {
+        const favoritesList = document.getElementById('favoritesList');
+        favoritesList.innerHTML =
+          '<div style="text-align: center; padding: 20px; color: #8E8E93;">加载中...</div>';
+
+        // 模拟API调用
+        setTimeout(() => {
+          const favoriteWorkers = getFavoriteWorkers();
+          renderFavoriteWorkers(favoriteWorkers);
+        }, 500);
+      }
+
+      // 获取收藏的装修工数据（模拟数据）
+      function getFavoriteWorkers() {
+        return [
+          {
+            id: 'W001',
+            name: '李师傅',
+            avatar:
+              'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face',
+            specialty: '厨房装修专家',
+            rating: 4.8,
+            completedOrders: 156,
+            experience: '8年经验',
+            phone: '138****5678',
+          },
+          {
+            id: 'W002',
+            name: '王师傅',
+            avatar:
+              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
+            specialty: '全屋装修',
+            rating: 4.9,
+            completedOrders: 203,
+            experience: '12年经验',
+            phone: '139****1234',
+          },
+          {
+            id: 'W003',
+            name: '张师傅',
+            avatar:
+              'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face',
+            specialty: '卫生间改造',
+            rating: 4.7,
+            completedOrders: 89,
+            experience: '6年经验',
+            phone: '137****9876',
+          },
+        ];
+      }
+
+      // 渲染收藏的装修工列表
+      function renderFavoriteWorkers(workers) {
+        const favoritesList = document.getElementById('favoritesList');
+
+        if (workers.length === 0) {
+          favoritesList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #8E8E93;">
+                        <i class="fas fa-heart" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                        <p>暂无收藏的装修工</p>
+                    </div>
+                `;
+          return;
+        }
+
+        favoritesList.innerHTML = workers
+          .map(
+            worker => `
+                <div class="worker-card">
+                    <div class="worker-header">
+                        <img src="${
+                          worker.avatar
+                        }" alt="装修工头像" class="worker-avatar-large">
+                        <div class="worker-info-large">
+                            <div class="worker-name-large">${worker.name}</div>
+                            <div class="worker-specialty">${
+                              worker.specialty
+                            }</div>
+                            <div class="worker-rating-large">
+                                <span class="rating-stars">
+                                    ${generateStars(worker.rating)}
+                                </span>
+                                <span>${worker.rating}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="worker-stats">
+                        <span>完成订单: ${worker.completedOrders}</span>
+                        <span>${worker.experience}</span>
+                    </div>
+                    <div class="worker-actions">
+                        <button class="unfavorite-btn" onclick="unfavoriteWorker('${
+                          worker.id
+                        }')">
+                            <i class="fas fa-heart-broken"></i> 取消收藏
+                        </button>
+                        <button class="contact-worker-btn" onclick="contactWorker('${
+                          worker.phone
+                        }')">
+                            <i class="fas fa-phone"></i> 联系
+                        </button>
+                    </div>
+                </div>
+            `,
+          )
+          .join('');
+      }
+
+      // 生成星级评分
+      function generateStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        let stars = '';
+
+        for (let i = 0; i < fullStars; i++) {
+          stars += '<i class="fas fa-star"></i>';
+        }
+
+        if (hasHalfStar) {
+          stars += '<i class="fas fa-star-half-alt"></i>';
+        }
+
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        for (let i = 0; i < emptyStars; i++) {
+          stars += '<i class="far fa-star"></i>';
+        }
+
+        return stars;
+      }
+
+      // 取消收藏装修工
+      function unfavoriteWorker(workerId) {
+        if (confirm('确定要取消收藏这位装修工吗？')) {
+          // 模拟API调用
+          setTimeout(() => {
+            alert('已取消收藏');
+            loadFavoriteWorkers(); // 重新加载收藏列表
+          }, 500);
+        }
+      }
+
+      // 关闭设置页面
+      function closeSettingsModal() {
+        document.getElementById('settingsModal').classList.remove('show');
+      }
+
+      // 加载用户设置
+      function loadUserSettings() {
+        // 模拟从API加载用户设置数据
+        const userSettings = {
+          name: '张先生',
+          phone: '138****1234',
+          email: 'zhang@example.com',
+          address: '北京市朝阳区',
+          notifications: true,
+          privacy: true,
+          autoAccept: false,
+        };
+
+        // 填充表单数据
+        document.getElementById('userName').value = userSettings.name;
+        document.getElementById('userPhone').value = userSettings.phone;
+        document.getElementById('userEmail').value = userSettings.email;
+        document.getElementById('userAddress').value = userSettings.address;
+
+        // 设置开关状态
+        setToggleState('notificationToggle', userSettings.notifications);
+        setToggleState('privacyToggle', userSettings.privacy);
+        setToggleState('autoAcceptToggle', userSettings.autoAccept);
+      }
+
+      // 设置开关状态
+      function setToggleState(toggleId, isActive) {
+        const toggle = document.getElementById(toggleId);
+        if (isActive) {
+          toggle.classList.add('active');
+        } else {
+          toggle.classList.remove('active');
+        }
+      }
+
+      // 切换开关状态
+      function toggleSwitch(toggleId) {
+        const toggle = document.getElementById(toggleId);
+        toggle.classList.toggle('active');
+      }
+
+      // 上传头像
+      function uploadAvatar() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              document.getElementById('currentAvatar').src = e.target.result;
+              // 这里可以上传到服务器
+              alert('头像上传成功');
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+        input.click();
+      }
+
+      // 保存设置
+      function saveSettings() {
+        const settings = {
+          name: document.getElementById('userName').value,
+          phone: document.getElementById('userPhone').value,
+          email: document.getElementById('userEmail').value,
+          address: document.getElementById('userAddress').value,
+          notifications: document
+            .getElementById('notificationToggle')
+            .classList.contains('active'),
+          privacy: document
+            .getElementById('privacyToggle')
+            .classList.contains('active'),
+          autoAccept: document
+            .getElementById('autoAcceptToggle')
+            .classList.contains('active'),
+        };
+
+        // 验证必填字段
+        if (!settings.name.trim()) {
+          alert('请输入姓名');
+          return;
+        }
+
+        if (!settings.phone.trim()) {
+          alert('请输入手机号');
+          return;
+        }
+
+        // 模拟保存到服务器
+        const saveBtn = document.querySelector('.save-btn');
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+        saveBtn.disabled = true;
+
+        setTimeout(() => {
+          alert('设置保存成功');
+          closeSettingsModal();
+
+          // 更新页面显示的用户信息
+          document.querySelector('.profile-name').textContent = settings.name;
+
+          saveBtn.innerHTML = '保存设置';
+          saveBtn.disabled = false;
+        }, 1000);
+      }
+    </script>
+  </body>
+</html>

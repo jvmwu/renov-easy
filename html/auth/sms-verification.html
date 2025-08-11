@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>短信验证 - 装修易</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../styles/design-system.css" />
+    <style>
+      .verification-container {
+        min-height: 100vh;
+        background: var(--background-color);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .nav-bar {
+        background: var(--surface-color);
+        padding: var(--spacing-md) var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        box-shadow: var(--shadow-sm);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .nav-back-btn {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        font-size: 20px;
+        cursor: pointer;
+        padding: var(--spacing-sm);
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .nav-back-btn:hover {
+        background: rgba(0, 122, 255, 0.1);
+      }
+
+      .nav-title {
+        font-size: var(--font-size-headline);
+        font-weight: 600;
+        color: var(--text-primary);
+        flex: 1;
+      }
+
+      .verification-content {
+        flex: 1;
+        padding: var(--spacing-xxxl) var(--spacing-lg) var(--spacing-lg);
+        display: flex;
+        flex-direction: column;
+        max-width: 400px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .instruction-section {
+        text-align: center;
+        margin-bottom: var(--spacing-xxxl);
+      }
+
+      .verification-icon {
+        font-size: 64px;
+        color: var(--primary-color);
+        margin-bottom: var(--spacing-xl);
+        display: block;
+      }
+
+      .instruction-section h2 {
+        font-size: var(--font-size-large-title);
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .instruction-section p {
+        font-size: var(--font-size-body);
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      .phone-number {
+        color: var(--primary-color);
+        font-weight: 600;
+      }
+
+      .code-input-section {
+        margin-bottom: var(--spacing-xxxl);
+      }
+
+      .code-inputs {
+        display: flex;
+        justify-content: center;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .code-digit {
+        width: 48px;
+        height: 56px;
+        border: 2px solid var(--text-tertiary);
+        border-radius: var(--radius-md);
+        text-align: center;
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--text-primary);
+        background: var(--surface-color);
+        transition: all 0.2s ease;
+        outline: none;
+      }
+
+      .code-digit:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+      }
+
+      .code-digit.filled {
+        border-color: var(--primary-color);
+        background: rgba(0, 122, 255, 0.05);
+      }
+
+      .code-digit.error {
+        border-color: var(--warning-color);
+        background: rgba(255, 59, 48, 0.05);
+        animation: shake 0.5s ease-in-out;
+      }
+
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+      }
+
+      .resend-section {
+        text-align: center;
+        margin-bottom: var(--spacing-xxxl);
+      }
+
+      .resend-text {
+        font-size: var(--font-size-footnote);
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .resend-btn {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        font-size: var(--font-size-footnote);
+        cursor: pointer;
+        text-decoration: underline;
+        transition: all 0.2s ease;
+      }
+
+      .resend-btn:disabled {
+        color: var(--text-secondary);
+        cursor: not-allowed;
+        text-decoration: none;
+      }
+
+      .resend-btn:hover:not(:disabled) {
+        color: #0056CC;
+      }
+
+      .countdown {
+        color: var(--warning-color);
+        font-weight: 600;
+      }
+
+      .verify-btn {
+        width: 100%;
+        margin-bottom: var(--spacing-xl);
+      }
+
+      .verify-btn:disabled {
+        background: var(--text-tertiary);
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .error-message {
+        color: var(--warning-color);
+        font-size: var(--font-size-footnote);
+        text-align: center;
+        margin-top: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+      }
+
+      .success-message {
+        color: var(--success-color);
+        font-size: var(--font-size-footnote);
+        text-align: center;
+        margin-top: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+      }
+
+      /* 加载状态 */
+      .loading {
+        position: relative;
+        color: transparent !important;
+      }
+
+      .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        color: white;
+      }
+
+      @keyframes spin {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      /* 动画效果 */
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      .verification-content > * {
+        animation: slideInUp 0.6s ease-out;
+      }
+
+      .verification-content > *:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      .verification-content > *:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+
+      .verification-content > *:nth-child(4) {
+        animation-delay: 0.3s;
+      }
+
+      .code-digit:focus {
+        animation: pulse 0.3s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device-screen">
+      <div class="verification-container">
+        <!-- 导航栏 -->
+        <div class="nav-bar">
+          <button class="nav-back-btn" onclick="goBack()">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <h1 class="nav-title">短信验证</h1>
+        </div>
+
+        <!-- 主要内容 -->
+        <div class="verification-content">
+          <!-- 说明区域 -->
+          <div class="instruction-section">
+            <i class="fas fa-sms verification-icon"></i>
+            <h2>输入验证码</h2>
+            <p>验证码已发送至 <span class="phone-number" id="phoneDisplay">138****1234</span></p>
+          </div>
+
+          <!-- 验证码输入区域 -->
+          <div class="code-input-section">
+            <div class="code-inputs">
+              <input type="text" class="code-digit" maxlength="1" data-index="0" />
+              <input type="text" class="code-digit" maxlength="1" data-index="1" />
+              <input type="text" class="code-digit" maxlength="1" data-index="2" />
+              <input type="text" class="code-digit" maxlength="1" data-index="3" />
+              <input type="text" class="code-digit" maxlength="1" data-index="4" />
+              <input type="text" class="code-digit" maxlength="1" data-index="5" />
+            </div>
+            
+            <div class="error-message" id="errorMessage" style="display: none;">
+              <i class="fas fa-exclamation-circle"></i>
+              <span id="errorText"></span>
+            </div>
+            
+            <div class="success-message" id="successMessage" style="display: none;">
+              <i class="fas fa-check-circle"></i>
+              <span>验证成功！</span>
+            </div>
+          </div>
+
+          <!-- 重新发送区域 -->
+          <div class="resend-section">
+            <p class="resend-text">没收到验证码？</p>
+            <button class="resend-btn" id="resendBtn" onclick="resendCode()" disabled>
+              <span class="countdown" id="countdown">60s</span>后重新发送
+            </button>
+          </div>
+
+          <!-- 验证按钮 -->
+          <button class="button-primary verify-btn" id="verifyBtn" onclick="verifyCode()" disabled>
+            验证
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let countdownTimer;
+      let countdownSeconds = 60;
+      let currentCode = '';
+      
+      // 返回上一页
+      function goBack() {
+        window.history.back() || (window.location.href = './phone-auth.html');
+      }
+
+      // 初始化验证码输入框
+      function initCodeInputs() {
+        const codeInputs = document.querySelectorAll('.code-digit');
+        
+        codeInputs.forEach((input, index) => {
+          // 输入事件
+          input.addEventListener('input', function(e) {
+            const value = e.target.value;
+            
+            // 只允许数字
+            if (!/^\d$/.test(value)) {
+              e.target.value = '';
+              return;
+            }
+            
+            // 更新样式
+            if (value) {
+              e.target.classList.add('filled');
+            } else {
+              e.target.classList.remove('filled');
+            }
+            
+            // 自动跳转到下一个输入框
+            if (value && index < codeInputs.length - 1) {
+              codeInputs[index + 1].focus();
+            }
+            
+            // 更新当前验证码
+            updateCurrentCode();
+          });
+          
+          // 键盘事件
+          input.addEventListener('keydown', function(e) {
+            // 退格键处理
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+              codeInputs[index - 1].focus();
+              codeInputs[index - 1].value = '';
+              codeInputs[index - 1].classList.remove('filled');
+              updateCurrentCode();
+            }
+            
+            // 回车键验证
+            if (e.key === 'Enter' && currentCode.length === 6) {
+              verifyCode();
+            }
+            
+            // 只允许数字和控制键
+            if (!/[0-9]/.test(e.key) && 
+                !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+              e.preventDefault();
+            }
+          });
+          
+          // 粘贴事件
+          input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedData = e.clipboardData.getData('text');
+            const digits = pastedData.replace(/\D/g, '').slice(0, 6);
+            
+            if (digits.length > 0) {
+              fillCodeInputs(digits);
+            }
+          });
+        });
+      }
+
+      // 填充验证码输入框
+      function fillCodeInputs(code) {
+        const codeInputs = document.querySelectorAll('.code-digit');
+        
+        codeInputs.forEach((input, index) => {
+          if (index < code.length) {
+            input.value = code[index];
+            input.classList.add('filled');
+          } else {
+            input.value = '';
+            input.classList.remove('filled');
+          }
+        });
+        
+        updateCurrentCode();
+        
+        // 聚焦到下一个空输入框或最后一个
+        const nextEmptyIndex = code.length < 6 ? code.length : 5;
+        codeInputs[nextEmptyIndex].focus();
+      }
+
+      // 更新当前验证码
+      function updateCurrentCode() {
+        const codeInputs = document.querySelectorAll('.code-digit');
+        currentCode = Array.from(codeInputs).map(input => input.value).join('');
+        
+        const verifyBtn = document.getElementById('verifyBtn');
+        verifyBtn.disabled = currentCode.length !== 6;
+        
+        // 清除错误状态
+        clearErrorState();
+      }
+
+      // 清除错误状态
+      function clearErrorState() {
+        const codeInputs = document.querySelectorAll('.code-digit');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        codeInputs.forEach(input => {
+          input.classList.remove('error');
+        });
+        
+        errorMessage.style.display = 'none';
+      }
+
+      // 显示错误
+      function showError(message) {
+        const codeInputs = document.querySelectorAll('.code-digit');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        
+        codeInputs.forEach(input => {
+          input.classList.add('error');
+        });
+        
+        errorText.textContent = message;
+        errorMessage.style.display = 'flex';
+      }
+
+      // 显示成功
+      function showSuccess() {
+        const successMessage = document.getElementById('successMessage');
+        successMessage.style.display = 'flex';
+      }
+
+      // 验证验证码
+      function verifyCode() {
+        if (currentCode.length !== 6) {
+          showError('请输入完整的6位验证码');
+          return;
+        }
+        
+        const verifyBtn = document.getElementById('verifyBtn');
+        verifyBtn.classList.add('loading');
+        verifyBtn.disabled = true;
+        
+        // 模拟API验证
+        setTimeout(() => {
+          // 模拟验证逻辑（实际应该调用后端API）
+          const isValid = currentCode === '123456' || Math.random() > 0.3; // 模拟验证结果
+          
+          verifyBtn.classList.remove('loading');
+          
+          if (isValid) {
+            showSuccess();
+            
+            // 检查是否为新用户
+            const isNewUser = !localStorage.getItem('userExists');
+            
+            setTimeout(() => {
+              if (isNewUser) {
+                // 新用户跳转到用户类型选择
+                window.location.href = './user-type-selection.html';
+              } else {
+                // 老用户直接跳转到主页面
+                const userType = localStorage.getItem('userType') || 'customer';
+                if (userType === 'worker') {
+                  window.location.href = '../worker-home.html';
+                } else {
+                  window.location.href = '../user-home.html';
+                }
+              }
+            }, 1500);
+          } else {
+            showError('验证码错误，请重新输入');
+            verifyBtn.disabled = false;
+            
+            // 清空输入框
+            setTimeout(() => {
+              const codeInputs = document.querySelectorAll('.code-digit');
+              codeInputs.forEach(input => {
+                input.value = '';
+                input.classList.remove('filled', 'error');
+              });
+              currentCode = '';
+              codeInputs[0].focus();
+            }, 1000);
+          }
+        }, 2000);
+      }
+
+      // 重新发送验证码
+      function resendCode() {
+        const resendBtn = document.getElementById('resendBtn');
+        
+        // 重置倒计时
+        countdownSeconds = 60;
+        resendBtn.disabled = true;
+        startCountdown();
+        
+        // 模拟重新发送
+        console.log('重新发送验证码');
+        showNotification('验证码已重新发送');
+      }
+
+      // 开始倒计时
+      function startCountdown() {
+        const resendBtn = document.getElementById('resendBtn');
+        const countdown = document.getElementById('countdown');
+        
+        countdownTimer = setInterval(() => {
+          countdownSeconds--;
+          countdown.textContent = `${countdownSeconds}s`;
+          
+          if (countdownSeconds <= 0) {
+            clearInterval(countdownTimer);
+            resendBtn.disabled = false;
+            resendBtn.innerHTML = '重新发送';
+          }
+        }, 1000);
+      }
+
+      // 显示通知
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 20%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: var(--success-color);
+          color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          font-size: 14px;
+          z-index: 1000;
+          box-shadow: var(--shadow-lg);
+        `;
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          notification.remove();
+        }, 3000);
+      }
+
+      // 页面加载完成后的初始化
+      document.addEventListener('DOMContentLoaded', function() {
+        // 获取手机号显示
+        const phoneDisplay = localStorage.getItem('pendingPhoneDisplay');
+        if (phoneDisplay) {
+          document.getElementById('phoneDisplay').textContent = phoneDisplay;
+        }
+        
+        // 初始化验证码输入框
+        initCodeInputs();
+        
+        // 开始倒计时
+        startCountdown();
+        
+        // 自动聚焦到第一个输入框
+        setTimeout(() => {
+          document.querySelector('.code-digit').focus();
+        }, 500);
+      });
+
+      // 页面卸载时清理定时器
+      window.addEventListener('beforeunload', function() {
+        if (countdownTimer) {
+          clearInterval(countdownTimer);
+        }
+      });
+    </script>
+  </body>
+</html>

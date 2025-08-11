@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>选择账户类型 - 装修易</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../styles/design-system.css" />
+    <style>
+      .user-type-container {
+        min-height: 100vh;
+        background: var(--background-color);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .nav-bar {
+        background: var(--surface-color);
+        padding: var(--spacing-md) var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        box-shadow: var(--shadow-sm);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .nav-back-btn {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        font-size: 20px;
+        cursor: pointer;
+        padding: var(--spacing-sm);
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .nav-back-btn:hover {
+        background: rgba(0, 122, 255, 0.1);
+      }
+
+      .nav-title {
+        font-size: var(--font-size-headline);
+        font-weight: 600;
+        color: var(--text-primary);
+        flex: 1;
+      }
+
+      .user-type-content {
+        flex: 1;
+        padding: var(--spacing-xxxl) var(--spacing-lg) var(--spacing-lg);
+        display: flex;
+        flex-direction: column;
+        max-width: 400px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .instruction-section {
+        text-align: center;
+        margin-bottom: var(--spacing-xxxl);
+      }
+
+      .instruction-section h2 {
+        font-size: var(--font-size-large-title);
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .instruction-section p {
+        font-size: var(--font-size-body);
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      .type-selection {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xxxl);
+      }
+
+      .type-card {
+        background: var(--surface-color);
+        border: 2px solid var(--text-tertiary);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .type-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.1), transparent);
+        transition: left 0.5s ease;
+      }
+
+      .type-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-color);
+      }
+
+      .type-card:hover::before {
+        left: 100%;
+      }
+
+      .type-card.selected {
+        border-color: var(--primary-color);
+        background: rgba(0, 122, 255, 0.05);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .type-card.selected .type-icon {
+        color: var(--primary-color);
+        transform: scale(1.1);
+      }
+
+      .type-icon {
+        font-size: 48px;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-lg);
+        transition: all 0.3s ease;
+        display: block;
+        text-align: center;
+      }
+
+      .type-title {
+        font-size: var(--font-size-headline);
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+        text-align: center;
+      }
+
+      .type-description {
+        font-size: var(--font-size-body);
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-lg);
+        text-align: center;
+      }
+
+      .type-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+        justify-content: center;
+        margin-bottom: var(--spacing-md);
+      }
+
+      .feature-item {
+        background: var(--background-color);
+        color: var(--text-secondary);
+        padding: var(--spacing-xs) var(--spacing-md);
+        border-radius: var(--radius-sm);
+        font-size: var(--font-size-footnote);
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .type-card.selected .feature-item {
+        background: rgba(0, 122, 255, 0.1);
+        color: var(--primary-color);
+      }
+
+      .verification-notice {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        background: rgba(255, 193, 7, 0.1);
+        color: #F57C00;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-sm);
+        font-size: var(--font-size-footnote);
+        font-weight: 500;
+        margin-top: var(--spacing-md);
+      }
+
+      .continue-btn {
+        width: 100%;
+        margin-top: auto;
+      }
+
+      .continue-btn:disabled {
+        background: var(--text-tertiary);
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .selection-indicator {
+        position: absolute;
+        top: var(--spacing-lg);
+        right: var(--spacing-lg);
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.3s ease;
+      }
+
+      .type-card.selected .selection-indicator {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      /* 加载状态 */
+      .loading {
+        position: relative;
+        color: transparent !important;
+      }
+
+      .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        color: white;
+      }
+
+      @keyframes spin {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      /* 动画效果 */
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes bounceIn {
+        0% {
+          opacity: 0;
+          transform: scale(0.3);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+        70% {
+          transform: scale(0.9);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .user-type-content > * {
+        animation: slideInUp 0.6s ease-out;
+      }
+
+      .user-type-content > *:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      .user-type-content > *:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+
+      .type-card:nth-child(1) {
+        animation-delay: 0.3s;
+      }
+
+      .type-card:nth-child(2) {
+        animation-delay: 0.4s;
+      }
+
+      .selection-indicator {
+        animation: bounceIn 0.5s ease-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device-screen">
+      <div class="user-type-container">
+        <!-- 导航栏 -->
+        <div class="nav-bar">
+          <button class="nav-back-btn" onclick="goBack()">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <h1 class="nav-title">选择账户类型</h1>
+        </div>
+
+        <!-- 主要内容 -->
+        <div class="user-type-content">
+          <!-- 说明区域 -->
+          <div class="instruction-section">
+            <h2>选择账户类型</h2>
+            <p>请选择最符合您需求的账户类型</p>
+          </div>
+
+          <!-- 类型选择区域 -->
+          <div class="type-selection">
+            <!-- 普通用户卡片 -->
+            <div class="type-card customer-card" data-type="customer" onclick="selectType('customer')">
+              <div class="selection-indicator">
+                <i class="fas fa-check"></i>
+              </div>
+              
+              <div class="type-icon">
+                <i class="fas fa-home"></i>
+              </div>
+              
+              <h3 class="type-title">普通用户</h3>
+              <p class="type-description">我需要装修服务</p>
+              
+              <div class="type-features">
+                <span class="feature-item">发布装修需求</span>
+                <span class="feature-item">查找装修工</span>
+                <span class="feature-item">管理订单</span>
+              </div>
+            </div>
+
+            <!-- 装修工卡片 -->
+            <div class="type-card worker-card" data-type="worker" onclick="selectType('worker')">
+              <div class="selection-indicator">
+                <i class="fas fa-check"></i>
+              </div>
+              
+              <div class="type-icon">
+                <i class="fas fa-tools"></i>
+              </div>
+              
+              <h3 class="type-title">装修工</h3>
+              <p class="type-description">我提供装修服务</p>
+              
+              <div class="type-features">
+                <span class="feature-item">接收订单</span>
+                <span class="feature-item">展示作品</span>
+                <span class="feature-item">收入统计</span>
+              </div>
+              
+              <div class="verification-notice">
+                <i class="fas fa-shield-alt"></i>
+                <span>需要专业认证</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 继续按钮 -->
+          <button class="button-primary continue-btn" id="continueBtn" onclick="continueToNext()" disabled>
+            继续
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let selectedUserType = null;
+      
+      // 返回上一页
+      function goBack() {
+        window.history.back() || (window.location.href = './sms-verification.html');
+      }
+
+      // 选择用户类型
+      function selectType(type) {
+        const cards = document.querySelectorAll('.type-card');
+        const continueBtn = document.getElementById('continueBtn');
+        
+        // 清除之前的选择
+        cards.forEach(card => {
+          card.classList.remove('selected');
+        });
+        
+        // 选择当前类型
+        const selectedCard = document.querySelector(`[data-type="${type}"]`);
+        selectedCard.classList.add('selected');
+        
+        selectedUserType = type;
+        continueBtn.disabled = false;
+        
+        // 添加选择反馈
+        navigator.vibrate && navigator.vibrate(50);
+        
+        console.log(`选择了用户类型: ${type}`);
+      }
+
+      // 继续到下一步
+      function continueToNext() {
+        if (!selectedUserType) {
+          showNotification('请先选择账户类型', 'warning');
+          return;
+        }
+        
+        const continueBtn = document.getElementById('continueBtn');
+        continueBtn.classList.add('loading');
+        continueBtn.disabled = true;
+        
+        // 保存用户类型到本地存储
+        localStorage.setItem('userType', selectedUserType);
+        localStorage.setItem('userExists', 'true');
+        
+        // 模拟账户创建过程
+        setTimeout(() => {
+          console.log(`创建${selectedUserType}账户...`);
+          
+          // 根据用户类型跳转到不同页面
+          if (selectedUserType === 'worker') {
+            // 装修工需要额外的认证流程
+            showNotification('装修工账户创建成功！请完善资料并上传认证文件。', 'success');
+            setTimeout(() => {
+              window.location.href = '../worker-profile.html';
+            }, 2000);
+          } else {
+            // 普通用户直接跳转到主页
+            showNotification('账户创建成功！欢迎使用装修易。', 'success');
+            setTimeout(() => {
+              window.location.href = '../user-home.html';
+            }, 2000);
+          }
+        }, 1500);
+      }
+
+      // 显示通知
+      function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        
+        const colors = {
+          'info': 'var(--primary-color)',
+          'success': 'var(--success-color)',
+          'warning': 'var(--warning-color)'
+        };
+        
+        const icons = {
+          'info': 'fas fa-info-circle',
+          'success': 'fas fa-check-circle',
+          'warning': 'fas fa-exclamation-triangle'
+        };
+        
+        notification.style.cssText = `
+          position: fixed;
+          top: 20%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: ${colors[type]};
+          color: white;
+          padding: 16px 20px;
+          border-radius: 12px;
+          font-size: 14px;
+          z-index: 1000;
+          box-shadow: var(--shadow-lg);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          max-width: 90%;
+          text-align: center;
+        `;
+        
+        notification.innerHTML = `
+          <i class="${icons[type]}"></i>
+          <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          notification.style.animation = 'fadeOut 0.3s ease-out';
+          setTimeout(() => notification.remove(), 300);
+        }, type === 'success' ? 3000 : 2000);
+      }
+
+      // 键盘事件处理
+      document.addEventListener('keydown', function(e) {
+        if (e.key === '1') {
+          selectType('customer');
+        } else if (e.key === '2') {
+          selectType('worker');
+        } else if (e.key === 'Enter' && selectedUserType) {
+          continueToNext();
+        }
+      });
+
+      // 页面加载完成后的初始化
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('用户类型选择页面加载完成');
+        
+        // 检查是否有待验证的手机号
+        const pendingPhone = localStorage.getItem('pendingPhone');
+        if (!pendingPhone) {
+          console.warn('没有找到待验证的手机号，可能是直接访问此页面');
+        }
+        
+        // 添加卡片悬停效果增强
+        const cards = document.querySelectorAll('.type-card');
+        cards.forEach(card => {
+          card.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('selected')) {
+              this.style.transform = 'translateY(-6px)';
+            }
+          });
+          
+          card.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('selected')) {
+              this.style.transform = 'translateY(0)';
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

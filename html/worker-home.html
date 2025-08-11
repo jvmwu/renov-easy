@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>接单首页 - 装修工端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./styles/design-system.css" />
+    <script>
+      // 全局回调函数，用于处理Google Maps API加载
+      window.initMap = function () {
+        console.log('Google Maps API加载完成，开始初始化地图');
+        if (typeof initMapFunction === 'function') {
+          initMapFunction();
+        }
+      };
+
+      // 处理Google Maps API加载错误
+      window.gm_authFailure = function () {
+        console.error('Google Maps API认证失败');
+        if (typeof showMapError === 'function') {
+          showMapError();
+        }
+      };
+    </script>
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYPZxg0bwj0cJParBccF3XmY21EPb_7D0&libraries=places&callback=initMap&loading=async"
+      onerror="console.error('Google Maps API加载失败'); if(typeof showMapError === 'function') showMapError();"
+    ></script>
+    <style>
+      .filter-container {
+        position: absolute;
+        top: 60px;
+        left: 16px;
+        right: 16px;
+        z-index: 20;
+      }
+
+      .filter-bar {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        gap: 8px;
+      }
+
+      .filter-btn {
+        background: #f2f2f7;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .filter-btn.active {
+        background: #007aff;
+        color: white;
+      }
+
+      .filter-drawer {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 280px;
+        height: 100vh;
+        background: white;
+        z-index: 50;
+        transition: right 0.3s ease-out;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .filter-drawer.open {
+        right: 0;
+      }
+
+      .filter-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        display: none;
+      }
+
+      .filter-overlay.show {
+        display: block;
+      }
+
+      .filter-header {
+        background: #007aff;
+        color: white;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .filter-content {
+        padding: 20px;
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+      }
+
+      .filter-section {
+        margin-bottom: 24px;
+      }
+
+      .filter-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #000;
+      }
+
+      .distance-slider {
+        margin: 16px 0;
+      }
+
+      .distance-range {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: #e5e5ea;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .distance-range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #007aff;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      }
+
+      .budget-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .budget-option {
+        background: #f2f2f7;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+      }
+
+      .budget-option.selected {
+        background: #e3f2fd;
+        border-color: #007aff;
+        color: #007aff;
+      }
+
+      .type-options {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .type-option {
+        background: #f2f2f7;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 12px 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 12px;
+      }
+
+      .type-option.selected {
+        background: #e3f2fd;
+        border-color: #007aff;
+        color: #007aff;
+      }
+
+      .type-icon {
+        font-size: 20px;
+        margin-bottom: 4px;
+        display: block;
+      }
+
+      .order-detail-card {
+        position: fixed;
+        bottom: -100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 20px 20px 0 0;
+        z-index: 30;
+        max-height: 70vh;
+        transition: bottom 0.3s ease-out;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .order-detail-card.show {
+        bottom: 0;
+      }
+
+      .card-handle {
+        width: 36px;
+        height: 4px;
+        background: #c7c7cc;
+        border-radius: 2px;
+        margin: 12px auto 20px;
+      }
+
+      .order-info {
+        padding: 0 20px 20px;
+      }
+
+      .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+      }
+
+      .order-type {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .order-budget {
+        font-size: 16px;
+        color: #007aff;
+        font-weight: 600;
+      }
+
+      .order-status {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .status-available {
+        background: #e8f5e8;
+        color: #34c759;
+      }
+
+      .status-taken {
+        background: #ffe8e8;
+        color: #ff3b30;
+      }
+
+      .order-address {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        color: #666;
+      }
+
+      .order-description {
+        margin-bottom: 16px;
+        line-height: 1.5;
+        color: #333;
+      }
+
+      .order-photos {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .photo-item {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .customer-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 20px;
+      }
+
+      .customer-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .customer-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .customer-name {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .customer-phone {
+        font-size: 14px;
+        color: #666;
+      }
+
+      .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+      }
+
+      .action-btn {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+        border: none;
+      }
+
+      .btn-secondary {
+        background: #f2f2f7;
+        color: #007aff;
+      }
+
+      .btn-primary {
+        background: #007aff;
+        color: white;
+      }
+
+      .btn-success {
+        background: #34c759;
+        color: white;
+      }
+
+      .order-marker {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .order-marker:hover {
+        transform: scale(1.1);
+      }
+
+      .marker-available {
+        background: #34c759;
+      }
+
+      .marker-taken {
+        background: #ff3b30;
+      }
+
+      .stats-bar {
+        position: absolute;
+        bottom: 180px;
+        left: 16px;
+        right: 16px;
+        background: white;
+        border-radius: 12px;
+        padding: 12px 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 20;
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #007aff;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: #666;
+      }
+
+      /* 动画效果 */
+      @keyframes slideDown {
+        from {
+          transform: translateY(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device-screen">
+      <div class="safe-area">
+        <!-- 地图容器 -->
+        <div
+          id="map"
+          style="
+            width: 100%;
+            height: 100vh;
+            background: #f5f5f5;
+            position: relative;
+          "
+        ></div>
+
+        <!-- 筛选栏 -->
+        <div class="filter-container">
+          <div class="filter-bar">
+            <button
+              class="filter-btn active"
+              onclick="toggleFilter('distance')"
+            >
+              <i class="fas fa-map-marker-alt"></i> 距离
+            </button>
+            <button class="filter-btn" onclick="toggleFilter('budget')">
+              <i class="fas fa-dollar-sign"></i> 预算
+            </button>
+            <button class="filter-btn" onclick="toggleFilter('type')">
+              <i class="fas fa-home"></i> 类型
+            </button>
+            <button class="filter-btn" onclick="openFilterDrawer()">
+              <i class="fas fa-sliders-h"></i> 更多
+            </button>
+          </div>
+        </div>
+
+        <!-- 统计栏 -->
+        <div class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-number" id="availableCount">12</div>
+            <div class="stat-label">可接订单</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="todayEarnings">¥680</div>
+            <div class="stat-label">今日收入</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="completedToday">3</div>
+            <div class="stat-label">今日完成</div>
+          </div>
+        </div>
+
+        <!-- 底部标签栏 -->
+        <div class="tab-bar">
+          <a href="#" class="tab-item active">
+            <i class="fas fa-map tab-icon"></i>
+            <span>接单</span>
+          </a>
+          <a href="./worker-orders.html" class="tab-item">
+            <i class="fas fa-clipboard-list tab-icon"></i>
+            <span>订单</span>
+          </a>
+          <a href="./worker-profile.html" class="tab-item">
+            <i class="fas fa-user tab-icon"></i>
+            <span>我的</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 筛选抽屉 -->
+    <div
+      class="filter-overlay"
+      id="filterOverlay"
+      onclick="closeFilterDrawer()"
+    ></div>
+    <div class="filter-drawer" id="filterDrawer">
+      <div class="filter-header">
+        <div class="order-title">筛选条件</div>
+        <button class="close-btn" onclick="closeFilterDrawer()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="filter-content">
+        <!-- 距离筛选 -->
+        <div class="filter-section">
+          <div class="filter-title">接单距离</div>
+          <div class="distance-slider">
+            <input
+              type="range"
+              class="distance-range"
+              min="1"
+              max="4"
+              value="2"
+              id="distanceRange"
+              oninput="updateDistance(this.value)"
+            />
+            <div class="flex justify-between text-caption text-gray-500 mt-2">
+              <span>1km</span>
+              <span>3km</span>
+              <span>5km</span>
+              <span>10km</span>
+            </div>
+            <div class="text-center mt-2">
+              <span
+                class="text-body font-semibold text-blue-600"
+                id="distanceDisplay"
+                >3km</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- 预算筛选 -->
+        <div class="filter-section">
+          <div class="filter-title">预算范围</div>
+          <div class="budget-options">
+            <div class="budget-option" onclick="selectBudget(this, '1-5w')">
+              1-5万
+            </div>
+            <div class="budget-option" onclick="selectBudget(this, '5-10w')">
+              5-10万
+            </div>
+            <div class="budget-option" onclick="selectBudget(this, '10-20w')">
+              10-20万
+            </div>
+            <div class="budget-option" onclick="selectBudget(this, '20w+')">
+              20万+
+            </div>
+          </div>
+        </div>
+
+        <!-- 装修类型筛选 -->
+        <div class="filter-section">
+          <div class="filter-title">装修类型</div>
+          <div class="type-options">
+            <div class="type-option" onclick="selectType(this, 'kitchen')">
+              <i class="fas fa-utensils type-icon"></i>
+              厨房
+            </div>
+            <div class="type-option" onclick="selectType(this, 'bathroom')">
+              <i class="fas fa-bath type-icon"></i>
+              卫生间
+            </div>
+            <div class="type-option" onclick="selectType(this, 'living')">
+              <i class="fas fa-couch type-icon"></i>
+              客厅
+            </div>
+            <div class="type-option" onclick="selectType(this, 'bedroom')">
+              <i class="fas fa-bed type-icon"></i>
+              卧室
+            </div>
+            <div class="type-option" onclick="selectType(this, 'study')">
+              <i class="fas fa-book type-icon"></i>
+              书房
+            </div>
+            <div class="type-option" onclick="selectType(this, 'whole')">
+              <i class="fas fa-home type-icon"></i>
+              全屋
+            </div>
+          </div>
+        </div>
+
+        <!-- 应用按钮 -->
+        <div style="margin-top: 32px">
+          <button class="button-primary w-full" onclick="applyFilters()">
+            <i class="fas fa-check mr-2"></i>应用筛选
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 订单详情卡片 -->
+    <div class="order-detail-card" id="orderDetailCard">
+      <div class="card-handle"></div>
+      <div class="order-info" id="orderInfo">
+        <!-- 订单详情内容将在这里动态加载 -->
+      </div>
+    </div>
+
+    <script>
+      let map;
+      let markers = [];
+      let selectedOrder = null;
+      let currentFilters = {
+        distance: 3,
+        budget: [],
+        type: [],
+      };
+
+      // 模拟订单数据
+      const mockOrders = [
+        {
+          id: 'ORD001',
+          type: '厨房装修',
+          budget: '5-10万',
+          status: 'available',
+          location: { lat: 39.9042, lng: 116.4074 },
+          address: '北京市朝阳区望京SOHO',
+          description:
+            '需要重新装修厨房，包括橱柜、台面、瓷砖等，希望现代简约风格',
+          photos: [
+            'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=150&h=150&fit=crop',
+            'https://images.unsplash.com/photo-1556909045-f7c5c2b4b2b2?w=150&h=150&fit=crop',
+          ],
+          customer: {
+            name: '张女士',
+            phone: '138****1234',
+            avatar:
+              'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face',
+          },
+          createdAt: '2024-01-15 10:30',
+        },
+        {
+          id: 'ORD002',
+          type: '卫生间改造',
+          budget: '3-5万',
+          status: 'available',
+          location: { lat: 39.9142, lng: 116.4174 },
+          address: '北京市海淀区中关村',
+          description: '卫生间防水重做，更换洁具，面积约6平米',
+          photos: [
+            'https://images.unsplash.com/photo-1620626011761-996317b8d101?w=150&h=150&fit=crop',
+          ],
+          customer: {
+            name: '李先生',
+            phone: '139****5678',
+            avatar:
+              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
+          },
+          createdAt: '2024-01-15 14:20',
+        },
+        {
+          id: 'ORD003',
+          type: '客厅装修',
+          budget: '10-20万',
+          status: 'taken',
+          location: { lat: 39.8942, lng: 116.3974 },
+          address: '北京市东城区王府井',
+          description: '客厅全面装修，包括吊顶、地板、墙面',
+          photos: [
+            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=150&h=150&fit=crop',
+          ],
+          customer: {
+            name: '王女士',
+            phone: '137****9999',
+            avatar:
+              'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
+          },
+          createdAt: '2024-01-14 16:45',
+        },
+      ];
+
+      // 初始化地图的实际函数
+      function initMapFunction() {
+        console.log('开始初始化地图...');
+        try {
+          // 检查Google Maps API是否可用
+          if (typeof google === 'undefined' || !google.maps) {
+            console.error('Google Maps API未加载');
+            showMapError();
+            return;
+          }
+
+          const defaultLocation = { lat: 39.9042, lng: 116.4074 };
+          console.log('使用默认位置:', defaultLocation);
+
+          map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 13,
+            center: defaultLocation,
+            styles: [
+              {
+                featureType: 'poi',
+                elementType: 'labels',
+                stylers: [{ visibility: 'off' }],
+              },
+            ],
+            disableDefaultUI: true,
+            zoomControl: true,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+          });
+
+          console.log('地图对象创建成功');
+
+          // 地图加载完成后立即加载订单标记
+          google.maps.event.addListenerOnce(map, 'idle', function () {
+            console.log('地图加载完成，开始加载订单标记');
+            loadOrderMarkers();
+          });
+
+          // 获取当前位置（不阻塞地图显示）
+          getCurrentLocation();
+
+          console.log('地图初始化完成');
+        } catch (error) {
+          console.error('地图初始化失败:', error);
+          showMapError();
+        }
+      }
+
+      // 备用初始化函数（当Google Maps不可用时）
+      function initMapFallback() {
+        console.log('启用地图备用方案');
+        showMapError();
+      }
+
+      // 获取当前位置
+      function getCurrentLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function (position) {
+              const pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+              };
+
+              if (map) {
+                map.setCenter(pos);
+                console.log('定位成功，已更新地图中心位置');
+              }
+            },
+            function (error) {
+              console.log('定位失败，使用默认位置:', error.message);
+              // 定位失败不影响地图显示，继续使用默认位置
+              if (map) {
+                console.log('地图将显示默认位置：北京');
+              }
+            },
+            {
+              timeout: 10000,
+              enableHighAccuracy: false,
+              maximumAge: 300000,
+            },
+          );
+        } else {
+          console.log('浏览器不支持地理定位，使用默认位置');
+        }
+      }
+
+      // 加载订单标记
+      function loadOrderMarkers() {
+        console.log('开始加载订单标记...');
+        try {
+          // 检查地图是否可用
+          if (!map || !google || !google.maps) {
+            console.log('地图不可用，跳过标记加载');
+            return;
+          }
+
+          // 清除现有标记
+          markers.forEach(marker => marker.setMap(null));
+          markers = [];
+
+          mockOrders.forEach(order => {
+            // 使用传统的Marker（避免弃用警告但仍然可用）
+            const marker = new google.maps.Marker({
+              position: order.location,
+              map: map,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 16,
+                fillColor: order.status === 'available' ? '#34C759' : '#FF3B30',
+                fillOpacity: 1,
+                strokeColor: '#FFFFFF',
+                strokeWeight: 3,
+              },
+              title: `${order.type} - ${order.budget}`,
+            });
+
+            // 添加点击事件
+            marker.addListener('click', () => {
+              showOrderDetail(order);
+            });
+
+            markers.push(marker);
+          });
+
+          console.log(`成功加载 ${markers.length} 个订单标记`);
+
+          // 更新统计数据
+          updateStats();
+        } catch (error) {
+          console.error('加载订单标记失败:', error);
+        }
+      }
+
+      // 显示订单详情
+      function showOrderDetail(order) {
+        selectedOrder = order;
+        const orderInfo = document.getElementById('orderInfo');
+
+        orderInfo.innerHTML = `
+                <div class="order-header">
+                    <div>
+                        <div class="order-type">${order.type}</div>
+                        <div class="order-budget">预算: ${order.budget}</div>
+                    </div>
+                    <div class="order-status ${
+                      order.status === 'available'
+                        ? 'status-available'
+                        : 'status-taken'
+                    }">
+                        ${order.status === 'available' ? '可接单' : '已接单'}
+                    </div>
+                </div>
+                
+                <div class="order-address">
+                    <i class="fas fa-map-marker-alt" style="color: #FF3B30;"></i>
+                    ${order.address}
+                </div>
+                
+                <div class="order-description">
+                    ${order.description}
+                </div>
+                
+                ${
+                  order.photos && order.photos.length > 0
+                    ? `
+                    <div class="order-photos">
+                        ${order.photos
+                          .map(
+                            photo => `
+                            <div class="photo-item">
+                                <img src="${photo}" alt="现场照片">
+                            </div>
+                        `,
+                          )
+                          .join('')}
+                    </div>
+                `
+                    : ''
+                }
+                
+                <div class="customer-info">
+                    <div class="customer-header">
+                        <img src="${
+                          order.customer.avatar
+                        }" alt="客户头像" class="customer-avatar">
+                        <div>
+                            <div class="customer-name">${
+                              order.customer.name
+                            }</div>
+                            <div class="customer-phone">${
+                              order.customer.phone
+                            }</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn btn-secondary" onclick="closeOrderDetail()">
+                        <i class="fas fa-times"></i> 关闭
+                    </button>
+                    <button class="action-btn btn-primary" onclick="navigateToOrder()">
+                        <i class="fas fa-directions"></i> 导航
+                    </button>
+                    ${
+                      order.status === 'available'
+                        ? `
+                        <button class="action-btn btn-success" onclick="acceptOrder()">
+                            <i class="fas fa-check"></i> 接单
+                        </button>
+                    `
+                        : `
+                        <button class="action-btn btn-secondary" onclick="contactCustomer()">
+                            <i class="fas fa-phone"></i> 联系
+                        </button>
+                    `
+                    }
+                </div>
+            `;
+
+        document.getElementById('orderDetailCard').classList.add('show');
+      }
+
+      // 关闭订单详情
+      function closeOrderDetail() {
+        document.getElementById('orderDetailCard').classList.remove('show');
+        selectedOrder = null;
+      }
+
+      // 接单
+      function acceptOrder() {
+        if (!selectedOrder) return;
+
+        if (confirm(`确定要接这个${selectedOrder.type}订单吗？`)) {
+          // 模拟接单API调用
+          setTimeout(() => {
+            alert('接单成功！客户信息已发送到您的手机。');
+
+            // 更新订单状态
+            selectedOrder.status = 'taken';
+
+            // 重新加载标记
+            loadOrderMarkers();
+
+            // 关闭详情卡片
+            closeOrderDetail();
+          }, 500);
+        }
+      }
+
+      // 导航到订单位置
+      function navigateToOrder() {
+        if (!selectedOrder) return;
+
+        const { lat, lng } = selectedOrder.location;
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+        window.open(url, '_blank');
+      }
+
+      // 联系客户
+      function contactCustomer() {
+        if (!selectedOrder) return;
+
+        if (confirm(`是否拨打电话 ${selectedOrder.customer.phone}？`)) {
+          window.location.href = `tel:${selectedOrder.customer.phone}`;
+        }
+      }
+
+      // 打开筛选抽屉
+      function openFilterDrawer() {
+        document.getElementById('filterOverlay').classList.add('show');
+        document.getElementById('filterDrawer').classList.add('open');
+      }
+
+      // 关闭筛选抽屉
+      function closeFilterDrawer() {
+        document.getElementById('filterOverlay').classList.remove('show');
+        document.getElementById('filterDrawer').classList.remove('open');
+      }
+
+      // 更新距离显示
+      function updateDistance(value) {
+        const distances = ['1km', '3km', '5km', '10km'];
+        document.getElementById('distanceDisplay').textContent =
+          distances[value - 1];
+        currentFilters.distance = [1, 3, 5, 10][value - 1];
+      }
+
+      // 选择预算
+      function selectBudget(element, budget) {
+        element.classList.toggle('selected');
+
+        if (element.classList.contains('selected')) {
+          if (!currentFilters.budget.includes(budget)) {
+            currentFilters.budget.push(budget);
+          }
+        } else {
+          currentFilters.budget = currentFilters.budget.filter(
+            b => b !== budget,
+          );
+        }
+      }
+
+      // 选择类型
+      function selectType(element, type) {
+        element.classList.toggle('selected');
+
+        if (element.classList.contains('selected')) {
+          if (!currentFilters.type.includes(type)) {
+            currentFilters.type.push(type);
+          }
+        } else {
+          currentFilters.type = currentFilters.type.filter(t => t !== type);
+        }
+      }
+
+      // 应用筛选
+      function applyFilters() {
+        // 这里可以根据筛选条件过滤订单
+        console.log('应用筛选条件:', currentFilters);
+
+        // 重新加载标记（实际应用中会根据筛选条件请求API）
+        loadOrderMarkers();
+
+        // 关闭筛选抽屉
+        closeFilterDrawer();
+
+        // 显示应用成功提示
+        alert('筛选条件已应用');
+      }
+
+      // 更新统计数据
+      function updateStats() {
+        const availableOrders = mockOrders.filter(
+          order => order.status === 'available',
+        );
+        document.getElementById('availableCount').textContent =
+          availableOrders.length;
+
+        // 模拟今日数据
+        document.getElementById('todayEarnings').textContent = '¥680';
+        document.getElementById('completedToday').textContent = '3';
+      }
+
+      // 显示地图错误
+      function showMapError() {
+        console.log('显示地图错误页面，自动切换到订单列表模式');
+        const mapContainer = document.getElementById('map');
+
+        if (!mapContainer) {
+          console.error('找不到地图容器元素');
+          return;
+        }
+
+        // 立即显示订单列表内容
+        try {
+          const orderListHtml = renderOrderListFallback();
+          mapContainer.innerHTML = `
+            <div style="height: 100%; background: white; overflow-y: auto;">
+              <div style="padding: 20px; border-bottom: 1px solid #E5E5EA; background: #007AFF; color: white;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 600;">
+                  <i class="fas fa-list"></i> 可接订单列表
+                </h3>
+                <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">地图模式暂不可用，以下是附近的订单</p>
+              </div>
+              <div id="orderListFallback" style="padding: 16px;">
+                ${orderListHtml}
+              </div>
+            </div>
+          `;
+          console.log('订单列表显示成功');
+        } catch (error) {
+          console.error('显示订单列表失败:', error);
+          mapContainer.innerHTML = `
+            <div style="height: 100%; background: white; display: flex; align-items: center; justify-content: center;">
+              <div style="text-align: center; color: #666;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                <p style="font-size: 16px; margin-bottom: 8px;">加载订单列表失败</p>
+                <button onclick="location.reload()" style="background: #007AFF; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">
+                  重新加载
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        // 显示通知条
+        showNotification('地图模式不可用，已切换到列表模式', 'info');
+      }
+
+      // 显示通知函数
+      function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        const bgColor =
+          type === 'info'
+            ? '#007AFF'
+            : type === 'warning'
+            ? '#FF9500'
+            : '#34C759';
+
+        notification.style.cssText = `
+          position: fixed;
+          top: 70px;
+          left: 16px;
+          right: 16px;
+          background: ${bgColor};
+          color: white;
+          padding: 12px 16px;
+          border-radius: 8px;
+          font-size: 14px;
+          text-align: center;
+          z-index: 1000;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          animation: slideDown 0.3s ease-out;
+        `;
+
+        notification.innerHTML = `
+          <i class="fas fa-info-circle"></i> ${message}
+          <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; margin-left: 8px; cursor: pointer; float: right;">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+
+        document.body.appendChild(notification);
+
+        // 5秒后自动隐藏
+        setTimeout(() => {
+          if (notification.parentElement) {
+            notification.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+          }
+        }, 5000);
+      }
+
+      // 重试地图加载
+      function retryMapLoad() {
+        location.reload();
+      }
+
+      // 显示订单列表（备用方案）
+      function showOrderList() {
+        const mapContainer = document.getElementById('map');
+        mapContainer.innerHTML = `
+                <div style="height: 100%; background: white; overflow-y: auto;">
+                    <div style="padding: 20px; border-bottom: 1px solid #E5E5EA; background: #007AFF; color: white;">
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 600;">可接订单列表</h3>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">地图模式暂不可用，以下是附近的订单</p>
+                    </div>
+                    <div id="orderListFallback" style="padding: 16px;">
+                        ${renderOrderListFallback()}
+                    </div>
+                </div>
+            `;
+      }
+
+      // 渲染订单列表备用方案
+      function renderOrderListFallback() {
+        return mockOrders
+          .map(
+            order => `
+                <div style="background: white; border: 1px solid #E5E5EA; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div>
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">${
+                              order.type
+                            }</div>
+                            <div style="font-size: 14px; color: #007AFF; font-weight: 600;">预算: ${
+                              order.budget
+                            }</div>
+                        </div>
+                        <div style="padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; background: ${
+                          order.status === 'available'
+                            ? '#E8F5E8; color: #34C759'
+                            : '#FFE8E8; color: #FF3B30'
+                        };">
+                            ${
+                              order.status === 'available' ? '可接单' : '已接单'
+                            }
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: #666; font-size: 14px;">
+                        <i class="fas fa-map-marker-alt" style="color: #FF3B30;"></i>
+                        ${order.address}
+                    </div>
+                    <div style="font-size: 14px; color: #333; margin-bottom: 12px; line-height: 1.4;">
+                        ${order.description}
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="showOrderDetailFromList('${
+                          order.id
+                        }')" style="flex: 1; background: #007AFF; color: white; border: none; border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor: pointer;">
+                            查看详情
+                        </button>
+                        ${
+                          order.status === 'available'
+                            ? `
+                            <button onclick="acceptOrderDirect('${order.id}')" style="flex: 1; background: #34C759; color: white; border: none; border-radius: 8px; padding: 8px 12px; font-size: 14px; cursor: pointer;">
+                                立即接单
+                            </button>
+                        `
+                            : ''
+                        }
+                    </div>
+                </div>
+            `,
+          )
+          .join('');
+      }
+
+      // 从列表显示订单详情
+      function showOrderDetailFromList(orderId) {
+        const order = mockOrders.find(o => o.id === orderId);
+        if (order) {
+          showOrderDetail(order);
+        }
+      }
+
+      // 直接接单（列表模式）
+      function acceptOrderDirect(orderId) {
+        const order = mockOrders.find(o => o.id === orderId);
+        if (order && confirm(`确定要接这个${order.type}订单吗？`)) {
+          setTimeout(() => {
+            alert('接单成功！客户信息已发送到您的手机。');
+            order.status = 'taken';
+            // 重新渲染列表
+            const fallbackContainer =
+              document.getElementById('orderListFallback');
+            if (fallbackContainer) {
+              fallbackContainer.innerHTML = renderOrderListFallback();
+            }
+            updateStats();
+          }, 500);
+        }
+      }
+
+      // 立即执行的初始化（不等待DOMContentLoaded）
+      function immediateInit() {
+        console.log('立即初始化开始...');
+
+        // 确保地图容器存在并显示内容
+        setTimeout(() => {
+          const mapContainer = document.getElementById('map');
+          if (mapContainer && !mapContainer.innerHTML.trim()) {
+            console.log('地图容器为空，立即显示备用内容');
+            showMapError();
+          }
+        }, 500);
+      }
+
+      // 页面加载完成后的初始化
+      document.addEventListener('DOMContentLoaded', function () {
+        console.log('页面加载完成，开始初始化...');
+
+        // 立即更新统计数据（不依赖地图）
+        try {
+          updateStats();
+          console.log('统计数据更新成功');
+        } catch (error) {
+          console.error('统计数据更新失败:', error);
+        }
+
+        // 立即显示加载状态
+        const mapContainer = document.getElementById('map');
+        if (mapContainer) {
+          mapContainer.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; color: #666;">
+              <div style="text-align: center;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 16px; color: #007AFF;"></i>
+                <p style="margin: 0; font-size: 16px;">正在加载地图...</p>
+                <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.7;">如果长时间未加载，将自动切换到列表模式</p>
+              </div>
+            </div>
+          `;
+        }
+
+        // 检查Google Maps API是否可用
+        if (typeof google === 'undefined') {
+          console.log('Google Maps API未加载，1秒后显示备用页面');
+          setTimeout(() => {
+            showMapError();
+          }, 1000);
+        } else {
+          console.log('Google Maps API已可用');
+        }
+
+        // 设置超时检查地图是否加载成功
+        setTimeout(function () {
+          if (!map) {
+            console.log('地图加载超时，启用备用模式');
+            showMapError();
+          }
+        }, 3000); // 减少超时时间到3秒
+
+        // 如果2秒后仍然没有地图，直接尝试初始化
+        setTimeout(() => {
+          if (!map && typeof google !== 'undefined' && google.maps) {
+            console.log('尝试手动初始化地图...');
+            try {
+              initMapFunction();
+            } catch (error) {
+              console.error('手动初始化地图失败:', error);
+              showMapError();
+            }
+          } else if (!map) {
+            console.log('Google Maps API不可用，显示备用页面');
+            showMapError();
+          }
+        }, 2000);
+      });
+
+      // 测试函数 - 确保基本功能正常工作
+      function testBasicFunctions() {
+        console.log('=== 基本功能测试 ===');
+        console.log('mockOrders数量:', mockOrders.length);
+        console.log(
+          '可接订单数量:',
+          mockOrders.filter(o => o.status === 'available').length,
+        );
+
+        // 测试统计更新
+        try {
+          updateStats();
+          console.log('✓ 统计数据更新成功');
+        } catch (error) {
+          console.error('✗ 统计数据更新失败:', error);
+        }
+
+        // 测试订单列表显示
+        try {
+          const testHtml = renderOrderListFallback();
+          console.log('✓ 订单列表渲染成功，HTML长度:', testHtml.length);
+        } catch (error) {
+          console.error('✗ 订单列表渲染失败:', error);
+        }
+
+        console.log('=== 测试完成 ===');
+      }
+
+      // 立即运行初始化
+      immediateInit();
+
+      // 页面加载后运行测试
+      setTimeout(testBasicFunctions, 1000);
+    </script>
+  </body>
+</html>

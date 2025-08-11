@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>附近页面 - 用户端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./styles/design-system.css">
+    <style>
+        .filter-bar {
+            background: white;
+            padding: 16px;
+            border-bottom: 1px solid #E5E5EA;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+        }
+        
+        .filter-chip {
+            background: #F2F2F7;
+            border: 1px solid #E5E5EA;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-chip.active {
+            background: #007AFF;
+            color: white;
+            border-color: #007AFF;
+        }
+        
+        .worker-card {
+            background: white;
+            margin: 12px 16px;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .worker-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .worker-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .worker-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            object-fit: cover;
+        }
+        
+        .worker-info {
+            flex: 1;
+        }
+        
+        .worker-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .worker-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: #8E8E93;
+        }
+        
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .star {
+            color: #FFD700;
+            font-size: 12px;
+        }
+        
+        .distance {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .response-time {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .worker-skills {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .skill-tag {
+            background: #E3F2FD;
+            color: #1976D2;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .worker-gallery {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            overflow-x: auto;
+        }
+        
+        .gallery-item {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        .worker-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #F2F2F7;
+        }
+        
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #007AFF;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #8E8E93;
+            margin-top: 2px;
+        }
+        
+        .favorite-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .favorite-btn.active {
+            background: #FF3B30;
+            color: white;
+        }
+        
+        .worker-detail-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        
+        .worker-detail-modal.show {
+            display: flex;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-height: 85vh;
+            border-radius: 16px 16px 0 0;
+            overflow: hidden;
+            animation: slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+        }
+        
+        .modal-header {
+            padding: 20px 20px 16px 20px;
+            border-bottom: 1px solid #F2F2F7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+        
+        .modal-close-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            background: #F2F2F7;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8E8E93;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .modal-close-btn:hover {
+            background: #E5E5EA;
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 0 20px 20px 20px;
+            overflow-y: auto;
+            max-height: calc(85vh - 140px);
+        }
+        
+        .worker-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 0;
+            border-bottom: 1px solid #F2F2F7;
+            margin-bottom: 20px;
+        }
+        
+        .worker-detail-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 40px;
+            object-fit: cover;
+            border: 3px solid #F2F2F7;
+        }
+        
+        .worker-detail-info {
+            flex: 1;
+        }
+        
+        .worker-detail-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1D1D1F;
+        }
+        
+        .worker-detail-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        
+        .worker-detail-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .worker-detail-distance {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            color: #8E8E93;
+        }
+        
+        .worker-verification {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #34C759;
+            font-weight: 500;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1D1D1F;
+        }
+        
+        .section {
+            margin-bottom: 32px;
+        }
+        
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .skill-tag-large {
+            background: #E3F2FD;
+            color: #1976D2;
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 16px;
+            font-weight: 500;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            background: #F8F9FA;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .stat-card {
+            text-align: center;
+        }
+        
+        .stat-card-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #007AFF;
+            margin-bottom: 4px;
+        }
+        
+        .stat-card-label {
+            font-size: 12px;
+            color: #8E8E93;
+            font-weight: 500;
+        }
+        
+        /* 作品轮播组件 */
+        .portfolio-carousel {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .portfolio-main {
+            width: 100%;
+            height: 260px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .portfolio-main img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .portfolio-main:hover img {
+            transform: scale(1.05);
+        }
+        
+        .portfolio-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+        
+        .portfolio-nav:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .portfolio-nav.prev {
+            left: 12px;
+        }
+        
+        .portfolio-nav.next {
+            right: 12px;
+        }
+        
+        .portfolio-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .portfolio-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: #E5E5EA;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .portfolio-indicator.active {
+            background: #007AFF;
+            width: 24px;
+        }
+        
+        .portfolio-thumbnails {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .portfolio-thumbnails::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .portfolio-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .portfolio-thumbnail.active {
+            border-color: #007AFF;
+            transform: scale(1.05);
+        }
+        
+        .portfolio-thumbnail:hover {
+            transform: scale(1.02);
+            border-color: #E5E5EA;
+        }
+        
+        .portfolio-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .portfolio-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+            padding: 20px 16px 16px 16px;
+        }
+        
+        .portfolio-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .portfolio-desc {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        /* 作品网格展示 */
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .portfolio-grid-item {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .portfolio-grid-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .portfolio-grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .portfolio-grid-item:hover img {
+            transform: scale(1.1);
+        }
+        
+        .portfolio-grid-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            color: white;
+            padding: 12px;
+        }
+        
+        .portfolio-grid-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .portfolio-grid-type {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+        
+        /* 评价列表 */
+        .reviews-container {
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #E5E5EA transparent;
+        }
+        
+        .reviews-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .reviews-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .reviews-container::-webkit-scrollbar-thumb {
+            background: #E5E5EA;
+            border-radius: 2px;
+        }
+        
+        .review-item {
+            padding: 16px 0;
+            border-bottom: 1px solid #F2F2F7;
+            transition: background-color 0.2s ease;
+        }
+        
+        .review-item:last-child {
+            border-bottom: none;
+        }
+        
+        .review-item:hover {
+            background-color: #FAFAFA;
+            margin: 0 -20px;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .review-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .review-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            background: #F2F2F7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #8E8E93;
+        }
+        
+        .review-user-details {
+            flex: 1;
+        }
+        
+        .review-user-name {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .review-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .review-date {
+            font-size: 12px;
+            color: #8E8E93;
+        }
+        
+        .review-content {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+        }
+        
+        .review-photos {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            overflow-x: auto;
+        }
+        
+        .review-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            padding: 20px;
+            border-top: 1px solid #F2F2F7;
+            background: white;
+            position: sticky;
+            bottom: 0;
+        }
+        
+        .btn-secondary {
+            flex: 1;
+            background: #F2F2F7;
+            color: #007AFF;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #E5E5EA;
+        }
+        
+        .btn-primary {
+            flex: 1;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #0056CC;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 加载状态 */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007AFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 空状态样式 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8E8E93;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        /* 作品详情信息 */
+        .portfolio-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .portfolio-date {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .portfolio-budget {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-screen">
+        <div class="safe-area">
+            <!-- 导航栏 -->
+            <div class="nav-bar">
+                <div class="nav-title">附近装修工</div>
+                <button onclick="showFilterModal()">
+                    <i class="fas fa-sliders-h"></i>
+                </button>
+            </div>
+            
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <div class="filter-chip active" onclick="filterByDistance('all')">全部</div>
+                <div class="filter-chip" onclick="filterByDistance('1km')">1km内</div>
+                <div class="filter-chip" onclick="filterByDistance('3km')">3km内</div>
+                <div class="filter-chip" onclick="filterByDistance('5km')">5km内</div>
+                <div class="filter-chip" onclick="filterByRating('high')">高评分</div>
+                <div class="filter-chip" onclick="filterByPrice('low')">价格优惠</div>
+            </div>
+            
+            <!-- 装修工列表 -->
+            <div class="flex-1 overflow-y-auto pb-20">
+                <!-- 装修工卡片1 -->
+                <div class="worker-card relative" onclick="showWorkerDetail('worker1')">
+                    <button class="favorite-btn" onclick="toggleFavorite(event, 'worker1')">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    
+                    <div class="worker-header">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" alt="张师傅" class="worker-avatar">
+                        <div class="worker-info">
+                            <div class="worker-name">张师傅</div>
+                            <div class="worker-meta">
+                                <div class="rating">
+                                    <i class="fas fa-star star"></i>
+                                    <span>4.9</span>
+                                </div>
+                                <div class="distance">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>1.2km</span>
+                                </div>
+                                <div class="response-time">
+                                    <i class="fas fa-clock"></i>
+                                    <span>5分钟内回复</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="worker-skills">
+                        <span class="skill-tag">厨房装修</span>
+                        <span class="skill-tag">卫生间</span>
+                        <span class="skill-tag">水电改造</span>
+                        <span class="skill-tag">瓷砖铺贴</span>
+                    </div>
+                    
+                    <div class="worker-gallery">
+                        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=120&h=120&fit=crop" alt="作品1" class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=120&h=120&fit=crop" alt="作品2" class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=120&h=120&fit=crop" alt="作品3" class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=120&h=120&fit=crop" alt="作品4" class="gallery-item">
+                    </div>
+                    
+                    <div class="worker-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">156</div>
+                            <div class="stat-label">完成订单</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">98%</div>
+                            <div class="stat-label">好评率</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">8年</div>
+                            <div class="stat-label">从业经验</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 装修工卡片2 -->
+                <div class="worker-card relative" onclick="showWorkerDetail('worker2')">
+                    <button class="favorite-btn active" onclick="toggleFavorite(event, 'worker2')">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    
+                    <div class="worker-header">
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" alt="李师傅" class="worker-avatar">
+                        <div class="worker-info">
+                            <div class="worker-name">李师傅</div>
+                            <div class="worker-meta">
+                                <div class="rating">
+                                    <i class="fas fa-star star"></i>
+                                    <span>4.8</span>
+                                </div>
+                                <div class="distance">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>2.1km</span>
+                                </div>
+                                <div class="response-time">
+                                    <i class="fas fa-clock"></i>
+                                    <span>10分钟内回复</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="worker-skills">
+                        <span class="skill-tag">全屋装修</span>
+                        <span class="skill-tag">木工</span>
+                        <span class="skill-tag">油漆</span>
+                    </div>
+                    
+                    <div class="worker-gallery">
+                        <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=120&h=120&fit=crop" alt="作品1" class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1560448075-bb485b067938?w=120&h=120&fit=crop" alt="作品2" class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=120&h=120&fit=crop" alt="作品3" class="gallery-item">
+                    </div>
+                    
+                    <div class="worker-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">89</div>
+                            <div class="stat-label">完成订单</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">96%</div>
+                            <div class="stat-label">好评率</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">5年</div>
+                            <div class="stat-label">从业经验</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 装修工卡片3 -->
+                <div class="worker-card relative" onclick="showWorkerDetail('worker3')">
+                    <button class="favorite-btn" onclick="toggleFavorite(event, 'worker3')">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    
+                    <div class="worker-header">
+                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face" alt="王师傅" class="worker-avatar">
+                        <div class="worker-info">
+                            <div class="worker-name">王师傅</div>
+                            <div class="worker-meta">
+                                <div class="rating">
+                                    <i class="fas fa-star star"></i>
+                                    <span>4.7</span>
+                                </div>
+                                <div class="distance">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>3.5km</span>
+                                </div>
+                                <div class="response-time">
+                                    <i class="fas fa-clock"></i>
+                                    <span>15分钟内回复</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="worker-skills">
+                        <span class="skill-tag">水电安装</span>
+                        <span class="skill-tag">管道维修</span>
+                        <span class="skill-tag">电路改造</span>
+                    </div>
+                    
+                    <div class="worker-gallery">
+                        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=120&h=120&fit=crop" alt="作品1" class="gallery-item">
+                        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=120&h=120&fit=crop" alt="作品2" class="gallery-item">
+                    </div>
+                    
+                    <div class="worker-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">234</div>
+                            <div class="stat-label">完成订单</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">94%</div>
+                            <div class="stat-label">好评率</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">12年</div>
+                            <div class="stat-label">从业经验</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 装修工详情模态框 -->
+            <div class="worker-detail-modal" id="workerDetailModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="text-headline font-semibold">装修工详情</h3>
+                        <button class="modal-close-btn" onclick="closeWorkerDetail()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body" id="modalBody">
+                        <!-- 动态内容将在这里插入 -->
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn-secondary" id="favoriteBtn" onclick="toggleFavoriteInModal()">
+                            <i class="fas fa-heart mr-2"></i>收藏
+                        </button>
+                        <button class="btn-primary" onclick="contactWorker()">
+                            <i class="fas fa-phone mr-2"></i>立即联系
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 底部标签栏 -->
+            <div class="tab-bar">
+                <a href="./user-home.html" class="tab-item">
+                    <i class="fas fa-home tab-icon"></i>
+                    <span>首页</span>
+                </a>
+                <a href="#" class="tab-item active">
+                    <i class="fas fa-map-marker-alt tab-icon"></i>
+                    <span>附近</span>
+                </a>
+                <a href="./user-profile.html" class="tab-item">
+                    <i class="fas fa-user tab-icon"></i>
+                    <span>我的</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentWorker = null;
+        let favorites = ['worker2']; // 模拟已收藏的装修工
+        
+        // 筛选功能
+        function filterByDistance(distance) {
+            // 更新筛选按钮状态
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 这里可以添加实际的筛选逻辑
+            console.log('按距离筛选:', distance);
+        }
+        
+        function filterByRating(rating) {
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            console.log('按评分筛选:', rating);
+        }
+        
+        function filterByPrice(price) {
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            console.log('按价格筛选:', price);
+        }
+        
+        // 收藏功能
+        function toggleFavorite(event, workerId) {
+            event.stopPropagation();
+            
+            const btn = event.target.closest('.favorite-btn');
+            const index = favorites.indexOf(workerId);
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+                btn.classList.remove('active');
+            } else {
+                favorites.push(workerId);
+                btn.classList.add('active');
+            }
+            
+            // 添加动画效果
+            btn.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                btn.style.transform = 'scale(1)';
+            }, 200);
+        }
+        
+        let currentPortfolioIndex = 0;
+        let currentWorkerPortfolio = [];
+        
+        // 显示装修工详情
+        function showWorkerDetail(workerId) {
+            currentWorker = workerId;
+            
+            // 模拟装修工数据
+            const workerData = {
+                worker1: {
+                    name: '张师傅',
+                    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+                    rating: 4.9,
+                    distance: '1.2km',
+                    experience: '8年',
+                    completedJobs: 156,
+                    goodRate: '98%',
+                    responseTime: '5分钟内回复',
+                    verified: true,
+                    skills: ['厨房装修', '卫生间', '水电改造', '瓷砖铺贴'],
+                    portfolio: [
+                        { 
+                            image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop', 
+                            title: '现代厨房改造', 
+                            description: '简约现代风格，采用石英石台面，整体橱柜定制。工期15天，预算8万元。',
+                            type: '厨房装修',
+                            date: '2024-01-20',
+                            budget: '8万元'
+                        },
+                        { 
+                            image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop', 
+                            title: '卫生间翻新', 
+                            description: '干湿分离设计，防水工程质量保证。采用进口瓷砖，工艺精湛。',
+                            type: '卫生间装修',
+                            date: '2024-01-15',
+                            budget: '3.5万元'
+                        },
+                        { 
+                            image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop', 
+                            title: '水电改造', 
+                            description: '全屋水电重新布线，符合国家标准。使用优质电线和管材。',
+                            type: '水电工程',
+                            date: '2024-01-10',
+                            budget: '2万元'
+                        },
+                        { 
+                            image: 'https://images.unsplash.com/photo-1560448075-bb485b067938?w=400&h=300&fit=crop', 
+                            title: '瓷砖铺贴', 
+                            description: '精工铺贴，缝隙均匀，效果美观。选用一线品牌瓷砖。',
+                            type: '瓷砖工程',
+                            date: '2024-01-05',
+                            budget: '1.8万元'
+                        },
+                        { 
+                            image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop', 
+                            title: '客厅装修', 
+                            description: '现代简约风格客厅装修，包含吊顶、地板、墙面处理。',
+                            type: '客厅装修',
+                            date: '2023-12-28',
+                            budget: '5万元'
+                        },
+                        { 
+                            image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop', 
+                            title: '卧室装修', 
+                            description: '温馨舒适的卧室设计，定制衣柜和床头背景墙。',
+                            type: '卧室装修',
+                            date: '2023-12-20',
+                            budget: '4.2万元'
+                        }
+                    ],
+                    reviews: [
+                        { 
+                            user: '李女士', 
+                            avatar: '李',
+                            date: '2024-01-15', 
+                            rating: 5, 
+                            content: '张师傅手艺很好，厨房装修效果超出预期，工期也很准时。整个过程很专业，推荐！材料选择也给了很好的建议。',
+                            photos: ['https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=160&h=160&fit=crop'],
+                            helpful: 12,
+                            projectType: '厨房装修'
+                        },
+                        { 
+                            user: '王先生', 
+                            avatar: '王',
+                            date: '2024-01-10', 
+                            rating: 5, 
+                            content: '专业负责，价格合理，推荐！水电改造做得很仔细，后期维护服务也很到位。',
+                            helpful: 8,
+                            projectType: '水电改造'
+                        },
+                        { 
+                            user: '陈女士', 
+                            avatar: '陈',
+                            date: '2024-01-05', 
+                            rating: 4, 
+                            content: '整体满意，细节处理得很好。师傅很有耐心，会主动沟通装修细节。工期稍有延误但质量不错。',
+                            helpful: 5,
+                            projectType: '卫生间装修'
+                        },
+                        { 
+                            user: '刘先生', 
+                            avatar: '刘',
+                            date: '2023-12-28', 
+                            rating: 5, 
+                            content: '非常专业的师傅，瓷砖铺贴工艺精湛，缝隙处理得很好，效果很满意！',
+                            helpful: 15,
+                            projectType: '瓷砖铺贴'
+                        }
+                    ]
+                },
+                worker2: {
+                    name: '李师傅',
+                    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+                    rating: 4.8,
+                    distance: '2.1km',
+                    experience: '5年',
+                    completedJobs: 89,
+                    goodRate: '96%',
+                    responseTime: '10分钟内回复',
+                    verified: true,
+                    skills: ['全屋装修', '木工', '油漆'],
+                    portfolio: [
+                        { 
+                            image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop', 
+                            title: '全屋装修', 
+                            description: '北欧风格全屋装修，木质元素搭配，营造温馨自然的居住环境。',
+                            type: '全屋装修',
+                            date: '2024-01-18',
+                            budget: '15万元'
+                        },
+                        { 
+                            image: 'https://images.unsplash.com/photo-1560448075-bb485b067938?w=400&h=300&fit=crop', 
+                            title: '木工定制', 
+                            description: '定制衣柜和书柜，工艺精细，充分利用空间。',
+                            type: '木工定制',
+                            date: '2024-01-12',
+                            budget: '3万元'
+                        },
+                        { 
+                            image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop', 
+                            title: '厨房改造', 
+                            description: '开放式厨房设计，增加储物空间，提升使用便利性。',
+                            type: '厨房装修',
+                            date: '2024-01-08',
+                            budget: '6万元'
+                        }
+                    ],
+                    reviews: [
+                        { 
+                            user: '张先生', 
+                            avatar: '张',
+                            date: '2024-01-12', 
+                            rating: 5, 
+                            content: '李师傅的木工活很精细，全屋装修效果很棒。定制家具的尺寸把握得很准确。',
+                            helpful: 9,
+                            projectType: '全屋装修'
+                        },
+                        { 
+                            user: '周女士', 
+                            avatar: '周',
+                            date: '2024-01-08', 
+                            rating: 4, 
+                            content: '木工手艺不错，衣柜做得很实用，就是工期比预期长了几天。',
+                            helpful: 6,
+                            projectType: '木工定制'
+                        }
+                    ]
+                },
+                worker3: {
+                    name: '王师傅',
+                    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
+                    rating: 4.7,
+                    distance: '3.5km',
+                    experience: '12年',
+                    completedJobs: 234,
+                    goodRate: '94%',
+                    responseTime: '15分钟内回复',
+                    verified: true,
+                    skills: ['水电安装', '管道维修', '电路改造'],
+                    portfolio: [
+                        { 
+                            image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop', 
+                            title: '水电改造', 
+                            description: '专业水电改造，安全可靠，符合国家电气安装标准。',
+                            type: '水电工程',
+                            date: '2024-01-16',
+                            budget: '2.5万元'
+                        },
+                        { 
+                            image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop', 
+                            title: '管道维修', 
+                            description: '专业管道维修和更换，解决漏水问题，质量保证。',
+                            type: '管道维修',
+                            date: '2024-01-14',
+                            budget: '0.8万元'
+                        }
+                    ],
+                    reviews: [
+                        { 
+                            user: '赵女士', 
+                            avatar: '赵',
+                            date: '2024-01-08', 
+                            rating: 5, 
+                            content: '王师傅经验丰富，水电改造很专业。布线规范，后期维护也很方便。',
+                            helpful: 11,
+                            projectType: '水电改造'
+                        },
+                        { 
+                            user: '孙先生', 
+                            avatar: '孙',
+                            date: '2024-01-03', 
+                            rating: 4, 
+                            content: '管道维修很及时，解决了漏水问题，价格也合理。',
+                            helpful: 7,
+                            projectType: '管道维修'
+                        }
+                    ]
+                }
+            };
+            
+            const worker = workerData[workerId];
+            if (!worker) return;
+            
+            currentWorkerPortfolio = worker.portfolio;
+            currentPortfolioIndex = 0;
+            
+            // 生成详情内容
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="worker-detail-header">
+                    <img src="${worker.avatar}" alt="${worker.name}" class="worker-detail-avatar">
+                    <div class="worker-detail-info">
+                        <div class="worker-detail-name">${worker.name}</div>
+                        <div class="worker-detail-meta">
+                            <div class="worker-detail-rating">
+                                <i class="fas fa-star star"></i>
+                                <span>${worker.rating}</span>
+                            </div>
+                            <div class="worker-detail-distance">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${worker.distance}</span>
+                            </div>
+                        </div>
+                        ${worker.verified ? '<div class="worker-verification"><i class="fas fa-shield-check"></i><span>已认证</span></div>' : ''}
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">专业技能</div>
+                    <div class="skills-container">
+                        ${worker.skills.map(skill => `<span class="skill-tag-large">${skill}</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-value">${worker.completedJobs}</div>
+                            <div class="stat-card-label">完成订单</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-value">${worker.goodRate}</div>
+                            <div class="stat-card-label">好评率</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-value">${worker.experience}</div>
+                            <div class="stat-card-label">从业经验</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">作品展示 (${worker.portfolio.length}个案例)</div>
+                    ${worker.portfolio.length > 0 ? `
+                        <div class="portfolio-carousel">
+                            <div class="portfolio-main">
+                                <img src="${worker.portfolio[0].image}" alt="${worker.portfolio[0].title}" id="portfolioMainImage">
+                                <div class="portfolio-info">
+                                    <div class="portfolio-title" id="portfolioTitle">${worker.portfolio[0].title}</div>
+                                    <div class="portfolio-desc" id="portfolioDesc">${worker.portfolio[0].description}</div>
+                                    <div class="portfolio-meta" id="portfolioMeta">
+                                        <div class="portfolio-date">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <span id="portfolioDate">${worker.portfolio[0].date || '最近完成'}</span>
+                                        </div>
+                                        <div class="portfolio-budget">
+                                            <i class="fas fa-tag"></i>
+                                            <span id="portfolioBudget">${worker.portfolio[0].budget || '预算面议'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                ${worker.portfolio.length > 1 ? `
+                                    <button class="portfolio-nav prev" onclick="prevPortfolio()">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button class="portfolio-nav next" onclick="nextPortfolio()">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                            ${worker.portfolio.length > 1 ? `
+                                <div class="portfolio-indicators">
+                                    ${worker.portfolio.map((_, index) => `
+                                        <div class="portfolio-indicator ${index === 0 ? 'active' : ''}" onclick="goToPortfolio(${index})"></div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            ${worker.portfolio.length > 1 ? `
+                                <div class="portfolio-thumbnails">
+                                    ${worker.portfolio.map((item, index) => `
+                                        <div class="portfolio-thumbnail ${index === 0 ? 'active' : ''}" onclick="goToPortfolio(${index})">
+                                            <img src="${item.image}" alt="${item.title}">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="portfolio-grid">
+                            ${worker.portfolio.map((item, index) => `
+                                <div class="portfolio-grid-item" onclick="goToPortfolio(${index})">
+                                    <img src="${item.image}" alt="${item.title}">
+                                    <div class="portfolio-grid-overlay">
+                                        <div class="portfolio-grid-title">${item.title}</div>
+                                        <div class="portfolio-grid-type">${item.type} • ${item.budget || '预算面议'}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p class="text-gray-500">暂无作品展示</p>'}
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">用户评价 (${worker.reviews.length}条)</div>
+                    <div class="reviews-container">
+                        ${worker.reviews.map(review => `
+                            <div class="review-item">
+                                <div class="review-header">
+                                    <div class="review-user-info">
+                                        <div class="review-avatar">${review.avatar}</div>
+                                        <div class="review-user-details">
+                                            <div class="review-user-name">${review.user}</div>
+                                            <div class="review-rating">
+                                                ${Array(review.rating).fill('<i class="fas fa-star star"></i>').join('')}
+                                                ${review.projectType ? `<span style="margin-left: 8px; font-size: 11px; color: #8E8E93;">• ${review.projectType}</span>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="review-date">${review.date}</div>
+                                </div>
+                                <div class="review-content">${review.content}</div>
+                                ${review.photos ? `
+                                    <div class="review-photos">
+                                        ${review.photos.map(photo => `<img src="${photo}" alt="评价图片" class="review-photo" onclick="viewReviewPhoto('${photo}')">`).join('')}
+                                    </div>
+                                ` : ''}
+                                ${review.helpful ? `
+                                    <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8E8E93;">
+                                        <button onclick="toggleHelpful(event)" style="background: none; border: 1px solid #E5E5EA; border-radius: 16px; padding: 4px 12px; font-size: 12px; color: #8E8E93; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                            <i class="fas fa-thumbs-up"></i>
+                                            <span>有用 (${review.helpful})</span>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // 更新收藏按钮状态
+            updateFavoriteButton();
+            
+            // 显示模态框
+            document.getElementById('workerDetailModal').classList.add('show');
+            
+            // 添加触摸和自动播放监听器
+            setTimeout(() => {
+                addTouchListeners();
+                addAutoPlayListeners();
+                if (currentWorkerPortfolio.length > 1) {
+                    startAutoPlay();
+                }
+            }, 100);
+        }
+        
+        // 作品轮播功能
+        function nextPortfolio() {
+            if (currentWorkerPortfolio.length <= 1) return;
+            currentPortfolioIndex = (currentPortfolioIndex + 1) % currentWorkerPortfolio.length;
+            updatePortfolioDisplay();
+        }
+        
+        function prevPortfolio() {
+            if (currentWorkerPortfolio.length <= 1) return;
+            currentPortfolioIndex = currentPortfolioIndex === 0 ? currentWorkerPortfolio.length - 1 : currentPortfolioIndex - 1;
+            updatePortfolioDisplay();
+        }
+        
+        function goToPortfolio(index) {
+            if (index < 0 || index >= currentWorkerPortfolio.length) return;
+            currentPortfolioIndex = index;
+            updatePortfolioDisplay();
+        }
+        
+        function updatePortfolioDisplay() {
+            const currentItem = currentWorkerPortfolio[currentPortfolioIndex];
+            
+            // 更新主图和信息
+            const mainImage = document.getElementById('portfolioMainImage');
+            const title = document.getElementById('portfolioTitle');
+            const desc = document.getElementById('portfolioDesc');
+            const date = document.getElementById('portfolioDate');
+            const budget = document.getElementById('portfolioBudget');
+            
+            if (mainImage) {
+                mainImage.src = currentItem.image;
+                mainImage.alt = currentItem.title;
+            }
+            if (title) title.textContent = currentItem.title;
+            if (desc) desc.textContent = currentItem.description;
+            if (date) date.textContent = currentItem.date || '最近完成';
+            if (budget) budget.textContent = currentItem.budget || '预算面议';
+            
+            // 更新指示器
+            document.querySelectorAll('.portfolio-indicator').forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentPortfolioIndex);
+            });
+            
+            // 更新缩略图
+            document.querySelectorAll('.portfolio-thumbnail').forEach((thumbnail, index) => {
+                thumbnail.classList.toggle('active', index === currentPortfolioIndex);
+            });
+        }
+        
+        // 更新收藏按钮状态
+        function updateFavoriteButton() {
+            const favoriteBtn = document.getElementById('favoriteBtn');
+            if (favoriteBtn && currentWorker) {
+                const isFavorited = favorites.includes(currentWorker);
+                favoriteBtn.innerHTML = isFavorited ? 
+                    '<i class="fas fa-heart mr-2"></i>已收藏' : 
+                    '<i class="fas fa-heart mr-2"></i>收藏';
+            }
+        }
+        
+        // 关闭装修工详情
+        function closeWorkerDetail() {
+            stopAutoPlay();
+            document.getElementById('workerDetailModal').classList.remove('show');
+        }
+        
+        // 模态框中的收藏功能
+        function toggleFavoriteInModal() {
+            if (!currentWorker) return;
+            
+            const index = favorites.indexOf(currentWorker);
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+            } else {
+                favorites.push(currentWorker);
+            }
+            
+            // 更新模态框中的收藏按钮
+            updateFavoriteButton();
+            
+            // 同步更新列表中的收藏状态
+            const cardBtn = document.querySelector(`[onclick*="${currentWorker}"] .favorite-btn`);
+            if (cardBtn) {
+                if (index > -1) {
+                    cardBtn.classList.remove('active');
+                } else {
+                    cardBtn.classList.add('active');
+                }
+            }
+            
+            // 添加动画效果
+            const favoriteBtn = document.getElementById('favoriteBtn');
+            if (favoriteBtn) {
+                favoriteBtn.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    favoriteBtn.style.transform = 'scale(1)';
+                }, 200);
+            }
+        }
+        
+        // 联系装修工
+        function contactWorker() {
+            if (!currentWorker) return;
+            
+            alert('正在为您连接装修工，请稍候...');
+            // 这里可以添加实际的联系逻辑
+        }
+        
+        // 点击模态框外部关闭
+        document.getElementById('workerDetailModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeWorkerDetail();
+            }
+        });
+        
+        // 键盘导航支持
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('workerDetailModal');
+            if (!modal.classList.contains('show')) return;
+            
+            switch(e.key) {
+                case 'Escape':
+                    closeWorkerDetail();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevPortfolio();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextPortfolio();
+                    break;
+            }
+        });
+        
+        // 触摸滑动支持
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let touchStartY = 0;
+        let touchEndY = 0;
+        
+        function handleTouchStart(e) {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }
+        
+        function handleTouchEnd(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }
+        
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const minSwipeDistance = 50;
+            
+            // 确保水平滑动距离大于垂直滑动距离（避免与垂直滚动冲突）
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
+                    prevPortfolio(); // 向右滑动，显示上一张
+                } else {
+                    nextPortfolio(); // 向左滑动，显示下一张
+                }
+            }
+        }
+        
+        // 为作品轮播添加触摸事件监听
+        function addTouchListeners() {
+            const portfolioMain = document.querySelector('.portfolio-main');
+            if (portfolioMain) {
+                portfolioMain.addEventListener('touchstart', handleTouchStart, { passive: true });
+                portfolioMain.addEventListener('touchend', handleTouchEnd, { passive: true });
+            }
+        }
+        
+        // 自动播放功能（可选）
+        let autoPlayInterval = null;
+        
+        function startAutoPlay() {
+            if (currentWorkerPortfolio.length <= 1) return;
+            
+            autoPlayInterval = setInterval(() => {
+                nextPortfolio();
+            }, 5000); // 每5秒自动切换
+        }
+        
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+        }
+        
+        // 鼠标悬停时停止自动播放
+        function addAutoPlayListeners() {
+            const portfolioMain = document.querySelector('.portfolio-main');
+            if (portfolioMain) {
+                portfolioMain.addEventListener('mouseenter', stopAutoPlay);
+                portfolioMain.addEventListener('mouseleave', startAutoPlay);
+            }
+        }
+        
+        // 查看评价图片
+        function viewReviewPhoto(photoUrl) {
+            // 创建图片查看器
+            const viewer = document.createElement('div');
+            viewer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 100;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            `;
+            
+            const img = document.createElement('img');
+            img.src = photoUrl;
+            img.style.cssText = `
+                max-width: 90%;
+                max-height: 90%;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            `;
+            
+            viewer.appendChild(img);
+            document.body.appendChild(viewer);
+            
+            // 点击关闭
+            viewer.addEventListener('click', () => {
+                document.body.removeChild(viewer);
+            });
+        }
+        
+        // 切换有用投票
+        function toggleHelpful(event) {
+            event.stopPropagation();
+            const button = event.target.closest('button');
+            const span = button.querySelector('span');
+            const currentCount = parseInt(span.textContent.match(/\d+/)[0]);
+            
+            if (button.classList.contains('voted')) {
+                button.classList.remove('voted');
+                button.style.color = '#8E8E93';
+                button.style.borderColor = '#E5E5EA';
+                span.textContent = `有用 (${currentCount - 1})`;
+            } else {
+                button.classList.add('voted');
+                button.style.color = '#007AFF';
+                button.style.borderColor = '#007AFF';
+                span.textContent = `有用 (${currentCount + 1})`;
+            }
+        }
+        
+        // 初始化收藏状态
+        document.addEventListener('DOMContentLoaded', function() {
+            favorites.forEach(workerId => {
+                const btn = document.querySelector(`[onclick*="${workerId}"] .favorite-btn`);
+                if (btn) {
+                    btn.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

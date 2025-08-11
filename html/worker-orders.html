@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的订单 - 装修工端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./styles/design-system.css">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+            padding: 20px 16px;
+            color: white;
+        }
+        
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .header-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .order-tabs {
+            background: white;
+            display: flex;
+            border-bottom: 1px solid #E5E5EA;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .order-tab {
+            flex: 1;
+            padding: 16px 8px;
+            text-align: center;
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: #8E8E93;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .order-tab.active {
+            color: #007AFF;
+            font-weight: 600;
+        }
+        
+        .order-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #007AFF;
+        }
+        
+        .tab-badge {
+            background: #FF3B30;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+            min-width: 16px;
+            text-align: center;
+        }
+        
+        .order-list {
+            padding: 16px;
+            padding-bottom: 100px;
+        }
+        
+        .order-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+        
+        .order-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .order-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .order-id {
+            font-size: 12px;
+            color: #8E8E93;
+            margin-bottom: 4px;
+        }
+        
+        .order-type {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .order-budget {
+            font-size: 14px;
+            color: #007AFF;
+            font-weight: 600;
+        }
+        
+        .order-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background: #FFF3CD;
+            color: #856404;
+        }
+        
+        .status-progress {
+            background: #D4EDDA;
+            color: #155724;
+        }
+        
+        .status-review {
+            background: #D1ECF1;
+            color: #0C5460;
+        }
+        
+        .status-completed {
+            background: #E8F5E8;
+            color: #2E7D32;
+        }
+        
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: #F8F9FA;
+            border-radius: 8px;
+        }
+        
+        .customer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .customer-details {
+            flex: 1;
+        }
+        
+        .customer-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .customer-phone {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .contact-btn {
+            background: #34C759;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .order-address {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .order-time {
+            font-size: 12px;
+            color: #8E8E93;
+            margin-bottom: 12px;
+        }
+        
+        .order-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #F2F2F7;
+            color: #007AFF;
+            border: 1px solid #E5E5EA;
+        }
+        
+        .btn-success {
+            background: #34C759;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #FF9500;
+            color: white;
+        }
+        
+        .progress-section {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #E5E5EA;
+        }
+        
+        .progress-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #E5E5EA;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #34C759;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8E8E93;
+        }
+        
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .progress-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .progress-modal.show {
+            display: flex;
+        }
+        
+        .progress-content {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            border-radius: 16px;
+            overflow: hidden;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .progress-header {
+            background: #007AFF;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .progress-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #E5E5EA;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .photo-upload {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .photo-slot {
+            aspect-ratio: 1;
+            background: #F2F2F7;
+            border: 2px dashed #C7C7CC;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .photo-slot:hover {
+            border-color: #007AFF;
+            background: #F0F8FF;
+        }
+        
+        .photo-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        
+        .save-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-screen">
+        <div class="safe-area">
+            <!-- 页面头部 -->
+            <div class="page-header">
+                <div class="header-title">我的订单</div>
+                <div class="header-subtitle">管理您的装修订单和进度</div>
+            </div>
+            
+            <!-- 订单状态标签页 -->
+            <div class="order-tabs">
+                <button class="order-tab active" onclick="switchTab('pending', this)">
+                    待开工
+                    <span class="tab-badge">2</span>
+                </button>
+                <button class="order-tab" onclick="switchTab('progress', this)">
+                    施工中
+                    <span class="tab-badge">1</span>
+                </button>
+                <button class="order-tab" onclick="switchTab('review', this)">
+                    待验收
+                </button>
+                <button class="order-tab" onclick="switchTab('completed', this)">
+                    已完成
+                </button>
+            </div>
+            
+            <!-- 订单列表 -->
+            <div class="order-list" id="orderList">
+                <!-- 订单内容将在这里动态加载 -->
+            </div>
+            
+            <!-- 底部标签栏 -->
+            <div class="tab-bar">
+                <a href="./worker-home.html" class="tab-item">
+                    <i class="fas fa-map tab-icon"></i>
+                    <span>接单</span>
+                </a>
+                <a href="#" class="tab-item active">
+                    <i class="fas fa-clipboard-list tab-icon"></i>
+                    <span>订单</span>
+                </a>
+                <a href="./worker-profile.html" class="tab-item">
+                    <i class="fas fa-user tab-icon"></i>
+                    <span>我的</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 进度更新模态框 -->
+    <div class="progress-modal" id="progressModal">
+        <div class="progress-content">
+            <div class="progress-header">
+                <div class="order-title">更新施工进度</div>
+                <button class="close-btn" onclick="closeProgressModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="progress-body">
+                <div class="form-group">
+                    <label class="form-label">进度描述</label>
+                    <textarea class="form-textarea" id="progressDescription" placeholder="请描述当前施工进度和完成情况..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">施工照片</label>
+                    <div class="photo-upload" id="progressPhotos">
+                        <div class="photo-slot" onclick="uploadProgressPhoto(0)">
+                            <i class="fas fa-camera text-gray-400 text-xl"></i>
+                        </div>
+                        <div class="photo-slot" onclick="uploadProgressPhoto(1)">
+                            <i class="fas fa-plus text-gray-400 text-xl"></i>
+                        </div>
+                        <div class="photo-slot" onclick="uploadProgressPhoto(2)">
+                            <i class="fas fa-plus text-gray-400 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="save-btn" onclick="saveProgress()">
+                    <i class="fas fa-save"></i> 保存进度
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentTab = 'pending';
+        let selectedOrderId = null;
+        let progressPhotos = [];
+        
+        // 模拟订单数据
+        const mockOrders = {
+            pending: [
+                {
+                    id: 'ORD001',
+                    type: '厨房装修',
+                    budget: '5-10万',
+                    status: 'pending',
+                    address: '北京市朝阳区望京SOHO',
+                    customer: {
+                        name: '张女士',
+                        phone: '138****1234',
+                        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face'
+                    },
+                    acceptedAt: '2024-01-15 10:30',
+                    scheduledStart: '2024-01-18 09:00'
+                },
+                {
+                    id: 'ORD002',
+                    type: '卫生间改造',
+                    budget: '3-5万',
+                    status: 'pending',
+                    address: '北京市海淀区中关村',
+                    customer: {
+                        name: '李先生',
+                        phone: '139****5678',
+                        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face'
+                    },
+                    acceptedAt: '2024-01-15 14:20',
+                    scheduledStart: '2024-01-19 08:30'
+                }
+            ],
+            progress: [
+                {
+                    id: 'ORD003',
+                    type: '客厅装修',
+                    budget: '10-20万',
+                    status: 'progress',
+                    address: '北京市东城区王府井',
+                    customer: {
+                        name: '王女士',
+                        phone: '137****9999',
+                        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face'
+                    },
+                    startedAt: '2024-01-10 09:00',
+                    progress: 65,
+                    lastUpdate: '2024-01-15 16:30'
+                }
+            ],
+            review: [],
+            completed: [
+                {
+                    id: 'ORD004',
+                    type: '卧室装修',
+                    budget: '5-10万',
+                    status: 'completed',
+                    address: '北京市西城区金融街',
+                    customer: {
+                        name: '赵先生',
+                        phone: '136****7777',
+                        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face'
+                    },
+                    completedAt: '2024-01-12 17:00',
+                    rating: 4.8
+                }
+            ]
+        };
+        
+        // 切换标签页
+        function switchTab(tab, element) {
+            // 更新标签页状态
+            document.querySelectorAll('.order-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            currentTab = tab;
+            loadOrders(tab);
+        }
+        
+        // 加载订单列表
+        function loadOrders(status) {
+            const orderList = document.getElementById('orderList');
+            const orders = mockOrders[status] || [];
+            
+            if (orders.length === 0) {
+                orderList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list empty-icon"></i>
+                        <p>暂无${getStatusText(status)}订单</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            orderList.innerHTML = orders.map(order => renderOrderCard(order)).join('');
+        }
+        
+        // 渲染订单卡片
+        function renderOrderCard(order) {
+            return `
+                <div class="order-card">
+                    <div class="order-card-header">
+                        <div>
+                            <div class="order-id">订单号: ${order.id}</div>
+                            <div class="order-type">${order.type}</div>
+                            <div class="order-budget">预算: ${order.budget}</div>
+                        </div>
+                        <div class="order-status status-${order.status}">
+                            ${getStatusText(order.status)}
+                        </div>
+                    </div>
+                    
+                    <div class="customer-info">
+                        <img src="${order.customer.avatar}" alt="客户头像" class="customer-avatar">
+                        <div class="customer-details">
+                            <div class="customer-name">${order.customer.name}</div>
+                            <div class="customer-phone">${order.customer.phone}</div>
+                        </div>
+                        <button class="contact-btn" onclick="contactCustomer('${order.customer.phone}')">
+                            <i class="fas fa-phone"></i> 联系
+                        </button>
+                    </div>
+                    
+                    <div class="order-address">
+                        <i class="fas fa-map-marker-alt" style="color: #FF3B30;"></i>
+                        ${order.address}
+                    </div>
+                    
+                    <div class="order-time">
+                        ${getTimeText(order)}
+                    </div>
+                    
+                    ${order.status === 'progress' ? `
+                        <div class="progress-section">
+                            <div class="progress-title">施工进度</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${order.progress}%"></div>
+                            </div>
+                            <div class="progress-text">${order.progress}% 已完成</div>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="order-actions">
+                        ${getActionButtons(order)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 获取状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                pending: '待开工',
+                progress: '施工中',
+                review: '待验收',
+                completed: '已完成'
+            };
+            return statusMap[status] || status;
+        }
+        
+        // 获取时间文本
+        function getTimeText(order) {
+            switch (order.status) {
+                case 'pending':
+                    return `预计开工: ${order.scheduledStart}`;
+                case 'progress':
+                    return `最后更新: ${order.lastUpdate}`;
+                case 'completed':
+                    return `完成时间: ${order.completedAt}`;
+                default:
+                    return '';
+            }
+        }
+        
+        // 获取操作按钮
+        function getActionButtons(order) {
+            switch (order.status) {
+                case 'pending':
+                    return `
+                        <button class="action-btn btn-secondary" onclick="navigateToOrder('${order.id}')">
+                            <i class="fas fa-directions"></i> 导航
+                        </button>
+                        <button class="action-btn btn-success" onclick="startWork('${order.id}')">
+                            <i class="fas fa-play"></i> 开始施工
+                        </button>
+                    `;
+                case 'progress':
+                    return `
+                        <button class="action-btn btn-secondary" onclick="navigateToOrder('${order.id}')">
+                            <i class="fas fa-directions"></i> 导航
+                        </button>
+                        <button class="action-btn btn-primary" onclick="updateProgress('${order.id}')">
+                            <i class="fas fa-edit"></i> 更新进度
+                        </button>
+                        <button class="action-btn btn-warning" onclick="completeWork('${order.id}')">
+                            <i class="fas fa-check"></i> 完工
+                        </button>
+                    `;
+                case 'review':
+                    return `
+                        <button class="action-btn btn-secondary" onclick="viewOrderDetail('${order.id}')">
+                            <i class="fas fa-eye"></i> 查看详情
+                        </button>
+                    `;
+                case 'completed':
+                    return `
+                        <button class="action-btn btn-secondary" onclick="viewOrderDetail('${order.id}')">
+                            <i class="fas fa-eye"></i> 查看详情
+                        </button>
+                        ${order.rating ? `
+                            <div style="display: flex; align-items: center; gap: 4px; color: #FFD700;">
+                                <i class="fas fa-star"></i>
+                                <span style="color: #333; font-size: 14px;">${order.rating}</span>
+                            </div>
+                        ` : ''}
+                    `;
+                default:
+                    return '';
+            }
+        }
+        
+        // 联系客户
+        function contactCustomer(phone) {
+            if (confirm(`是否拨打电话 ${phone}？`)) {
+                window.location.href = `tel:${phone}`;
+            }
+        }
+        
+        // 导航到订单位置
+        function navigateToOrder(orderId) {
+            // 这里应该获取订单的具体位置信息
+            alert('正在打开导航...');
+        }
+        
+        // 开始施工
+        function startWork(orderId) {
+            if (confirm('确定要开始施工吗？开始后将通知客户。')) {
+                // 模拟API调用
+                setTimeout(() => {
+                    alert('施工已开始，客户已收到通知');
+                    
+                    // 将订单从待开工移动到施工中
+                    const order = mockOrders.pending.find(o => o.id === orderId);
+                    if (order) {
+                        order.status = 'progress';
+                        order.progress = 0;
+                        order.startedAt = new Date().toLocaleString();
+                        order.lastUpdate = new Date().toLocaleString();
+                        
+                        mockOrders.pending = mockOrders.pending.filter(o => o.id !== orderId);
+                        mockOrders.progress.push(order);
+                        
+                        // 重新加载当前标签页
+                        loadOrders(currentTab);
+                        updateTabBadges();
+                    }
+                }, 500);
+            }
+        }
+        
+        // 更新进度
+        function updateProgress(orderId) {
+            selectedOrderId = orderId;
+            document.getElementById('progressModal').classList.add('show');
+        }
+        
+        // 关闭进度更新模态框
+        function closeProgressModal() {
+            document.getElementById('progressModal').classList.remove('show');
+            selectedOrderId = null;
+            document.getElementById('progressDescription').value = '';
+            progressPhotos = [];
+            resetProgressPhotos();
+        }
+        
+        // 上传进度照片
+        function uploadProgressPhoto(index) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const photoSlots = document.querySelectorAll('#progressPhotos .photo-slot');
+                        photoSlots[index].innerHTML = `<img src="${e.target.result}" alt="施工照片">`;
+                        progressPhotos[index] = e.target.result;
+                        
+                        // 如果还有空位，添加新的上传槽
+                        if (index < 8 && photoSlots.length < 9) {
+                            addProgressPhotoSlot();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+        
+        // 添加进度照片槽
+        function addProgressPhotoSlot() {
+            const photoUpload = document.getElementById('progressPhotos');
+            const currentSlots = photoUpload.querySelectorAll('.photo-slot').length;
+            
+            if (currentSlots < 9) {
+                const newSlot = document.createElement('div');
+                newSlot.className = 'photo-slot';
+                newSlot.onclick = () => uploadProgressPhoto(currentSlots);
+                newSlot.innerHTML = '<i class="fas fa-plus text-gray-400 text-xl"></i>';
+                photoUpload.appendChild(newSlot);
+            }
+        }
+        
+        // 重置进度照片
+        function resetProgressPhotos() {
+            const photoUpload = document.getElementById('progressPhotos');
+            photoUpload.innerHTML = `
+                <div class="photo-slot" onclick="uploadProgressPhoto(0)">
+                    <i class="fas fa-camera text-gray-400 text-xl"></i>
+                </div>
+                <div class="photo-slot" onclick="uploadProgressPhoto(1)">
+                    <i class="fas fa-plus text-gray-400 text-xl"></i>
+                </div>
+                <div class="photo-slot" onclick="uploadProgressPhoto(2)">
+                    <i class="fas fa-plus text-gray-400 text-xl"></i>
+                </div>
+            `;
+        }
+        
+        // 保存进度
+        function saveProgress() {
+            const description = document.getElementById('progressDescription').value;
+            
+            if (!description.trim()) {
+                alert('请填写进度描述');
+                return;
+            }
+            
+            // 模拟API调用
+            setTimeout(() => {
+                alert('进度更新成功，客户已收到通知');
+                
+                // 更新订单进度
+                const order = mockOrders.progress.find(o => o.id === selectedOrderId);
+                if (order) {
+                    order.progress = Math.min(order.progress + 20, 95); // 模拟进度增加
+                    order.lastUpdate = new Date().toLocaleString();
+                }
+                
+                closeProgressModal();
+                loadOrders(currentTab);
+            }, 500);
+        }
+        
+        // 完工
+        function completeWork(orderId) {
+            if (confirm('确定要标记为完工吗？完工后将等待客户验收。')) {
+                // 模拟API调用
+                setTimeout(() => {
+                    alert('已标记为完工，等待客户验收');
+                    
+                    // 将订单从施工中移动到待验收
+                    const order = mockOrders.progress.find(o => o.id === orderId);
+                    if (order) {
+                        order.status = 'review';
+                        order.progress = 100;
+                        order.completedAt = new Date().toLocaleString();
+                        
+                        mockOrders.progress = mockOrders.progress.filter(o => o.id !== orderId);
+                        mockOrders.review.push(order);
+                        
+                        loadOrders(currentTab);
+                        updateTabBadges();
+                    }
+                }, 500);
+            }
+        }
+        
+        // 查看订单详情
+        function viewOrderDetail(orderId) {
+            alert('查看订单详情功能');
+        }
+        
+        // 更新标签页徽章
+        function updateTabBadges() {
+            const badges = document.querySelectorAll('.tab-badge');
+            badges[0].textContent = mockOrders.pending.length;
+            badges[1].textContent = mockOrders.progress.length;
+            
+            // 隐藏数量为0的徽章
+            badges.forEach((badge, index) => {
+                const counts = [mockOrders.pending.length, mockOrders.progress.length, mockOrders.review.length, mockOrders.completed.length];
+                badge.style.display = counts[index] > 0 ? 'inline' : 'none';
+            });
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrders('pending');
+            updateTabBadges();
+            
+            // 点击模态框外部关闭
+            document.getElementById('progressModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeProgressModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

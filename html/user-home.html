@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>装修首页 - 用户端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./styles/design-system.css" />
+    <script>
+      // 全局回调函数，用于处理Google Maps API加载
+      window.initMap = function () {
+        console.log('Google Maps API加载完成，开始初始化地图');
+        if (typeof initMapFunction === 'function') {
+          initMapFunction();
+        }
+      };
+
+      // 处理Google Maps API加载错误
+      window.gm_authFailure = function () {
+        console.error('Google Maps API认证失败');
+        if (typeof showMapError === 'function') {
+          showMapError();
+        }
+      };
+    </script>
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYPZxg0bwj0cJParBccF3XmY21EPb_7D0&libraries=places&callback=initMap&loading=async"
+      onerror="console.error('Google Maps API加载失败'); if(typeof showMapError === 'function') showMapError();"
+    ></script>
+    <style>
+      .search-container {
+        position: absolute;
+        top: 60px;
+        left: 16px;
+        right: 16px;
+        z-index: 20;
+      }
+
+      .search-box {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        gap: 12px;
+      }
+
+      .search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 16px;
+        color: #333;
+      }
+
+      .search-input::placeholder {
+        color: #8e8e93;
+      }
+
+      .location-btn {
+        background: #007aff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .publish-btn {
+        position: absolute;
+        bottom: 180px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #c7c7cc;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 16px 32px;
+        font-size: 16px;
+        font-weight: 600;
+        box-shadow: 0 8px 20px rgba(199, 199, 204, 0.3);
+        cursor: not-allowed;
+        z-index: 20;
+        display: block;
+        opacity: 0.6;
+        transition: all 0.3s ease;
+      }
+
+      .publish-btn.show {
+        background: #007aff;
+        box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+        cursor: pointer;
+        opacity: 1;
+        animation: slideUp 0.3s ease-out;
+      }
+
+      .order-drawer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 20px 20px 0 0;
+        transform: translateY(100%);
+        transition: transform 0.3s ease-out;
+        z-index: 30;
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+
+      .order-drawer.open {
+        transform: translateY(0);
+      }
+
+      .drawer-handle {
+        width: 36px;
+        height: 4px;
+        background: #c7c7cc;
+        border-radius: 2px;
+        margin: 12px auto 20px;
+      }
+
+      .renovation-types {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 20px 0;
+      }
+
+      .type-card {
+        background: #f2f2f7;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+      }
+
+      .type-card.selected {
+        background: #e3f2fd;
+        border-color: #007aff;
+      }
+
+      .type-icon {
+        font-size: 24px;
+        color: #007aff;
+        margin-bottom: 8px;
+      }
+
+      .budget-slider {
+        margin: 20px 0;
+      }
+
+      .budget-range {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: #e5e5ea;
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      .budget-range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #007aff;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      }
+
+      .photo-upload {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 20px 0;
+      }
+
+      .photo-slot {
+        aspect-ratio: 1;
+        background: #f2f2f7;
+        border: 2px dashed #c7c7cc;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .photo-slot:hover {
+        border-color: #007aff;
+        background: #f0f8ff;
+      }
+
+      .photo-slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 6px;
+      }
+
+      .map-marker {
+        width: 30px;
+        height: 30px;
+        background: #ff3b30;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .map-marker::before {
+        content: '';
+        width: 12px;
+        height: 12px;
+        background: white;
+        border-radius: 50%;
+        transform: rotate(45deg);
+      }
+
+      /* 动画效果 */
+      @keyframes slideDown {
+        from {
+          transform: translateY(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device-screen">
+      <!-- 状态栏 -->
+      <div class="safe-area">
+        <!-- 地图容器 -->
+        <div
+          id="map"
+          style="
+            width: 100%;
+            height: 100vh;
+            background: #f5f5f5;
+            position: relative;
+          "
+        ></div>
+
+        <!-- 搜索栏 -->
+        <div class="search-container">
+          <div class="search-box">
+            <i class="fas fa-search text-gray-400"></i>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="搜索地址或小区名称"
+              id="searchInput"
+              onchange="handleManualAddress(this.value)"
+            />
+            <button class="location-btn" onclick="getCurrentLocation()">
+              <i class="fas fa-location-arrow"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 发布需求按钮 -->
+        <button class="publish-btn" id="publishBtn" onclick="openOrderDrawer()">
+          <i class="fas fa-map-marker-alt mr-2"></i>请选择位置
+        </button>
+
+        <!-- 订单创建抽屉 -->
+        <div class="order-drawer" id="orderDrawer">
+          <div class="drawer-handle"></div>
+          <div class="container">
+            <h2 class="text-headline font-semibold mb-4">发布装修需求</h2>
+
+            <!-- 选择地址 -->
+            <div class="mb-6">
+              <label class="text-footnote text-gray-600 mb-2 block"
+                >装修地址</label
+              >
+              <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <i class="fas fa-map-marker-alt text-red-500"></i>
+                <span class="flex-1 text-body" id="selectedAddress"
+                  >请在地图上选择位置</span
+                >
+              </div>
+            </div>
+
+            <!-- 装修类型 -->
+            <div class="mb-6">
+              <label class="text-footnote text-gray-600 mb-3 block"
+                >装修类型</label
+              >
+              <div class="renovation-types">
+                <div class="type-card" onclick="selectType(this, 'kitchen')">
+                  <div class="type-icon">
+                    <i class="fas fa-utensils"></i>
+                  </div>
+                  <div class="text-caption">厨房</div>
+                </div>
+                <div class="type-card" onclick="selectType(this, 'bathroom')">
+                  <div class="type-icon">
+                    <i class="fas fa-bath"></i>
+                  </div>
+                  <div class="text-caption">卫生间</div>
+                </div>
+                <div class="type-card" onclick="selectType(this, 'living')">
+                  <div class="type-icon">
+                    <i class="fas fa-couch"></i>
+                  </div>
+                  <div class="text-caption">客厅</div>
+                </div>
+                <div class="type-card" onclick="selectType(this, 'bedroom')">
+                  <div class="type-icon">
+                    <i class="fas fa-bed"></i>
+                  </div>
+                  <div class="text-caption">卧室</div>
+                </div>
+                <div class="type-card" onclick="selectType(this, 'study')">
+                  <div class="type-icon">
+                    <i class="fas fa-book"></i>
+                  </div>
+                  <div class="text-caption">书房</div>
+                </div>
+                <div class="type-card" onclick="selectType(this, 'whole')">
+                  <div class="type-icon">
+                    <i class="fas fa-home"></i>
+                  </div>
+                  <div class="text-caption">全屋</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 预算范围 -->
+            <div class="mb-6">
+              <label class="text-footnote text-gray-600 mb-3 block"
+                >预算范围</label
+              >
+              <div class="budget-slider">
+                <input
+                  type="range"
+                  class="budget-range"
+                  min="0"
+                  max="3"
+                  value="1"
+                  id="budgetRange"
+                  oninput="updateBudget(this.value)"
+                />
+                <div
+                  class="flex justify-between text-caption text-gray-500 mt-2"
+                >
+                  <span>1-5万</span>
+                  <span>5-10万</span>
+                  <span>10-20万</span>
+                  <span>20万+</span>
+                </div>
+                <div class="text-center mt-2">
+                  <span
+                    class="text-body font-semibold text-blue-600"
+                    id="budgetDisplay"
+                    >5-10万</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- 详细描述 -->
+            <div class="mb-6">
+              <label class="text-footnote text-gray-600 mb-2 block"
+                >详细描述</label
+              >
+              <textarea
+                class="input resize-none"
+                rows="4"
+                placeholder="请描述您的装修需求，如风格偏好、特殊要求等..."
+                id="description"
+              ></textarea>
+            </div>
+
+            <!-- 现场照片 -->
+            <div class="mb-6">
+              <label class="text-footnote text-gray-600 mb-3 block"
+                >现场照片 (最多9张)</label
+              >
+              <div class="photo-upload" id="photoUpload">
+                <div class="photo-slot" onclick="uploadPhoto(0)">
+                  <i class="fas fa-camera text-gray-400 text-xl"></i>
+                </div>
+                <div class="photo-slot" onclick="uploadPhoto(1)">
+                  <i class="fas fa-plus text-gray-400 text-xl"></i>
+                </div>
+                <div class="photo-slot" onclick="uploadPhoto(2)">
+                  <i class="fas fa-plus text-gray-400 text-xl"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- 提交按钮 -->
+            <div class="pb-8">
+              <button class="button-primary w-full" onclick="submitOrder()">
+                <i class="fas fa-paper-plane mr-2"></i>发布需求
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部标签栏 -->
+        <div class="tab-bar">
+          <a href="#" class="tab-item active">
+            <i class="fas fa-home tab-icon"></i>
+            <span>首页</span>
+          </a>
+          <a href="./user-nearby.html" class="tab-item">
+            <i class="fas fa-map-marker-alt tab-icon"></i>
+            <span>附近</span>
+          </a>
+          <a href="./user-profile.html" class="tab-item">
+            <i class="fas fa-user tab-icon"></i>
+            <span>我的</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let map;
+      let marker;
+      let selectedLocation = null;
+      let selectedType = null;
+      let uploadedPhotos = [];
+
+      // 初始化地图的实际函数
+      function initMapFunction() {
+        console.log('开始初始化地图...');
+        try {
+          // 检查Google Maps API是否可用
+          if (typeof google === 'undefined' || !google.maps) {
+            console.error('Google Maps API未加载');
+            showMapError();
+            return;
+          }
+
+          // 默认位置：北京
+          const defaultLocation = { lat: 39.9042, lng: 116.4074 };
+          console.log('使用默认位置:', defaultLocation);
+
+          map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 15,
+            center: defaultLocation,
+            styles: [
+              {
+                featureType: 'poi',
+                elementType: 'labels',
+                stylers: [{ visibility: 'off' }],
+              },
+            ],
+            disableDefaultUI: true,
+            zoomControl: true,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+          });
+
+          console.log('地图对象创建成功');
+
+          // 地图加载完成后显示默认位置标记
+          google.maps.event.addListenerOnce(map, 'idle', function () {
+            console.log('地图加载完成，放置默认标记');
+            // 在默认位置放置标记并显示发布按钮
+            placeMarker(defaultLocation);
+          });
+
+          // 地图点击事件
+          map.addListener('click', function (event) {
+            placeMarker(event.latLng);
+          });
+
+          // 获取当前位置（不阻塞地图显示）
+          getCurrentLocation();
+
+          // 初始化搜索自动补全
+          setTimeout(() => {
+            initAutocomplete();
+          }, 1000);
+
+          console.log('地图初始化完成');
+        } catch (error) {
+          console.error('地图初始化失败:', error);
+          // 显示错误提示并允许用户手动输入地址
+          showMapError();
+        }
+      }
+
+      // 放置标记
+      function placeMarker(location) {
+        if (marker) {
+          marker.setMap(null);
+        }
+
+        marker = new google.maps.Marker({
+          position: location,
+          map: map,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: '#FF3B30',
+            fillOpacity: 1,
+            strokeColor: '#FFFFFF',
+            strokeWeight: 2,
+          },
+        });
+
+        selectedLocation = location;
+
+        // 反向地理编码获取地址
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: location }, function (results, status) {
+          if (status === 'OK' && results[0]) {
+            document.getElementById('selectedAddress').textContent =
+              results[0].formatted_address;
+          }
+        });
+
+        // 显示发布按钮并更新文本
+        const publishBtn = document.getElementById('publishBtn');
+        publishBtn.classList.add('show');
+        publishBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>发布装修需求';
+      }
+
+      // 获取当前位置
+      function getCurrentLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function (position) {
+              const pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+              };
+
+              if (map) {
+                map.setCenter(pos);
+                placeMarker(pos);
+                console.log('定位成功，已更新地图中心位置');
+              }
+            },
+            function (error) {
+              console.log('定位失败，使用默认位置:', error.message);
+              // 定位失败不影响地图显示，继续使用默认位置
+              if (map) {
+                console.log('地图将显示默认位置：北京');
+              }
+            },
+            {
+              timeout: 10000,
+              enableHighAccuracy: false,
+              maximumAge: 300000,
+            },
+          );
+        } else {
+          console.log('浏览器不支持地理定位，使用默认位置');
+        }
+      }
+
+      // 显示地图错误
+      function showMapError() {
+        console.log('显示地图错误页面，启用备用模式');
+        const mapContainer = document.getElementById('map');
+
+        if (!mapContainer) {
+          console.error('找不到地图容器元素');
+          return;
+        }
+
+        mapContainer.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; color: #666; padding: 20px;">
+                    <i class="fas fa-map-marked-alt" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                    <p style="text-align: center; margin-bottom: 8px; font-size: 16px; font-weight: 600;">地图服务暂时不可用</p>
+                    <p style="text-align: center; margin-bottom: 16px; font-size: 14px; line-height: 1.5;">
+                        您仍可以通过搜索框输入地址<br>
+                        然后发布装修需求
+                    </p>
+                    <div style="display: flex; gap: 12px;">
+                        <button onclick="retryMapLoad()" style="background: #007AFF; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">重新加载</button>
+                        <button onclick="focusSearchInput()" style="background: #34C759; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">输入地址</button>
+                    </div>
+                </div>
+            `;
+
+        // 即使地图失败也显示发布按钮，允许用户手动输入地址
+        const publishBtn = document.getElementById('publishBtn');
+        if (publishBtn) {
+          publishBtn.classList.add('show');
+          publishBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>发布装修需求';
+        }
+
+        // 更新地址显示
+        const selectedAddressElement =
+          document.getElementById('selectedAddress');
+        if (selectedAddressElement) {
+          selectedAddressElement.textContent = '请在搜索框中输入地址';
+        }
+
+        // 显示通知
+        showNotification('地图模式不可用，请使用搜索框输入地址', 'info');
+      }
+
+      // 聚焦到搜索输入框
+      function focusSearchInput() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.placeholder = '请输入详细地址，如：北京市朝阳区望京SOHO';
+        }
+      }
+
+      // 显示通知函数
+      function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        const bgColor =
+          type === 'info'
+            ? '#007AFF'
+            : type === 'warning'
+            ? '#FF9500'
+            : '#34C759';
+
+        notification.style.cssText = `
+                position: fixed;
+                top: 70px;
+                left: 16px;
+                right: 16px;
+                background: ${bgColor};
+                color: white;
+                padding: 12px 16px;
+                border-radius: 8px;
+                font-size: 14px;
+                text-align: center;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideDown 0.3s ease-out;
+            `;
+
+        notification.innerHTML = `
+                <i class="fas fa-info-circle"></i> ${message}
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; margin-left: 8px; cursor: pointer; float: right;">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+        document.body.appendChild(notification);
+
+        // 5秒后自动隐藏
+        setTimeout(() => {
+          if (notification.parentElement) {
+            notification.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+          }
+        }, 5000);
+      }
+
+      // 重试地图加载
+      function retryMapLoad() {
+        location.reload();
+      }
+
+      // 初始化搜索自动补全
+      function initAutocomplete() {
+        try {
+          const searchInput = document.getElementById('searchInput');
+          if (google && google.maps && google.maps.places) {
+            const autocomplete = new google.maps.places.Autocomplete(
+              searchInput,
+            );
+
+            autocomplete.addListener('place_changed', function () {
+              const place = autocomplete.getPlace();
+              if (place.geometry && map) {
+                map.setCenter(place.geometry.location);
+                map.setZoom(17);
+                placeMarker(place.geometry.location);
+              } else if (place.formatted_address) {
+                // 即使没有地图，也更新地址显示
+                document.getElementById('selectedAddress').textContent =
+                  place.formatted_address;
+                selectedLocation = { address: place.formatted_address };
+                document.getElementById('publishBtn').classList.add('show');
+              }
+            });
+          } else {
+            console.log('Google Places API 未加载');
+          }
+        } catch (error) {
+          console.error('搜索自动补全初始化失败:', error);
+        }
+      }
+
+      // 处理手动输入地址
+      function handleManualAddress(address) {
+        if (address && address.trim().length > 0) {
+          selectedLocation = { address: address.trim() };
+          document.getElementById('selectedAddress').textContent =
+            address.trim();
+          const publishBtn = document.getElementById('publishBtn');
+          publishBtn.classList.add('show');
+          publishBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>发布装修需求';
+        }
+      }
+
+      // 打开订单抽屉
+      function openOrderDrawer() {
+        if (!selectedLocation) {
+          alert('请先在地图上选择装修位置或在搜索框中输入地址');
+          return;
+        }
+        document.getElementById('orderDrawer').classList.add('open');
+      }
+
+      // 关闭订单抽屉
+      function closeOrderDrawer() {
+        document.getElementById('orderDrawer').classList.remove('open');
+      }
+
+      // 选择装修类型
+      function selectType(element, type) {
+        // 移除其他选中状态
+        document.querySelectorAll('.type-card').forEach(card => {
+          card.classList.remove('selected');
+        });
+
+        // 添加选中状态
+        element.classList.add('selected');
+        selectedType = type;
+      }
+
+      // 更新预算显示
+      function updateBudget(value) {
+        const budgets = ['1-5万', '5-10万', '10-20万', '20万+'];
+        document.getElementById('budgetDisplay').textContent = budgets[value];
+      }
+
+      // 上传照片
+      function uploadPhoto(index) {
+        // 模拟照片上传
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              const photoSlots = document.querySelectorAll('.photo-slot');
+              photoSlots[
+                index
+              ].innerHTML = `<img src="${e.target.result}" alt="现场照片">`;
+              uploadedPhotos[index] = e.target.result;
+
+              // 如果还有空位，添加新的上传槽
+              if (index < 8 && photoSlots.length < 9) {
+                addPhotoSlot();
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+        input.click();
+      }
+
+      // 添加照片槽
+      function addPhotoSlot() {
+        const photoUpload = document.getElementById('photoUpload');
+        const currentSlots = photoUpload.querySelectorAll('.photo-slot').length;
+
+        if (currentSlots < 9) {
+          const newSlot = document.createElement('div');
+          newSlot.className = 'photo-slot';
+          newSlot.onclick = () => uploadPhoto(currentSlots);
+          newSlot.innerHTML =
+            '<i class="fas fa-plus text-gray-400 text-xl"></i>';
+          photoUpload.appendChild(newSlot);
+        }
+      }
+
+      // 提交订单
+      function submitOrder() {
+        if (!selectedLocation) {
+          alert('请选择装修位置');
+          return;
+        }
+
+        if (!selectedType) {
+          alert('请选择装修类型');
+          return;
+        }
+
+        const description = document.getElementById('description').value;
+        if (!description.trim()) {
+          alert('请填写详细描述');
+          return;
+        }
+
+        // 模拟提交
+        const submitBtn = event.target;
+        submitBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin mr-2"></i>发布中...';
+        submitBtn.disabled = true;
+
+        setTimeout(() => {
+          alert('需求发布成功！装修工将会看到您的需求并主动联系您。');
+          closeOrderDrawer();
+
+          // 重置表单
+          resetForm();
+
+          submitBtn.innerHTML =
+            '<i class="fas fa-paper-plane mr-2"></i>发布需求';
+          submitBtn.disabled = false;
+        }, 2000);
+      }
+
+      // 重置表单
+      function resetForm() {
+        selectedType = null;
+        uploadedPhotos = [];
+        document.querySelectorAll('.type-card').forEach(card => {
+          card.classList.remove('selected');
+        });
+        document.getElementById('description').value = '';
+        document.getElementById('budgetRange').value = 1;
+        updateBudget(1);
+
+        // 重置照片上传
+        const photoUpload = document.getElementById('photoUpload');
+        photoUpload.innerHTML = `
+                <div class="photo-slot" onclick="uploadPhoto(0)">
+                    <i class="fas fa-camera text-gray-400 text-xl"></i>
+                </div>
+                <div class="photo-slot" onclick="uploadPhoto(1)">
+                    <i class="fas fa-plus text-gray-400 text-xl"></i>
+                </div>
+                <div class="photo-slot" onclick="uploadPhoto(2)">
+                    <i class="fas fa-plus text-gray-400 text-xl"></i>
+                </div>
+            `;
+      }
+
+      // 点击抽屉外部关闭
+      document.addEventListener('click', function (e) {
+        const drawer = document.getElementById('orderDrawer');
+        if (e.target === drawer) {
+          closeOrderDrawer();
+        }
+      });
+
+      // 阻止抽屉内部点击事件冒泡
+      document
+        .querySelector('.order-drawer .container')
+        .addEventListener('click', function (e) {
+          e.stopPropagation();
+        });
+
+      // 立即执行的初始化（不等待DOMContentLoaded）
+      function immediateInit() {
+        console.log('立即初始化开始...');
+
+        // 确保地图容器存在并显示内容
+        setTimeout(() => {
+          const mapContainer = document.getElementById('map');
+          if (mapContainer && !mapContainer.innerHTML.trim()) {
+            console.log('地图容器为空，显示加载状态');
+            mapContainer.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; color: #666;">
+                            <div style="text-align: center;">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 16px; color: #007AFF;"></i>
+                                <p style="margin: 0; font-size: 16px;">正在加载地图...</p>
+                                <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.7;">如果长时间未加载，将启用备用模式</p>
+                            </div>
+                        </div>
+                    `;
+          }
+        }, 500);
+      }
+
+      // 页面加载完成后的初始化
+      document.addEventListener('DOMContentLoaded', function () {
+        console.log('页面加载完成，开始初始化...');
+
+        // 检查Google Maps API是否可用
+        if (typeof google === 'undefined') {
+          console.log('Google Maps API未加载，1秒后显示备用页面');
+          setTimeout(() => {
+            showMapError();
+          }, 1000);
+        } else {
+          console.log('Google Maps API已可用');
+        }
+
+        // 设置超时检查地图是否加载成功
+        setTimeout(function () {
+          if (!map) {
+            console.log('地图加载超时，启用备用模式');
+            showMapError();
+          }
+        }, 3000); // 减少超时时间到3秒
+
+        // 如果2秒后仍然没有地图，直接尝试初始化
+        setTimeout(() => {
+          if (!map && typeof google !== 'undefined' && google.maps) {
+            console.log('尝试手动初始化地图...');
+            try {
+              initMapFunction();
+            } catch (error) {
+              console.error('手动初始化地图失败:', error);
+              showMapError();
+            }
+          } else if (!map) {
+            console.log('Google Maps API不可用，显示备用页面');
+            showMapError();
+          }
+        }, 2000);
+
+        // 为搜索框添加回车键支持
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+          searchInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+              handleManualAddress(this.value);
+            }
+          });
+        }
+      });
+
+      // 重试地图加载
+      function retryMapLoad() {
+        location.reload();
+      }
+
+      // 立即运行初始化
+      immediateInit();
+    </script>
+  </body>
+</html>

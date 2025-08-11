@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭装修接单App - 原型展示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./styles/design-system.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .prototype-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .prototype-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .tab-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .tab-navigation {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 8px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 30px;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+            white-space: nowrap;
+            min-width: 140px;
+        }
+        
+        .tab-button:hover {
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .tab-button.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content {
+            flex: 1;
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 30px;
+            justify-items: center;
+            padding: 20px 0;
+        }
+        
+        .page-frame {
+            background: #000;
+            border-radius: 39px;
+            padding: 3px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+        
+        .page-frame:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        }
+        
+        .page-frame:hover::before {
+            left: 100%;
+        }
+        
+        .page-iframe {
+            width: 393px;
+            height: 852px;
+            border: none;
+            border-radius: 36px;
+            background: #F2F2F7;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .page-label {
+            text-align: center;
+            margin-top: 15px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .footer-info {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .footer-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .footer-stat {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .footer-description {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .page-frame {
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        .page-frame:nth-child(1) { animation-delay: 0.1s; }
+        .page-frame:nth-child(2) { animation-delay: 0.2s; }
+        .page-frame:nth-child(3) { animation-delay: 0.3s; }
+        .page-frame:nth-child(4) { animation-delay: 0.4s; }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .section-grid {
+                grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+                gap: 20px;
+            }
+            
+            .prototype-container {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .tab-navigation {
+                max-width: 90%;
+            }
+            
+            .tab-button {
+                font-size: 15px;
+                padding: 12px 20px;
+                min-width: 120px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .tab-navigation {
+                flex-direction: column;
+                gap: 4px;
+                max-width: 300px;
+            }
+            
+            .tab-button {
+                font-size: 14px;
+                padding: 10px 16px;
+                min-width: auto;
+            }
+            
+            .section-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .page-iframe {
+                width: 320px;
+                height: 693px;
+            }
+            
+            .footer-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="prototype-container">
+        <!-- 页面头部 -->
+        <div class="prototype-header">
+            <h1 class="text-4xl font-bold mb-4">家庭装修接单App</h1>
+            <p class="text-xl opacity-90">高保真原型展示 - iPhone 16 Pro适配</p>
+            <p class="text-sm opacity-75 mt-2">基于iOS Human Interface Guidelines设计</p>
+        </div>
+        
+        <!-- Tab容器 -->
+        <div class="tab-container">
+            <!-- Tab导航 -->
+            <div class="tab-navigation">
+                <button class="tab-button active" onclick="switchTab('auth')" data-tab="auth">
+                    <i class="fas fa-lock"></i>
+                    <span>认证系统</span>
+                </button>
+                <button class="tab-button" onclick="switchTab('user')" data-tab="user">
+                    <i class="fas fa-user"></i>
+                    <span>用户端</span>
+                </button>
+                <button class="tab-button" onclick="switchTab('worker')" data-tab="worker">
+                    <i class="fas fa-hard-hat"></i>
+                    <span>装修工端</span>
+                </button>
+            </div>
+            
+            <!-- 认证系统Tab内容 -->
+            <div class="tab-content active" id="auth-tab">
+                <div class="section-grid">
+                    <div class="page-frame">
+                        <iframe src="./auth/auth-entry.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>认证入口</span>
+                        </div>
+                    </div>
+                    
+                    <div class="page-frame">
+                        <iframe src="./auth/phone-auth.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>手机号验证</span>
+                        </div>
+                    </div>
+                    
+                    <div class="page-frame">
+                        <iframe src="./auth/sms-verification.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-sms"></i>
+                            <span>短信验证</span>
+                        </div>
+                    </div>
+                    
+                    <div class="page-frame">
+                        <iframe src="./auth/user-type-selection.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-user-tag"></i>
+                            <span>用户类型选择</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 用户端Tab内容 -->
+            <div class="tab-content" id="user-tab">
+                <div class="section-grid">
+                    <div class="page-frame">
+                        <iframe src="./user-home.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-home"></i>
+                            <span>装修首页</span>
+                        </div>
+                    </div>
+                    
+                    <div class="page-frame">
+                        <iframe src="./user-nearby.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>附近页面</span>
+                        </div>
+                    </div>
+                    
+                    <div class="page-frame">
+                        <iframe src="./user-profile.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-user-circle"></i>
+                            <span>我的页面</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 装修工端Tab内容 -->
+            <div class="tab-content" id="worker-tab">
+                <div class="section-grid">
+                    <div class="page-frame">
+                        <iframe src="./worker-home.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-map"></i>
+                            <span>地图首页</span>
+                        </div>
+                    </div>
+                    
+                    <div class="page-frame">
+                        <iframe src="./worker-orders.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>订单页面</span>
+                        </div>
+                    </div>
+                    
+                    <div class="page-frame">
+                        <iframe src="./worker-profile.html" class="page-iframe"></iframe>
+                        <div class="page-label">
+                            <i class="fas fa-id-card"></i>
+                            <span>我的页面</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部信息 -->
+        <div class="footer-info">
+            <div class="footer-stats">
+                <div class="footer-stat">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>适配设备: iPhone 16 Pro (393×852)</span>
+                </div>
+                <div class="footer-stat">
+                    <i class="fas fa-code"></i>
+                    <span>技术栈: HTML5 + Tailwind CSS + FontAwesome</span>
+                </div>
+                <div class="footer-stat">
+                    <i class="fas fa-palette"></i>
+                    <span>设计规范: iOS Human Interface Guidelines</span>
+                </div>
+            </div>
+            <div class="footer-description">
+                这是一个基于地理位置的双端服务平台原型，连接需要装修服务的用户和专业装修工人。
+                采用现代化的设计理念和交互模式，为用户提供流畅的使用体验。
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab切换功能
+        function switchTab(tabName) {
+            // 移除所有active类
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 添加active类到当前tab
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // 重新触发iframe加载动画
+            setTimeout(() => {
+                const activeTab = document.getElementById(`${tabName}-tab`);
+                const iframes = activeTab.querySelectorAll('.page-iframe');
+                iframes.forEach((iframe, index) => {
+                    iframe.style.opacity = '0';
+                    iframe.style.transform = 'translateY(20px)';
+                    iframe.style.transition = 'all 0.5s ease';
+                    
+                    setTimeout(() => {
+                        iframe.style.opacity = '1';
+                        iframe.style.transform = 'translateY(0)';
+                    }, index * 150);
+                });
+            }, 100);
+        }
+        
+        // 页面加载完成后的交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化第一个tab的iframe动画
+            setTimeout(() => {
+                const activeTab = document.querySelector('.tab-content.active');
+                const iframes = activeTab.querySelectorAll('.page-iframe');
+                iframes.forEach((iframe, index) => {
+                    iframe.style.opacity = '0';
+                    iframe.style.transform = 'translateY(20px)';
+                    iframe.style.transition = 'all 0.5s ease';
+                    
+                    setTimeout(() => {
+                        iframe.style.opacity = '1';
+                        iframe.style.transform = 'translateY(0)';
+                    }, index * 150 + 500); // 延迟开始
+                });
+            }, 100);
+            
+            // 添加键盘快捷键支持
+            document.addEventListener('keydown', function(e) {
+                if (e.altKey) {
+                    switch(e.key) {
+                        case '1':
+                            e.preventDefault();
+                            switchTab('auth');
+                            break;
+                        case '2':
+                            e.preventDefault();
+                            switchTab('user');
+                            break;
+                        case '3':
+                            e.preventDefault();
+                            switchTab('worker');
+                            break;
+                    }
+                }
+            });
+            
+            // 添加页面框架的交互效果
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                    }
+                });
+            }, observerOptions);
+            
+            // 观察所有页面框架
+            document.querySelectorAll('.page-frame').forEach(frame => {
+                observer.observe(frame);
+                
+                // 添加点击效果
+                frame.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+            
+            // 添加tab按钮的点击效果
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+        });
+        
+        // 响应式处理
+        function handleResize() {
+            const width = window.innerWidth;
+            const tabNavigation = document.querySelector('.tab-navigation');
+            
+            if (width < 768) {
+                tabNavigation.style.flexDirection = 'column';
+            } else {
+                tabNavigation.style.flexDirection = 'row';
+            }
+        }
+        
+        window.addEventListener('resize', handleResize);
+        handleResize(); // 初始调用
+        
+        // 添加页面可见性API支持
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // 页面重新可见时，重新加载当前tab的iframe
+                const activeTab = document.querySelector('.tab-content.active');
+                const iframes = activeTab.querySelectorAll('.page-iframe');
+                iframes.forEach(iframe => {
+                    // 触发重新加载动画
+                    iframe.style.opacity = '0.8';
+                    setTimeout(() => {
+                        iframe.style.opacity = '1';
+                    }, 200);
+                });
+            }
+        });
+        
+        // 添加滚动到顶部功能
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        // 监听滚动，显示返回顶部按钮
+        let scrollTopButton = null;
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 500) {
+                if (!scrollTopButton) {
+                    scrollTopButton = document.createElement('button');
+                    scrollTopButton.innerHTML = '<i class="fas fa-chevron-up"></i>';
+                    scrollTopButton.style.cssText = `
+                        position: fixed;
+                        bottom: 30px;
+                        right: 30px;
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        background: rgba(255, 255, 255, 0.2);
+                        border: none;
+                        color: white;
+                        font-size: 18px;
+                        cursor: pointer;
+                        backdrop-filter: blur(10px);
+                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                        transition: all 0.3s ease;
+                        z-index: 1000;
+                    `;
+                    scrollTopButton.onclick = scrollToTop;
+                    document.body.appendChild(scrollTopButton);
+                }
+                scrollTopButton.style.opacity = '1';
+                scrollTopButton.style.transform = 'translateY(0)';
+            } else if (scrollTopButton) {
+                scrollTopButton.style.opacity = '0';
+                scrollTopButton.style.transform = 'translateY(20px)';
+            }
+        });
+    </script>
+</body>
+</html>

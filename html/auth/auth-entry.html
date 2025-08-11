@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>装修易 - 登录注册</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../styles/design-system.css" />
+    <style>
+      .auth-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: var(--spacing-xl);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .auth-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+      }
+
+      .logo-section {
+        text-align: center;
+        margin-bottom: var(--spacing-xxxl);
+        z-index: 1;
+      }
+
+      .app-logo {
+        width: 120px;
+        height: 120px;
+        background: var(--surface-color);
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--spacing-xl);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        font-size: 48px;
+        color: var(--primary-color);
+      }
+
+      .app-title {
+        font-size: var(--font-size-large-title);
+        font-weight: 700;
+        color: white;
+        margin-bottom: var(--spacing-sm);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .app-subtitle {
+        font-size: var(--font-size-body);
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 400;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .auth-options {
+        width: 100%;
+        max-width: 320px;
+        z-index: 1;
+      }
+
+      .phone-auth-btn {
+        width: 100%;
+        background: var(--surface-color);
+        color: var(--primary-color);
+        border: none;
+        border-radius: var(--radius-md);
+        padding: var(--spacing-lg) var(--spacing-xl);
+        font-size: var(--font-size-body);
+        font-weight: 600;
+        min-height: 56px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        margin-bottom: var(--spacing-xl);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-md);
+      }
+
+      .phone-auth-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+      }
+
+      .phone-auth-btn:active {
+        transform: translateY(0);
+      }
+
+      .social-auth {
+        display: flex;
+        justify-content: center;
+        gap: var(--spacing-xl);
+        margin-top: var(--spacing-lg);
+      }
+
+      .social-btn {
+        width: 64px;
+        height: 64px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.15);
+        font-size: 24px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .social-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 50%;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .social-btn:hover::before {
+        opacity: 1;
+      }
+
+      .social-btn:hover {
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+
+      .social-btn:active {
+        transform: translateY(-2px) scale(1.02);
+      }
+
+      /* 各平台图标的官方颜色 */
+      .apple-btn {
+        color: #000000;
+      }
+
+      .apple-btn:hover {
+        color: #333333;
+      }
+
+      .google-btn {
+        color: #4285f4;
+      }
+
+      .google-btn:hover {
+        color: #1a73e8;
+      }
+
+      .facebook-btn {
+        color: #1877f2;
+      }
+
+      .facebook-btn:hover {
+        color: #166fe5;
+      }
+
+      .social-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+
+      .social-label {
+        font-size: var(--font-size-caption);
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+
+      .social-option:hover .social-label {
+        color: rgba(255, 255, 255, 1);
+      }
+
+      .divider {
+        display: flex;
+        align-items: center;
+        margin: var(--spacing-xl) 0;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: var(--font-size-footnote);
+      }
+
+      .divider::before,
+      .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .divider span {
+        padding: 0 var(--spacing-lg);
+      }
+
+      .footer-text {
+        position: absolute;
+        bottom: var(--spacing-xl);
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: var(--font-size-caption);
+        z-index: 1;
+      }
+
+      .footer-text a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+      }
+
+      /* 动画效果 */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .logo-section {
+        animation: fadeInUp 0.8s ease-out;
+      }
+
+      .auth-options {
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+      }
+
+      .footer-text {
+        animation: fadeInUp 0.8s ease-out 0.4s both;
+      }
+
+      /* 响应式适配 */
+      @media (max-height: 700px) {
+        .auth-container {
+          padding: var(--spacing-lg);
+        }
+
+        .logo-section {
+          margin-bottom: var(--spacing-xl);
+        }
+
+        .app-logo {
+          width: 80px;
+          height: 80px;
+          font-size: 32px;
+        }
+
+        .social-btn {
+          width: 56px;
+          height: 56px;
+          font-size: 20px;
+        }
+
+        .social-auth {
+          gap: var(--spacing-lg);
+        }
+      }
+
+      @media (max-width: 360px) {
+        .social-btn {
+          width: 52px;
+          height: 52px;
+          font-size: 18px;
+        }
+
+        .social-auth {
+          gap: var(--spacing-md);
+        }
+
+        .social-label {
+          font-size: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device-screen">
+      <div class="auth-container">
+        <!-- Logo区域 -->
+        <div class="logo-section">
+          <div class="app-logo">
+            <i class="fas fa-home"></i>
+          </div>
+          <h1 class="app-title">装修易</h1>
+          <p class="app-subtitle">连接装修需求，成就美好家居</p>
+        </div>
+
+        <!-- 认证选项 -->
+        <div class="auth-options">
+          <!-- 手机号登录按钮 -->
+          <button class="phone-auth-btn" onclick="goToPhoneAuth()">
+            <i class="fas fa-mobile-alt"></i>
+            <span>手机号登录/注册</span>
+          </button>
+
+          <!-- 分割线 -->
+          <div class="divider">
+            <span>或使用以下方式</span>
+          </div>
+
+          <!-- 社交登录选项 -->
+          <div class="social-auth">
+            <div class="social-option">
+              <button class="social-btn apple-btn" onclick="handleAppleLogin()">
+                <i class="fab fa-apple"></i>
+              </button>
+              <div class="social-label">Apple</div>
+            </div>
+
+            <div class="social-option">
+              <button
+                class="social-btn google-btn"
+                onclick="handleGoogleLogin()"
+              >
+                <i class="fab fa-google"></i>
+              </button>
+              <div class="social-label">Google</div>
+            </div>
+
+            <div class="social-option">
+              <button
+                class="social-btn facebook-btn"
+                onclick="handleFacebookLogin()"
+              >
+                <i class="fab fa-facebook-f"></i>
+              </button>
+              <div class="social-label">Facebook</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部文字 -->
+        <div class="footer-text">
+          登录即表示同意 <a href="#" onclick="showTerms()">用户协议</a> 和
+          <a href="#" onclick="showPrivacy()">隐私政策</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 页面跳转函数
+      function goToPhoneAuth() {
+        // 添加点击反馈
+        const btn = event.target.closest('.phone-auth-btn');
+        btn.style.transform = 'scale(0.98)';
+
+        setTimeout(() => {
+          btn.style.transform = '';
+          // 跳转到手机号认证页面
+          window.location.href = './phone-auth.html';
+        }, 150);
+      }
+
+      // Apple登录处理
+      function handleAppleLogin() {
+        showComingSoon('Apple 登录');
+        // TODO: 实现Apple Sign In
+        console.log('Apple登录功能开发中...');
+      }
+
+      // Google登录处理
+      function handleGoogleLogin() {
+        showComingSoon('Google 登录');
+        // TODO: 实现Google登录
+        console.log('Google登录功能开发中...');
+      }
+
+      // Facebook登录处理
+      function handleFacebookLogin() {
+        showComingSoon('Facebook 登录');
+        // TODO: 实现Facebook登录
+        console.log('Facebook登录功能开发中...');
+      }
+
+      // 显示用户协议
+      function showTerms() {
+        alert('用户协议页面开发中...');
+      }
+
+      // 显示隐私政策
+      function showPrivacy() {
+        alert('隐私政策页面开发中...');
+      }
+
+      // 显示功能开发中提示
+      function showComingSoon(feature) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 16px 24px;
+          border-radius: 8px;
+          font-size: 14px;
+          z-index: 1000;
+          backdrop-filter: blur(10px);
+          animation: fadeIn 0.3s ease-out;
+        `;
+
+        notification.textContent = `${feature}功能即将上线，敬请期待！`;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.style.animation = 'fadeOut 0.3s ease-out';
+          setTimeout(() => notification.remove(), 300);
+        }, 2000);
+      }
+
+      // 页面加载完成后的初始化
+      document.addEventListener('DOMContentLoaded', function () {
+        console.log('认证入口页面加载完成');
+
+        // 检查是否已登录
+        const isLoggedIn = localStorage.getItem('userToken');
+        if (isLoggedIn) {
+          console.log('用户已登录，可以跳转到主页面');
+          // TODO: 根据用户类型跳转到相应页面
+        }
+      });
+
+      // 添加键盘事件支持
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          goToPhoneAuth();
+        }
+      });
+    </script>
+  </body>
+</html>

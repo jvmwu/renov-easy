@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的 - 装修工端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./styles/design-system.css">
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+            padding: 20px 16px 40px;
+            color: white;
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            object-fit: cover;
+        }
+        
+        .profile-details {
+            flex: 1;
+        }
+        
+        .profile-name {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .profile-title {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .profile-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+        
+        .verified-badge {
+            background: rgba(52, 199, 89, 0.9);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .skill-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .stats-container {
+            background: white;
+            margin: -20px 16px 20px;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #007AFF;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #8E8E93;
+        }
+        
+        .earnings-card {
+            background: white;
+            margin: 0 16px 16px;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .earnings-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .earnings-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000;
+        }
+        
+        .period-tabs {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .period-tab {
+            background: #F2F2F7;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .period-tab.active {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .earnings-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: #34C759;
+            margin-bottom: 8px;
+        }
+        
+        .earnings-change {
+            font-size: 14px;
+            color: #34C759;
+        }
+        
+        .earnings-chart {
+            height: 120px;
+            background: #F8F9FA;
+            border-radius: 8px;
+            display: flex;
+            align-items: end;
+            justify-content: space-around;
+            padding: 16px 8px 8px;
+            margin-top: 16px;
+        }
+        
+        .chart-bar {
+            background: #007AFF;
+            border-radius: 2px 2px 0 0;
+            width: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-section {
+            background: white;
+            margin: 0 16px 12px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #F2F2F7;
+            text-decoration: none;
+            color: #000;
+            transition: background-color 0.2s ease;
+        }
+        
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .menu-item:active {
+            background-color: #F2F2F7;
+        }
+        
+        .menu-icon {
+            width: 32px;
+            height: 32px;
+            background: #F2F2F7;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .menu-icon.portfolio {
+            background: #E3F2FD;
+            color: #007AFF;
+        }
+        
+        .menu-icon.reviews {
+            background: #FFF3E0;
+            color: #FF9500;
+        }
+        
+        .menu-icon.settings {
+            background: #F0F0F0;
+            color: #8E8E93;
+        }
+        
+        .menu-content {
+            flex: 1;
+        }
+        
+        .menu-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .menu-subtitle {
+            font-size: 13px;
+            color: #8E8E93;
+        }
+        
+        .menu-arrow {
+            color: #C7C7CC;
+            font-size: 14px;
+        }
+        
+        .menu-badge {
+            background: #FF3B30;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-right: 8px;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        .rating-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 8px;
+        }
+        
+        .rating-stars {
+            color: #FFD700;
+            font-size: 14px;
+        }
+        
+        .rating-score {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .content-area {
+            padding-bottom: 100px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 24px 16px 12px;
+            color: #000;
+        }
+        
+        /* 作品集模态框样式 */
+        .portfolio-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .portfolio-modal.show {
+            display: flex;
+        }
+        
+        .portfolio-content {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            max-height: 85vh;
+            border-radius: 16px;
+            overflow: hidden;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .portfolio-header {
+            background: #007AFF;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .portfolio-body {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .portfolio-item {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .portfolio-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .portfolio-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            color: white;
+            padding: 8px;
+            font-size: 12px;
+        }
+        
+        .add-portfolio-btn {
+            background: #F2F2F7;
+            border: 2px dashed #C7C7CC;
+            border-radius: 8px;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .add-portfolio-btn:hover {
+            border-color: #007AFF;
+            background: #F0F8FF;
+        }
+        
+        /* 评价模态框样式 */
+        .reviews-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .reviews-modal.show {
+            display: flex;
+        }
+        
+        .reviews-content {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            max-height: 85vh;
+            border-radius: 16px;
+            overflow: hidden;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .reviews-body {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .review-item {
+            border-bottom: 1px solid #F2F2F7;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .review-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .review-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .reviewer-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .reviewer-info {
+            flex: 1;
+        }
+        
+        .reviewer-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .review-date {
+            font-size: 12px;
+            color: #8E8E93;
+        }
+        
+        .review-rating {
+            color: #FFD700;
+            font-size: 14px;
+        }
+        
+        .review-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-screen">
+        <div class="safe-area">
+            <!-- 个人信息头部 -->
+            <div class="profile-header">
+                <div class="profile-info">
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" 
+                         alt="装修工头像" class="profile-avatar">
+                    <div class="profile-details">
+                        <div class="profile-name">李师傅</div>
+                        <div class="profile-title">资深装修工 · 8年经验</div>
+                        <div class="profile-status">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>已实名认证</span>
+                            <div class="verified-badge">
+                                <i class="fas fa-check"></i> 已验证
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="skill-tags">
+                    <div class="skill-tag">厨房装修</div>
+                    <div class="skill-tag">卫生间改造</div>
+                    <div class="skill-tag">水电安装</div>
+                    <div class="skill-tag">瓷砖铺贴</div>
+                </div>
+            </div>
+            
+            <!-- 统计数据 -->
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-number">4.8</div>
+                    <div class="stat-label">评分</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">156</div>
+                    <div class="stat-label">完成订单</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">好评率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">进行中</div>
+                </div>
+            </div>
+            
+            <!-- 收入统计 -->
+            <div class="earnings-card">
+                <div class="earnings-header">
+                    <div class="earnings-title">收入统计</div>
+                    <div class="period-tabs">
+                        <button class="period-tab" onclick="switchPeriod('day', this)">日</button>
+                        <button class="period-tab active" onclick="switchPeriod('week', this)">周</button>
+                        <button class="period-tab" onclick="switchPeriod('month', this)">月</button>
+                    </div>
+                </div>
+                <div class="earnings-amount" id="earningsAmount">¥2,680</div>
+                <div class="earnings-change">
+                    <i class="fas fa-arrow-up"></i> 比上周增长 12%
+                </div>
+                <div class="earnings-chart" id="earningsChart">
+                    <div class="chart-bar" style="height: 40%"></div>
+                    <div class="chart-bar" style="height: 60%"></div>
+                    <div class="chart-bar" style="height: 80%"></div>
+                    <div class="chart-bar" style="height: 45%"></div>
+                    <div class="chart-bar" style="height: 90%"></div>
+                    <div class="chart-bar" style="height: 70%"></div>
+                    <div class="chart-bar" style="height: 100%"></div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <!-- 作品和评价 -->
+                <div class="menu-section">
+                    <a href="#" class="menu-item" onclick="showPortfolio()">
+                        <div class="menu-icon portfolio">
+                            <i class="fas fa-images"></i>
+                        </div>
+                        <div class="menu-content">
+                            <div class="menu-title">我的作品集</div>
+                            <div class="menu-subtitle">展示装修案例和作品</div>
+                        </div>
+                        <div class="menu-badge">12</div>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </a>
+                    
+                    <a href="#" class="menu-item" onclick="showReviews()">
+                        <div class="menu-icon reviews">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="menu-content">
+                            <div class="menu-title">客户评价</div>
+                            <div class="menu-subtitle">查看客户反馈和评分</div>
+                        </div>
+                        <div class="rating-display">
+                            <div class="rating-stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="rating-score">4.8</div>
+                        </div>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </a>
+                </div>
+                
+                <!-- 账户设置 -->
+                <div class="menu-section">
+                    <a href="#" class="menu-item" onclick="showSettings()">
+                        <div class="menu-icon settings">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="menu-content">
+                            <div class="menu-title">账户设置</div>
+                            <div class="menu-subtitle">个人信息、收款设置</div>
+                        </div>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </a>
+                    
+                    <a href="#" class="menu-item">
+                        <div class="menu-icon settings">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="menu-content">
+                            <div class="menu-title">收款管理</div>
+                            <div class="menu-subtitle">银行卡、支付宝设置</div>
+                        </div>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </a>
+                    
+                    <a href="#" class="menu-item">
+                        <div class="menu-icon settings">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="menu-content">
+                            <div class="menu-title">通知设置</div>
+                            <div class="menu-subtitle">订单通知、消息提醒</div>
+                        </div>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </a>
+                </div>
+                
+                <!-- 帮助和支持 -->
+                <div class="menu-section">
+                    <a href="#" class="menu-item">
+                        <div class="menu-icon settings">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <div class="menu-content">
+                            <div class="menu-title">帮助中心</div>
+                            <div class="menu-subtitle">常见问题、使用指南</div>
+                        </div>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </a>
+                    
+                    <a href="#" class="menu-item">
+                        <div class="menu-icon settings">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <div class="menu-content">
+                            <div class="menu-title">联系客服</div>
+                            <div class="menu-subtitle">在线客服、意见反馈</div>
+                        </div>
+                        <i class="fas fa-chevron-right menu-arrow"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 底部标签栏 -->
+            <div class="tab-bar">
+                <a href="./worker-home.html" class="tab-item">
+                    <i class="fas fa-map tab-icon"></i>
+                    <span>接单</span>
+                </a>
+                <a href="./worker-orders.html" class="tab-item">
+                    <i class="fas fa-clipboard-list tab-icon"></i>
+                    <span>订单</span>
+                </a>
+                <a href="#" class="tab-item active">
+                    <i class="fas fa-user tab-icon"></i>
+                    <span>我的</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 作品集模态框 -->
+    <div class="portfolio-modal" id="portfolioModal">
+        <div class="portfolio-content">
+            <div class="portfolio-header">
+                <div class="order-title">我的作品集</div>
+                <button class="close-btn" onclick="closePortfolioModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="portfolio-body">
+                <div class="portfolio-grid" id="portfolioGrid">
+                    <!-- 作品集内容将在这里动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 评价模态框 -->
+    <div class="reviews-modal" id="reviewsModal">
+        <div class="reviews-content">
+            <div class="portfolio-header">
+                <div class="order-title">客户评价</div>
+                <button class="close-btn" onclick="closeReviewsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="reviews-body" id="reviewsBody">
+                <!-- 评价内容将在这里动态加载 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentPeriod = 'week';
+        
+        // 模拟作品集数据
+        const portfolioData = [
+            {
+                id: 1,
+                image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=200&fit=crop',
+                title: '现代厨房改造',
+                type: '厨房装修'
+            },
+            {
+                id: 2,
+                image: 'https://images.unsplash.com/photo-1620626011761-996317b8d101?w=200&h=200&fit=crop',
+                title: '简约卫生间',
+                type: '卫生间改造'
+            },
+            {
+                id: 3,
+                image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=200&fit=crop',
+                title: '温馨客厅',
+                type: '客厅装修'
+            },
+            {
+                id: 4,
+                image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200&h=200&fit=crop',
+                title: '舒适卧室',
+                type: '卧室装修'
+            }
+        ];
+        
+        // 模拟评价数据
+        const reviewsData = [
+            {
+                id: 1,
+                customerName: '张女士',
+                customerAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face',
+                rating: 5,
+                date: '2024-01-15',
+                comment: '李师傅手艺很好，工作认真负责，厨房装修效果超出预期，强烈推荐！'
+            },
+            {
+                id: 2,
+                customerName: '王先生',
+                customerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
+                rating: 5,
+                date: '2024-01-12',
+                comment: '施工质量很好，进度按时完成，师傅很专业，沟通也很顺畅。'
+            },
+            {
+                id: 3,
+                customerName: '李女士',
+                customerAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
+                rating: 4,
+                date: '2024-01-08',
+                comment: '整体满意，卫生间改造效果不错，就是工期稍微延长了一天。'
+            }
+        ];
+        
+        // 切换收入统计周期
+        function switchPeriod(period, element) {
+            // 更新标签页状态
+            document.querySelectorAll('.period-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            currentPeriod = period;
+            updateEarningsDisplay();
+        }
+        
+        // 更新收入显示
+        function updateEarningsDisplay() {
+            const earningsData = {
+                day: { amount: '¥380', change: '比昨天增长 8%' },
+                week: { amount: '¥2,680', change: '比上周增长 12%' },
+                month: { amount: '¥12,450', change: '比上月增长 15%' }
+            };
+            
+            const data = earningsData[currentPeriod];
+            document.getElementById('earningsAmount').textContent = data.amount;
+            document.querySelector('.earnings-change').innerHTML = `
+                <i class="fas fa-arrow-up"></i> ${data.change}
+            `;
+            
+            // 更新图表（模拟数据）
+            updateChart();
+        }
+        
+        // 更新图表
+        function updateChart() {
+            const bars = document.querySelectorAll('.chart-bar');
+            const heights = generateRandomHeights(bars.length);
+            
+            bars.forEach((bar, index) => {
+                setTimeout(() => {
+                    bar.style.height = heights[index] + '%';
+                }, index * 100);
+            });
+        }
+        
+        // 生成随机高度
+        function generateRandomHeights(count) {
+            return Array.from({ length: count }, () => Math.floor(Math.random() * 80) + 20);
+        }
+        
+        // 显示作品集
+        function showPortfolio() {
+            document.getElementById('portfolioModal').classList.add('show');
+            loadPortfolio();
+        }
+        
+        // 关闭作品集模态框
+        function closePortfolioModal() {
+            document.getElementById('portfolioModal').classList.remove('show');
+        }
+        
+        // 加载作品集
+        function loadPortfolio() {
+            const portfolioGrid = document.getElementById('portfolioGrid');
+            
+            portfolioGrid.innerHTML = portfolioData.map(item => `
+                <div class="portfolio-item">
+                    <img src="${item.image}" alt="${item.title}">
+                    <div class="portfolio-overlay">
+                        <div>${item.title}</div>
+                    </div>
+                </div>
+            `).join('') + `
+                <div class="add-portfolio-btn" onclick="addPortfolio()">
+                    <i class="fas fa-plus" style="font-size: 24px; color: #C7C7CC; margin-bottom: 8px;"></i>
+                    <span style="font-size: 12px; color: #8E8E93;">添加作品</span>
+                </div>
+            `;
+        }
+        
+        // 添加作品
+        function addPortfolio() {
+            alert('添加作品功能');
+        }
+        
+        // 显示评价
+        function showReviews() {
+            document.getElementById('reviewsModal').classList.add('show');
+            loadReviews();
+        }
+        
+        // 关闭评价模态框
+        function closeReviewsModal() {
+            document.getElementById('reviewsModal').classList.remove('show');
+        }
+        
+        // 加载评价
+        function loadReviews() {
+            const reviewsBody = document.getElementById('reviewsBody');
+            
+            reviewsBody.innerHTML = reviewsData.map(review => `
+                <div class="review-item">
+                    <div class="review-header">
+                        <img src="${review.customerAvatar}" alt="客户头像" class="reviewer-avatar">
+                        <div class="reviewer-info">
+                            <div class="reviewer-name">${review.customerName}</div>
+                            <div class="review-date">${review.date}</div>
+                        </div>
+                        <div class="review-rating">
+                            ${generateStars(review.rating)}
+                        </div>
+                    </div>
+                    <div class="review-text">${review.comment}</div>
+                </div>
+            `).join('');
+        }
+        
+        // 生成星级评分
+        function generateStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= rating) {
+                    stars += '<i class="fas fa-star"></i>';
+                } else {
+                    stars += '<i class="far fa-star"></i>';
+                }
+            }
+            return stars;
+        }
+        
+        // 显示设置
+        function showSettings() {
+            alert('账户设置功能');
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加页面加载动画
+            document.body.classList.add('fade-in');
+            
+            // 初始化图表
+            setTimeout(() => {
+                updateChart();
+            }, 500);
+            
+            // 点击模态框外部关闭事件监听
+            document.getElementById('portfolioModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closePortfolioModal();
+                }
+            });
+            
+            document.getElementById('reviewsModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeReviewsModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+{
+  "designSystem": {
+    "colors": {
+      "primary": "#007AFF",
+      "success": "#34C759", 
+      "warning": "#FF3B30",
+      "neutral": "#8E8E93",
+      "background": "#F2F2F7",
+      "surface": "#FFFFFF",
+      "textPrimary": "#000000",
+      "textSecondary": "#8E8E93",
+      "textTertiary": "#C7C7CC"
+    },
+    "typography": {
+      "fontFamily": "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif",
+      "sizes": {
+        "title": "32px",
+        "largeTitle": "28px", 
+        "headline": "24px",
+        "subheadline": "20px",
+        "body": "16px",
+        "callout": "16px",
+        "footnote": "14px",
+        "caption": "12px"
+      }
+    },
+    "spacing": {
+      "xs": "4px",
+      "sm": "8px", 
+      "md": "12px",
+      "lg": "16px",
+      "xl": "20px",
+      "xxl": "24px",
+      "xxxl": "32px"
+    },
+    "borderRadius": {
+      "sm": "8px",
+      "md": "12px", 
+      "lg": "16px",
+      "xl": "20px",
+      "device": "39px"
+    },
+    "device": {
+      "iPhone16Pro": {
+        "width": "393px",
+        "height": "852px",
+        "safeAreaTop": "44px",
+        "safeAreaBottom": "34px",
+        "tabBarHeight": "83px",
+        "navBarHeight": "44px"
+      }
+    }
+  },
+  "components": {
+    "button": {
+      "minHeight": "44px",
+      "borderRadius": "8px",
+      "padding": "12px 20px"
+    },
+    "input": {
+      "minHeight": "44px", 
+      "borderRadius": "8px",
+      "padding": "12px"
+    },
+    "card": {
+      "borderRadius": "12px",
+      "padding": "16px",
+      "shadow": "0 1px 3px rgba(0, 0, 0, 0.1)"
+    }
+  },
+  "animations": {
+    "duration": {
+      "fast": "0.2s",
+      "normal": "0.3s", 
+      "slow": "0.4s"
+    },
+    "easing": {
+      "easeOut": "ease-out",
+      "easeInOut": "ease-in-out"
+    }
+  }
+}
