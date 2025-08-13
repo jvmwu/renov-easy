@@ -11,7 +11,7 @@ renov-easy/
 │       ├── tasks/              # Task lists and TODOs
 │       ├── specs/              # Requirements specifications
 │       └── design/             # Design documents
-├── platforms/                   # Native platform implementations
+├── platform/                   # Native platform implementations
 │   ├── android/                # Android app (Kotlin)
 │   │   ├── app/               # Main application module
 │   │   ├── features/          # Feature modules
@@ -111,7 +111,7 @@ services/
 Each platform follows its native conventions while maintaining consistency:
 
 ```
-platforms/{platform}/features/
+platform/{platform}/features/
 ├── auth/                       # Authentication feature
 ├── home/                       # Home/map feature
 ├── orders/                     # Order management
