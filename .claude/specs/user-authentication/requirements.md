@@ -2,15 +2,15 @@
 
 ## Introduction
 
-用户鉴权系统是 RenovEasy 应用的核心功能，为装修服务市场平台提供安全、便捷的用户身份验证和授权机制。该系统采用基于手机号的无密码认证方式，通过短信验证码完成用户注册和登录，支持客户和工人两种用户角色的区分管理。
+The user authentication system is a core feature of the RenovEasy application, providing secure and convenient user identity verification and authorization mechanisms for the renovation services marketplace platform. The system adopts a passwordless authentication method based on phone numbers, completing user registration and login through SMS verification codes, and supporting differentiated management of two user roles: customers and workers.
 
 ## Alignment with Product Vision
 
-该功能直接支持 product.md 中定义的核心价值主张：
-- **便捷通信**：通过手机号快速注册，降低用户进入门槛
-- **双语支持**：认证流程支持中英文，符合澳大利亚市场需求
-- **用户分类**：区分客户和工人角色，为后续的服务匹配奠定基础
-- **信任建设**：通过手机验证确保用户真实性，建立平台信任基础
+This feature directly supports the core value propositions defined in product.md:
+- **Convenient Communication**: Quick registration through phone number, lowering user entry barriers
+- **Bilingual Support**: Authentication flow supports Chinese and English, meeting Australian market needs
+- **User Classification**: Distinguish between customer and worker roles, laying the foundation for subsequent service matching
+- **Trust Building**: Ensure user authenticity through phone verification, establishing platform trust foundation
 
 ## Requirements
 
@@ -113,3 +113,4 @@
 - Verification code input SHALL support paste and auto-progression
 - Loading states SHALL provide visual feedback for all async operations
 - Success states SHALL clearly indicate next steps
+- 

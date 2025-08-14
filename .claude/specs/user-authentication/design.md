@@ -2,41 +2,41 @@
 
 ## Overview
 
-用户鉴权系统为 RenovEasy 平台提供基于手机号的无密码认证机制，采用 Rust 后端实现核心业务逻辑，通过 FFI 为 iOS、Android 和 HarmonyOS 提供统一的认证服务。系统设计遵循 Clean Architecture 原则，实现领域驱动设计，确保高安全性、高性能和跨平台一致性。
+The user authentication system provides passwordless authentication based on phone numbers for the RenovEasy platform. It implements core business logic using a Rust backend and provides unified authentication services for iOS, Android, and HarmonyOS through FFI. The system design follows Clean Architecture principles, implements domain-driven design, and ensures high security, high performance, and cross-platform consistency.
 
 ## Steering Document Alignment
 
 ### Technical Standards (tech.md)
-- **Rust 技术栈**：使用 Tokio 异步运行时，Actix-web/Axum 框架构建 RESTful API
-- **JWT 认证**：jsonwebtoken crate 实现令牌管理，符合文档定义的 15 分钟访问令牌和 7 天刷新令牌策略
-- **数据库设计**：SQLx 与 MySQL 集成，采用连接池和预编译语句
-- **错误处理**：thiserror 和 anyhow 实现统一错误处理
-- **FFI 设计**：C-compatible 接口层，为各平台提供安全的内存管理
+- **Rust Technology Stack**: Uses Tokio async runtime, Actix-web/Axum framework to build RESTful API
+- **JWT Authentication**: jsonwebtoken crate implements token management, complying with the documented 15-minute access token and 7-day refresh token policy
+- **Database Design**: SQLx integrated with MySQL, using connection pooling and prepared statements
+- **Error Handling**: thiserror and anyhow implement unified error handling
+- **FFI Design**: C-compatible interface layer, providing safe memory management for all platforms
 
 ### Project Structure (structure.md)
-按照 Cargo workspace 结构组织代码：
-- `server/core/` - 领域模型和业务逻辑
-- `server/api/` - RESTful API 端点和中间件
-- `server/infrastructure/` - 数据库和外部服务适配器
-- `server/ffi/` - 平台特定的 FFI 绑定（未来阶段）
+Code organization following Cargo workspace structure:
+- `server/core/` - Domain models and business logic
+- `server/api/` - RESTful API endpoints and middleware
+- `server/infrastructure/` - Database and external service adapters
+- `server/ffi/` - Platform-specific FFI bindings (future phase)
 
 ## Code Reuse Analysis
 
 ### Existing Components to Leverage
-由于服务器端代码尚未实现，本设计将建立可重用的基础组件：
-- **基础架构模式**：建立可被其他功能模块复用的认证中间件
-- **错误处理框架**：创建统一的错误类型和响应格式
-- **数据库连接池**：实现可共享的数据库访问层
-- **验证工具**：创建手机号和输入验证的通用函数
+Since server-side code has not been implemented yet, this design will establish reusable foundation components:
+- **Infrastructure Patterns**: Establish authentication middleware that can be reused by other feature modules
+- **Error Handling Framework**: Create unified error types and response formats
+- **Database Connection Pool**: Implement shareable database access layer
+- **Validation Tools**: Create generic functions for phone number and input validation
 
 ### Integration Points
-- **原型 UI 参考**：复用 `prototype/auth/` 中的认证流程设计
-- **设计系统**：遵循 `prototype/styles/` 中定义的错误提示和加载状态模式
-- **未来集成**：预留与订单系统、用户资料、聊天功能的集成接口
+- **Prototype UI Reference**: Reuse authentication flow design from `prototype/auth/`
+- **Design System**: Follow error message and loading state patterns defined in `prototype/styles/`
+- **Future Integration**: Reserve integration interfaces for order system, user profiles, and chat features
 
 ## Architecture
 
-系统采用分层架构，清晰分离关注点：
+The system adopts a layered architecture with clear separation of concerns:
 
 ```mermaid
 graph TD
@@ -83,52 +83,52 @@ graph TD
 ## Components and Interfaces
 
 ### Component 1: Auth Service (server/core/services/auth_service.rs)
-- **Purpose:** 协调认证流程，管理用户注册和登录逻辑
+- **Purpose:** Coordinate authentication flow, manage user registration and login logic
 - **Interfaces:** 
   - `send_verification_code(phone: &str) -> Result<(), AuthError>`
   - `verify_code(phone: &str, code: &str) -> Result<AuthToken, AuthError>`
   - `select_user_type(user_id: Uuid, user_type: UserType) -> Result<(), AuthError>`
   - `refresh_token(refresh_token: &str) -> Result<AuthToken, AuthError>`
 - **Dependencies:** UserRepository, VerificationService, TokenService
-- **Reuses:** 将建立可被其他服务复用的认证模式
+- **Reuses:** Will establish authentication patterns that can be reused by other services
 
 ### Component 2: Token Service (server/core/services/token_service.rs)
-- **Purpose:** 管理 JWT 令牌的生成、验证和刷新
+- **Purpose:** Manage JWT token generation, verification, and refresh
 - **Interfaces:**
   - `generate_tokens(user_id: Uuid) -> Result<TokenPair, TokenError>`
   - `verify_access_token(token: &str) -> Result<Claims, TokenError>`
   - `verify_refresh_token(token: &str) -> Result<Uuid, TokenError>`
   - `revoke_tokens(user_id: Uuid) -> Result<(), TokenError>`
 - **Dependencies:** JWT library (jsonwebtoken), TokenRepository
-- **Reuses:** JWT 配置和密钥管理模式
+- **Reuses:** JWT configuration and key management patterns
 
 ### Component 3: Verification Service (server/infrastructure/sms/verification_service.rs)
-- **Purpose:** 处理短信验证码的发送和验证
+- **Purpose:** Handle SMS verification code sending and validation
 - **Interfaces:**
   - `send_sms(phone: &str, code: &str) -> Result<(), SmsError>`
   - `generate_code() -> String`
   - `store_code(phone: &str, code: &str) -> Result<(), CacheError>`
   - `verify_code(phone: &str, code: &str) -> Result<bool, CacheError>`
 - **Dependencies:** SMS Provider (Twilio/AWS SNS), Redis Cache
-- **Reuses:** 缓存模式和重试机制
+- **Reuses:** Cache patterns and retry mechanisms
 
 ### Component 4: Rate Limiter (server/api/middleware/rate_limiter.rs)
-- **Purpose:** 防止 API 滥用和暴力破解攻击
+- **Purpose:** Prevent API abuse and brute force attacks
 - **Interfaces:**
   - `check_rate_limit(identifier: &str, action: &str) -> Result<(), RateLimitError>`
   - `record_attempt(identifier: &str, action: &str) -> Result<(), CacheError>`
   - `reset_limit(identifier: &str, action: &str) -> Result<(), CacheError>`
 - **Dependencies:** Redis Cache, Time utilities
-- **Reuses:** 可扩展到其他需要限流的 API 端点
+- **Reuses:** Extensible to other API endpoints requiring rate limiting
 
 ### Component 5: Auth Middleware (server/api/middleware/auth_middleware.rs)
-- **Purpose:** 验证请求中的 JWT 令牌并注入用户上下文
+- **Purpose:** Verify JWT tokens in requests and inject user context
 - **Interfaces:**
   - `verify_request(req: HttpRequest) -> Result<AuthContext, AuthError>`
   - `extract_token(req: &HttpRequest) -> Option<String>`
   - `inject_context(req: HttpRequest, context: AuthContext) -> HttpRequest`
 - **Dependencies:** TokenService, HTTP framework
-- **Reuses:** HTTP 头处理和请求增强模式
+- **Reuses:** HTTP header handling and request enhancement patterns
 
 ## Data Models
 
@@ -289,24 +289,24 @@ POST /api/v1/auth/logout
 
 ### Error Scenarios
 1. **Invalid Phone Format**
-   - **Handling:** 返回 400 错误码，包含具体格式要求
-   - **User Impact:** 显示 "请输入有效的手机号码" (中文) 或 "Please enter a valid phone number" (英文)
+   - **Handling:** Return 400 error code with specific format requirements
+   - **User Impact:** Display "Please enter a valid phone number"
 
 2. **SMS Service Failure**
-   - **Handling:** 尝试备用 SMS 提供商，记录失败日志
-   - **User Impact:** 显示 "短信发送失败，请稍后重试" 或提供替代验证方式
+   - **Handling:** Attempt backup SMS provider, log failure
+   - **User Impact:** Display "SMS sending failed, please try again later" or provide alternative verification method
 
 3. **Rate Limit Exceeded**
-   - **Handling:** 返回 429 错误码，包含重试时间
-   - **User Impact:** 显示 "请求过于频繁，请在 X 分钟后重试"
+   - **Handling:** Return 429 error code with retry time
+   - **User Impact:** Display "Too many requests, please try again in X minutes"
 
 4. **Invalid Verification Code**
-   - **Handling:** 返回 401 错误码，记录失败次数
-   - **User Impact:** 显示 "验证码错误，您还有 X 次尝试机会"
+   - **Handling:** Return 401 error code, record failure count
+   - **User Impact:** Display "Incorrect verification code, you have X attempts remaining"
 
 5. **Token Expired**
-   - **Handling:** 自动使用刷新令牌获取新的访问令牌
-   - **User Impact:** 无感知，后台自动处理
+   - **Handling:** Automatically use refresh token to obtain new access token
+   - **User Impact:** Transparent to user, handled automatically in background
 
 ### Error Response Format
 ```rust
@@ -321,63 +321,63 @@ pub struct ErrorResponse {
 ## Security Considerations
 
 1. **Phone Number Privacy**
-   - 存储时使用 SHA-256 哈希
-   - 传输时使用 TLS 1.3 加密
-   - 日志中脱敏处理（只显示末 4 位）
+   - Store using SHA-256 hash
+   - Transmit using TLS 1.3 encryption
+   - Desensitize in logs (show only last 4 digits)
 
 2. **Token Security**
-   - 使用 RS256 算法签名 JWT
-   - 刷新令牌存储哈希值而非明文
-   - 实现令牌轮换机制
+   - Use RS256 algorithm to sign JWT
+   - Store refresh token hash instead of plaintext
+   - Implement token rotation mechanism
 
 3. **Rate Limiting Strategy**
-   - SMS 发送：每手机号每小时 3 次
-   - 验证码验证：每手机号每验证码 3 次尝试
-   - API 调用：每 IP 每分钟 60 次请求
+   - SMS sending: 3 times per phone number per hour
+   - Verification code validation: 3 attempts per phone number per code
+   - API calls: 60 requests per IP per minute
 
 4. **Audit Logging**
-   - 记录所有认证尝试（成功和失败）
-   - 包含 IP 地址和 User Agent
-   - 用于安全分析和异常检测
+   - Log all authentication attempts (success and failure)
+   - Include IP address and User Agent
+   - For security analysis and anomaly detection
 
 ## Testing Strategy
 
 ### Unit Testing
-- **Token Service**: 测试令牌生成、验证、过期处理
-- **Verification Service**: 测试验证码生成、存储、验证逻辑
-- **Rate Limiter**: 测试限流规则和重置机制
-- **Validators**: 测试手机号格式验证
+- **Token Service**: Test token generation, verification, expiration handling
+- **Verification Service**: Test code generation, storage, validation logic
+- **Rate Limiter**: Test rate limiting rules and reset mechanisms
+- **Validators**: Test phone number format validation
 
 ### Integration Testing
-- **Auth Flow**: 完整的注册/登录流程测试
-- **Database Operations**: 用户创建、更新、查询测试
-- **SMS Integration**: 使用 mock provider 测试短信发送
-- **Cache Operations**: Redis 缓存的读写和过期测试
+- **Auth Flow**: Complete registration/login flow testing
+- **Database Operations**: User creation, update, query testing
+- **SMS Integration**: Test SMS sending using mock provider
+- **Cache Operations**: Redis cache read/write and expiration testing
 
 ### End-to-End Testing
-- **Multi-Platform Auth**: 模拟 iOS/Android/HarmonyOS 认证请求
-- **Token Refresh Flow**: 测试令牌自动刷新机制
-- **Rate Limit Scenarios**: 测试各种限流场景
-- **Error Recovery**: 测试各种错误场景的恢复流程
+- **Multi-Platform Auth**: Simulate iOS/Android/HarmonyOS authentication requests
+- **Token Refresh Flow**: Test automatic token refresh mechanism
+- **Rate Limit Scenarios**: Test various rate limiting scenarios
+- **Error Recovery**: Test recovery flows for various error scenarios
 
 ## Performance Optimization
 
-1. **数据库优化**
-   - 为 phone_hash 创建索引加速查询
-   - 使用连接池减少连接开销
-   - 批量操作减少数据库往返
+1. **Database Optimization**
+   - Create index for phone_hash to accelerate queries
+   - Use connection pooling to reduce connection overhead
+   - Batch operations to reduce database round trips
 
-2. **缓存策略**
-   - Redis 缓存验证码（5 分钟过期）
-   - 缓存用户会话信息
-   - 缓存速率限制计数器
+2. **Caching Strategy**
+   - Redis cache for verification codes (5-minute expiration)
+   - Cache user session information
+   - Cache rate limit counters
 
-3. **异步处理**
-   - 使用 Tokio 异步发送 SMS
-   - 并发处理多个验证请求
-   - 异步写入审计日志
+3. **Asynchronous Processing**
+   - Use Tokio to send SMS asynchronously
+   - Handle multiple verification requests concurrently
+   - Write audit logs asynchronously
 
-4. **响应优化**
-   - 预编译正则表达式
-   - 重用 JWT 验证器实例
-   - 连接复用和 HTTP/2 支持
+4. **Response Optimization**
+   - Pre-compile regular expressions
+   - Reuse JWT validator instances
+   - Connection reuse and HTTP/2 support
