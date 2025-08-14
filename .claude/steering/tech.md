@@ -2,28 +2,39 @@
 
 ## Architecture Overview
 - **Pattern**: Clean Architecture with Domain-Driven Design
-- **Core Business Logic**: Rust (shared across all platforms)
-- **Platform Communication**: FFI (Foreign Function Interface)
-- **Native UI**: Platform-specific implementations
+- **Core Business Logic**: Rust (shared across all platforms via FFI)
+- **Backend Priority**: Rust backend development precedes native app development
+- **Native UI**: Platform-specific implementations (future phase)
 
 ## Technology Stack
 
-### Core Business Layer (Shared)
+### Backend Layer (Current Priority)
 - **Language**: Rust
-- **Async Runtime**: Tokio
-- **Error Handling**: thiserror crate with Result types
-- **Serialization**: serde for JSON/data handling
-- **HTTP Client**: reqwest or hyper
-- **Database ORM**: diesel or sqlx
+- **Build System**: Cargo (standard Rust package manager)
+- **Async Runtime**: Tokio for async operations
+- **Web Framework**: Actix-web or Axum for RESTful APIs
+- **Database ORM**: SQLx or Diesel for MySQL
+- **Serialization**: Serde for JSON handling
+- **Error Handling**: thiserror and anyhow crates
+- **HTTP Client**: reqwest for external services
+- **Authentication**: jsonwebtoken for JWT handling
+- **Validation**: validator crate for input validation
 
-### Platform-Specific Layers
+### FFI Layer (For Platform Integration)
+- **C ABI**: Expose Rust functions via C-compatible interface
+- **iOS Bridge**: Swift-Rust interop via C bindings
+- **Android Bridge**: JNI (Java Native Interface)
+- **HarmonyOS Bridge**: NAPI bindings
+- **Memory Safety**: Careful handling at FFI boundaries
+
+### Platform-Specific Layers (Future Phase)
 
 #### iOS
 - **Language**: Swift
-- **UI Framework**: SwiftUI / UIKit
+- **UI Framework**: SwiftUI with UIKit fallback
 - **FFI Bridge**: Swift-Rust interop via C bindings
 - **Maps**: MapKit
-- **Networking**: URLSession (for platform-specific needs)
+- **Networking**: URLSession for platform-specific needs
 
 #### Android
 - **Language**: Kotlin
@@ -38,34 +49,37 @@
 - **FFI Bridge**: NAPI bindings
 - **Maps**: Petal Maps or compatible solution
 
-### Backend Infrastructure
-- **API Layer**: RESTful API (Rust-based)
-- **Database**: MySQL for data persistence
-- **SMS Provider**: To be selected (Twilio, AWS SNS, or regional provider)
+### Infrastructure Services
+- **Database**: MySQL for primary data persistence
+- **SMS Provider**: Twilio or AWS SNS for phone verification
+- **Push Notifications**: FCM/APNS/HMS Push (platform-specific)
 - **Real-time**: WebSocket for chat functionality
-- **Caching**: Redis (future consideration)
+- **Maps API**: Google Maps API for geocoding and places
 
-### Frontend Prototype
-- **Current**: HTML5 + Tailwind CSS (prototype phase)
-- **JavaScript**: Vanilla JS (no framework)
+### Prototype Reference
+- **Purpose**: UI/UX reference for native development
+- **Stack**: HTML5 + Tailwind CSS 4.1.11
 - **Maps**: Google Maps JavaScript API
 - **Icons**: FontAwesome 6.4.0
+- **Target**: iPhone 16 Pro (393×852 points)
 
 ## Performance Requirements
-- **Response Time**: < 500ms for all API calls
-- **Concurrent Users**: Support up to 10,000 concurrent users
-- **App Launch**: < 2 seconds cold start
-- **UI Responsiveness**: 60 FPS for animations
-- **Offline Support**: Basic functionality when disconnected
+- **API Response Time**: < 500ms for standard requests
+- **Database Queries**: < 100ms for simple queries
+- **Concurrent Connections**: Support 1,000+ concurrent WebSocket connections
+- **App Launch**: < 2 seconds cold start (future native apps)
+- **Backend Scalability**: Horizontal scaling capability
 
 ## Development Standards
 
-### Rust Best Practices
-- Follow Rust API Guidelines
-- Use clippy and rustfmt for code quality
-- Implement proper lifetimes and ownership
-- Prefer zero-cost abstractions
+### Rust Development
+- Follow official Rust API Guidelines
+- Use rustfmt for consistent formatting
+- Apply clippy lints for code quality
+- Implement proper error handling with Result types
+- Write comprehensive unit tests
 - Document public APIs with rustdoc
+- Use workspace for multi-crate organization
 
 ### Cross-Platform FFI Design
 - Unified C-compatible interface layer
@@ -81,6 +95,29 @@
 - Backpressure management
 - Connection pooling for database
 
+### Database Design
+- Normalized schema design (3NF minimum)
+- Proper indexing for query performance
+- Migration-based schema evolution
+- Connection pooling for efficiency
+- Prepared statements for security
+
+### API Design
+- RESTful principles with clear resource modeling
+- Consistent JSON response format
+- Versioned API endpoints
+- Comprehensive error responses
+- OpenAPI/Swagger documentation
+
+### Security Requirements
+- **Authentication**: JWT tokens with refresh mechanism
+- **Password Storage**: Argon2id hashing (if passwords added later)
+- **Data Encryption**: TLS 1.3 for all API communications
+- **Input Validation**: Strict validation on all inputs
+- **SQL Injection**: Parameterized queries only
+- **Rate Limiting**: Per-endpoint rate limits
+- **CORS**: Properly configured for web access
+
 ### Error Handling
 - Unified error types with thiserror
 - Consistent error codes for FFI
@@ -88,53 +125,73 @@
 - User-friendly error messages
 - Comprehensive logging
 
-## Security Requirements
-- **Authentication**: JWT tokens with refresh mechanism
-- **Data Encryption**: TLS 1.3 for all communications
-- **Password Storage**: Argon2 hashing (if passwords used)
-- **API Security**: Rate limiting and request validation
-- **Data Privacy**: GDPR-compliant data handling
-- **App Security**: Certificate pinning for API calls
 
 ## Third-Party Integrations
-- **SMS Provider**: Required for phone verification
-- **Maps Services**: Platform-specific map SDKs
-- **Analytics**: Optional (Firebase, Mixpanel)
-- **Crash Reporting**: Sentry or similar
+
+### Essential (Phase 1-2)
+- **SMS Provider**: Twilio or regional provider for verification
+- **Google Maps API**: Geocoding and place search
+
+### Future Integrations
 - **Push Notifications**: FCM/APNS/HMS Push
+- **Analytics**: Optional tracking solution
+- **Crash Reporting**: Sentry or similar
+- **Payment Gateway**: Stripe or regional provider (deferred)
 
 ## Development Tools
-- **Version Control**: Git
-- **CI/CD**: GitHub Actions or similar
-- **Code Quality**: rustfmt, clippy, SwiftLint, ktlint
-- **Testing**: Built-in Rust testing, XCTest, JUnit
-- **Documentation**: rustdoc, inline comments
-- **Build System**: Cargo for Rust, Gradle/Xcode/DevEco
+- **Version Control**: Git with feature branch workflow
+- **Rust Toolchain**: Latest stable Rust
+- **IDE**: VS Code with rust-analyzer
+- **Database Tools**: MySQL Workbench or DBeaver
+- **API Testing**: Postman or Insomnia
+- **Load Testing**: k6 or Apache JMeter
 
 ## Testing Strategy
-- **Unit Tests**: Core business logic in Rust
-- **Integration Tests**: FFI boundary testing
-- **UI Tests**: Platform-specific UI testing
-- **Performance Tests**: Load testing for APIs
-- **Coverage Target**: 70% for critical paths
+
+### Backend Testing
+- **Unit Tests**: Business logic with 80% coverage target
+- **Integration Tests**: API endpoints and database operations
+- **Load Tests**: Performance under concurrent load
+- **Security Tests**: OWASP API Security Top 10
+
+### Future Native App Testing
+- **Unit Tests**: Core functionality
+- **UI Tests**: Platform-specific testing
+- **E2E Tests**: Critical user journeys
 
 ## Deployment Architecture
-- **API Hosting**: Cloud provider (AWS/GCP/Azure)
-- **Database**: Managed MySQL instance
-- **CDN**: For static assets
-- **Monitoring**: Application performance monitoring
-- **Logging**: Centralized log aggregation
+- **Environment**: Development → Staging → Production
+- **Backend Hosting**: Cloud VPS or containerized deployment
+- **Database**: Managed MySQL service
+- **CI/CD**: GitHub Actions for automated deployment
+- **Monitoring**: Application and infrastructure monitoring
+- **Logging**: Structured logging with log aggregation
 
 ## Technical Constraints
-- **API Response Time**: Must not exceed 500ms
-- **Memory Usage**: Optimize for mobile constraints
-- **Battery Usage**: Minimize background operations
-- **Network**: Handle poor connectivity gracefully
-- **Storage**: Efficient local data caching
+- **Solo Development**: Architecture must be maintainable by one developer
+- **Incremental Delivery**: Backend can function independently
+- **Platform Independence**: Core logic must work across all platforms
+- **Resource Efficiency**: Optimize for cost-effective hosting
 
-## Future Considerations
-- **Microservices**: Potential service decomposition
-- **GraphQL**: Alternative to REST API
-- **Real-time Tracking**: WebRTC for live location
-- **Machine Learning**: Matching algorithm improvements
-- **Blockchain**: Smart contracts for payments (long-term)
+## Development Phases
+
+### Phase 1: Backend Foundation (Current)
+- Rust project setup with Cargo
+- Database schema design and migrations
+- Core domain models and business logic
+- RESTful API implementation
+- Authentication and authorization
+- SMS integration for verification
+
+### Phase 2: Backend Completion
+- WebSocket server for real-time features
+- Google Maps integration
+- Advanced search and filtering
+- Performance optimization
+- API documentation
+
+### Phase 3: Native Development (Future)
+- FFI layer implementation
+- Platform-specific UI development
+- Native feature integration
+- App store deployment
