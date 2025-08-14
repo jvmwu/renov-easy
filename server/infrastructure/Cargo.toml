@@ -1,0 +1,60 @@
+[package]
+name = "infrastructure"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Infrastructure layer - Database, cache, SMS, and external service implementations"
+repository.workspace = true
+
+[dependencies]
+# Core domain and error types
+renov_core = { path = "../core", package = "core" }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Database
+sqlx = { workspace = true }
+
+# Cache (Redis)
+redis = { workspace = true }
+
+# HTTP client for external services
+reqwest = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Date and time
+chrono = { workspace = true }
+
+# UUID support
+uuid = { workspace = true }
+
+# Logging and tracing
+tracing = { workspace = true }
+
+# Base64 encoding (for SMS services)
+base64 = { workspace = true }
+
+# Configuration
+config = { workspace = true }
+
+# Environment variables
+dotenvy = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[features]
+default = ["mysql", "redis-cache", "twilio-sms"]
+mysql = ["sqlx/mysql"]
+redis-cache = ["redis/tokio-comp"]
+twilio-sms = []
+mock-services = []

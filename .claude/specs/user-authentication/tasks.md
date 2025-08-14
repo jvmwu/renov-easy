@@ -20,21 +20,21 @@
 
 ### 1. 项目初始化和基础设置
 
-- [ ] 1. 创建 Rust workspace 配置文件 server/Cargo.toml
+- [x] 1. 创建 Rust workspace 配置文件 server/Cargo.toml
   - 文件: server/Cargo.toml
   - 定义 workspace members: api, core, infrastructure
   - 配置共享依赖: tokio, serde, sqlx, uuid, chrono
   - 设置 Rust 2021 edition 和基本元数据
   - _Requirements: 技术栈设置_
 
-- [ ] 2. 创建 core crate 的 Cargo.toml 和入口文件
+- [x] 2. 创建 core crate 的 Cargo.toml 和入口文件
   - 文件: server/core/Cargo.toml, server/core/src/lib.rs
   - 配置 core 依赖: serde, uuid, chrono, thiserror
   - 创建模块声明: domain, services, repositories, errors
   - 导出公共接口
   - _Requirements: 4.1_
 
-- [ ] 3. 创建 infrastructure crate 的 Cargo.toml 和入口文件
+- [x] 3. 创建 infrastructure crate 的 Cargo.toml 和入口文件
   - 文件: server/infrastructure/Cargo.toml, server/infrastructure/src/lib.rs
   - 配置依赖: sqlx, redis, reqwest, tokio
   - 创建模块声明: database, sms, cache

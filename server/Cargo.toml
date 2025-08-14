@@ -1,0 +1,65 @@
+[workspace]
+resolver = "2"
+members = [
+    # "api",      # TODO: Create api crate
+    "core", 
+    "infrastructure",
+    # "ffi"       # TODO: Add ffi crate manifest
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["RenovEasy Team"]
+license = "MIT"
+description = "RenovEasy backend services - Cross-platform renovation marketplace"
+repository = "https://github.com/renoveasty/renov-easy"
+
+[workspace.dependencies]
+# Async runtime and web framework
+tokio = { version = "1.35", features = ["full"] }
+actix-web = "4.4"
+actix-cors = "0.6"
+
+# Serialization and data handling
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database and ORM
+sqlx = { version = "0.7", features = ["mysql", "runtime-tokio-rustls", "chrono", "uuid"] }
+
+# Authentication and security
+jsonwebtoken = "9.2"
+bcrypt = "0.15"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Date and time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# HTTP client for external services
+reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
+
+# Validation and configuration
+validator = { version = "0.16", features = ["derive"] }
+config = "0.13"
+
+# Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-actix-web = "0.7"
+
+# Redis for caching
+redis = { version = "0.24", features = ["tokio-comp"] }
+
+# Environment variables
+dotenvy = "0.15"
+
+# SMS and external services (Twilio)
+base64 = "0.21"
+
+# Cross-platform FFI support
+uniffi = "0.25"
