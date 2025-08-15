@@ -1,0 +1,17 @@
+{
+  "name": "renov-easy",
+  "version": "1.0.0",
+  "description": "RenovEasy - Cross-platform renovation marketplace",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

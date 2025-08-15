@@ -53,3 +53,7 @@ logs/
 tmp/
 temp/
 *.tmp
+
+
+# node_modules
+node_modules/

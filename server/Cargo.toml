@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    # "api",      # TODO: Create api crate
+    "api",
     "core", 
     "infrastructure",
     # "ffi"       # TODO: Add ffi crate manifest

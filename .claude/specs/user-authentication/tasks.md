@@ -41,7 +41,7 @@
   - 设置异步运行时
   - _Requirements: 4.1_
 
-- [ ] 4. 创建 api crate 的 Cargo.toml 和入口文件
+- [x] 4. 创建 api crate 的 Cargo.toml 和入口文件
   - 文件: server/api/Cargo.toml, server/api/src/main.rs
   - 配置依赖: actix-web, jsonwebtoken, env_logger
   - 创建基本 HTTP 服务器结构

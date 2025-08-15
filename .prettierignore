@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+target/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Git
+.git/
+.gitignore
+
+# Rust/Cargo
+Cargo.lock
+*.rs
+
+# Database
+*.sql
+migrations/
+
+# Environment files
+.env*
+
+# Binary files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.pdf
+*.zip
+*.tar.gz
+
+# Generated files
+*.min.js
+*.min.css
+
+# Documentation
+docs/
