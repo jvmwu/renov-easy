@@ -7,10 +7,8 @@
 //! - Database migrations
 
 pub mod connection;
+pub mod mysql;
 
 // Re-export commonly used types
 pub use connection::{DatabasePool, PoolStatistics};
-
-// Future modules will be added here:
-// pub mod mysql;
-// pub mod repositories;
+pub use mysql::{MySqlUserRepository, MySqlTokenRepository};

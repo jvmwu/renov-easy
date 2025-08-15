@@ -37,6 +37,12 @@ chrono = { workspace = true }
 # UUID support
 uuid = { workspace = true }
 
+# Cryptography for phone hashing
+sha2 = "0.10"
+
+# Async trait support
+async-trait = "0.1"
+
 # Logging and tracing
 tracing = { workspace = true }
 

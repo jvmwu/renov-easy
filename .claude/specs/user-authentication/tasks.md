@@ -103,21 +103,21 @@
 
 ### 4. Repository 层实现
 
-- [ ] 12. 定义 UserRepository trait
+- [x] 12. 定义 UserRepository trait
   - 文件: server/core/src/repositories/user_repository.rs
   - 定义异步方法: find_by_phone, create, update, find_by_id
   - 使用 Result 类型处理错误
   - 添加文档注释
   - _Requirements: 1.1, 3.1_
 
-- [ ] 13. 实现 MySQL UserRepository
+- [x] 13. 实现 MySQL UserRepository
   - 文件: server/infrastructure/src/database/mysql/user_repository_impl.rs
   - 实现 UserRepository trait 的所有方法
   - 使用 SQLx 执行查询
   - 处理手机号哈希
   - _Requirements: 1.1, 安全要求_
 
-- [ ] 14. 定义和实现 TokenRepository
+- [x] 14. 定义和实现 TokenRepository
   - 文件: server/core/src/repositories/token_repository.rs
   - 文件: server/infrastructure/src/database/mysql/token_repository_impl.rs
   - 定义方法: save_refresh_token, find_refresh_token, revoke_token
