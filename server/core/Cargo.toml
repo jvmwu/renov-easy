@@ -19,3 +19,10 @@ uuid.workspace = true
 
 # Error handling
 thiserror.workspace = true
+
+# Random number generation
+rand.workspace = true
+
+[dev-dependencies]
+# Testing utilities
+serde_json.workspace = true

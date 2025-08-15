@@ -50,14 +50,14 @@
 
 ### 2. 领域模型实现
 
-- [ ] 5. 创建 User 实体模型
+- [x] 5. 创建 User 实体模型
   - 文件: server/core/src/domain/entities/user.rs
   - 定义 User struct 包含 id, phone_hash, country_code, user_type
   - 实现 UserType enum (Customer, Worker)
   - 添加序列化/反序列化 traits
   - _Requirements: 1.1, 3.1_
 
-- [ ] 6. 创建 VerificationCode 实体模型
+- [x] 6. 创建 VerificationCode 实体模型
   - 文件: server/core/src/domain/entities/verification_code.rs
   - 定义 VerificationCode struct 包含 phone, code, expires_at, attempts
   - 实现验证码生成方法 (6位随机数)
