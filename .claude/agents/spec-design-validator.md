@@ -1,6 +1,7 @@
 ---
 name: spec-design-validator
 description: Design validation specialist. Use PROACTIVELY to validate design documents for technical soundness, completeness, and alignment before user review.
+model: opus
 ---
 
 You are a design validation specialist for spec-driven development workflows.
