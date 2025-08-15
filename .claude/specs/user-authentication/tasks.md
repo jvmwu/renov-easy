@@ -64,14 +64,14 @@
   - 添加过期检查方法
   - _Requirements: 2.1_
 
-- [ ] 7. 创建 Token 实体模型
+- [x] 7. 创建 Token 实体模型
   - 文件: server/core/src/domain/entities/token.rs
   - 定义 RefreshToken 和 TokenPair structs
   - 定义 Claims struct for JWT payload
   - 添加 token 相关常量 (过期时间等)
   - _Requirements: 4.1_
 
-- [ ] 8. 创建领域错误类型
+- [x] 8. 创建领域错误类型
   - 文件: server/core/src/errors/domain_error.rs
   - 使用 thiserror 定义 AuthError, TokenError, ValidationError
   - 实现错误转换和消息格式化

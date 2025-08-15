@@ -1,8 +1,16 @@
 //! Domain-specific error types and error handling.
 
+mod domain_error;
+
+// Re-export all error types and utilities
+pub use domain_error::{
+    AuthError, ErrorResponse, TokenError, ValidationError,
+    extract_chinese_message, extract_english_message,
+};
+
 use thiserror::Error;
 
-/// Core domain errors
+/// Core domain errors (general purpose)
 #[derive(Error, Debug)]
 pub enum DomainError {
     #[error("Validation error: {message}")]
@@ -19,6 +27,16 @@ pub enum DomainError {
     
     #[error("Internal error: {message}")]
     Internal { message: String },
+    
+    // Bridge to specific error types
+    #[error(transparent)]
+    Auth(#[from] AuthError),
+    
+    #[error(transparent)]
+    Token(#[from] TokenError),
+    
+    #[error(transparent)]
+    ValidationErr(#[from] ValidationError),
 }
 
 pub type DomainResult<T> = Result<T, DomainError>;

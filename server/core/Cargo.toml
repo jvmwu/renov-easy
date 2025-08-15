@@ -10,6 +10,7 @@ repository.workspace = true
 [dependencies]
 # Serialization
 serde.workspace = true
+serde_json.workspace = true
 
 # Date and time handling
 chrono.workspace = true
@@ -25,4 +26,3 @@ rand.workspace = true
 
 [dev-dependencies]
 # Testing utilities
-serde_json.workspace = true
