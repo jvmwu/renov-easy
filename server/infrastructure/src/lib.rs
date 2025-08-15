@@ -23,15 +23,7 @@
 pub use renov_core::errors::*;
 
 /// Database module - MySQL implementations using SQLx
-pub mod database {
-    //! Database persistence layer using SQLx with MySQL
-    //! 
-    //! Provides:
-    //! - Connection pool management
-    //! - Repository pattern implementations
-    //! - Database migrations
-    //! - Transaction support
-}
+pub mod database;
 
 /// SMS service module - External SMS providers
 pub mod sms {

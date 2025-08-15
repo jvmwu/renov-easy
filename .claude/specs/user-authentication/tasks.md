@@ -80,21 +80,21 @@
 
 ### 3. 数据库和迁移设置
 
-- [ ] 9. 创建数据库迁移脚本 - users 表
+- [x] 9. 创建数据库迁移脚本 - users 表
   - 文件: server/migrations/001_create_users_table.sql
   - 创建 users 表结构 (id, phone_hash, country_code, user_type 等)
   - 添加必要的索引 (phone_hash, user_type)
   - 设置字符集为 UTF8MB4
   - _Requirements: 1.1_
 
-- [ ] 10. 创建数据库迁移脚本 - tokens 和 audit 表
+- [x] 10. 创建数据库迁移脚本 - tokens 和 audit 表
   - 文件: server/migrations/002_create_tokens_audit_tables.sql
   - 创建 refresh_tokens 表
   - 创建 auth_audit_log 表
   - 添加外键约束和索引
   - _Requirements: 4.1, 5.4_
 
-- [ ] 11. 实现数据库连接池配置
+- [x] 11. 实现数据库连接池配置
   - 文件: server/infrastructure/src/database/connection.rs
   - 使用 SQLx 创建 MySQL 连接池
   - 配置连接池大小和超时
