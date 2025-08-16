@@ -238,9 +238,9 @@ pub mod mock {
             
             // Check for duplicate
             if tokens.contains_key(&token.token_hash) {
-                return Err(DomainError::Validation(
-                    "Token already exists".to_string(),
-                ));
+                return Err(DomainError::Validation {
+                    message: "Token already exists".to_string(),
+                });
             }
             
             tokens.insert(token.token_hash.clone(), token.clone());
@@ -332,7 +332,7 @@ mod tests {
         let result = repo.save_refresh_token(token2).await;
         
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), DomainError::Validation(_)));
+        assert!(matches!(result.unwrap_err(), DomainError::Validation { .. }));
     }
 
     #[tokio::test]

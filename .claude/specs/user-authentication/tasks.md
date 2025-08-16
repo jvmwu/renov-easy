@@ -149,49 +149,49 @@
 
 ### 6. 核心业务服务
 
-- [ ] 18. 创建 TokenService
+- [x] 18. 创建 TokenService
   - 文件: server/core/src/services/token_service.rs
   - 实现 JWT 生成 (access_token 15分钟, refresh_token 7天)
   - 实现 token 验证方法
   - 实现 refresh token 逻辑
   - _Requirements: 4.1, 4.2, 4.3_
 
-- [ ] 19. 创建 VerificationService
+- [x] 19. 创建 VerificationService
   - 文件: server/core/src/services/verification_service.rs
   - 整合 SMS 服务和缓存服务
   - 实现发送验证码逻辑
   - 实现验证码校验逻辑
   - _Requirements: 2.1, 2.2_
 
-- [ ] 20. 创建 AuthService - 发送验证码功能
+- [x] 20. 创建 AuthService - 发送验证码功能
   - 文件: server/core/src/services/auth_service.rs (part 1)
   - 实现 send_verification_code 方法
   - 集成手机号验证
   - 集成速率限制检查
   - _Requirements: 1.1, 5.1_
 
-- [ ] 21. 创建 AuthService - 验证码校验逻辑
+- [x] 21. 创建 AuthService - 验证码校验逻辑
   - 文件: server/core/src/services/auth_service.rs (part 2)
   - 实现 verify_code 方法的验证码校验部分
   - 调用 VerificationService 验证
   - 返回验证结果
   - _Requirements: 2.2_
 
-- [ ] 22. 创建 AuthService - 用户创建和获取逻辑
+- [x] 22. 创建 AuthService - 用户创建和获取逻辑
   - 文件: server/core/src/services/auth_service.rs (part 3)
   - 实现用户查找逻辑
   - 实现新用户创建逻辑
   - 处理用户状态检查
   - _Requirements: 1.1, 3.1_
 
-- [ ] 23. 创建 AuthService - Token 生成集成
+- [x] 23. 创建 AuthService - Token 生成集成
   - 文件: server/core/src/services/auth_service.rs (part 4)
   - 集成 TokenService 生成 token pair
   - 处理新用户的类型选择标记
   - 返回认证响应
   - _Requirements: 4.1_
 
-- [ ] 24. 创建 AuthService - 用户类型选择功能
+- [x] 24. 创建 AuthService - 用户类型选择功能
   - 文件: server/core/src/services/auth_service.rs (part 5)
   - 实现 select_user_type 方法
   - 更新用户类型

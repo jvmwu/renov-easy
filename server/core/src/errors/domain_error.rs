@@ -46,6 +46,12 @@ pub enum AuthError {
 
     #[error("Session expired. Please login again | 会话已过期，请重新登录")]
     SessionExpired,
+    
+    #[error("Registration is currently disabled | 注册功能暂时关闭")]
+    RegistrationDisabled,
+    
+    #[error("User account is blocked | 用户账户已被封禁")]
+    UserBlocked,
 }
 
 /// Token-related errors with bilingual messages
@@ -122,6 +128,12 @@ pub enum ValidationError {
 
     #[error("Business rule violation: {rule} | 业务规则违反: {rule}")]
     BusinessRuleViolation { rule: String },
+
+    #[error("{message_en} | {message_zh}")]
+    RateLimitExceeded { 
+        message_en: String,
+        message_zh: String,
+    },
 }
 
 /// Unified error response structure for API responses
@@ -180,6 +192,8 @@ impl From<AuthError> for ErrorResponse {
             AuthError::InsufficientPermissions => "INSUFFICIENT_PERMISSIONS",
             AuthError::AccountSuspended => "ACCOUNT_SUSPENDED",
             AuthError::SessionExpired => "SESSION_EXPIRED",
+            AuthError::RegistrationDisabled => "REGISTRATION_DISABLED",
+            AuthError::UserBlocked => "USER_BLOCKED",
         };
 
         ErrorResponse::new(error_code, err.to_string())
@@ -220,6 +234,7 @@ impl From<ValidationError> for ErrorResponse {
             ValidationError::InvalidDate => "INVALID_DATE",
             ValidationError::DuplicateValue { .. } => "DUPLICATE_VALUE",
             ValidationError::BusinessRuleViolation { .. } => "BUSINESS_RULE_VIOLATION",
+            ValidationError::RateLimitExceeded { .. } => "RATE_LIMIT_EXCEEDED",
         };
 
         ErrorResponse::new(error_code, err.to_string())

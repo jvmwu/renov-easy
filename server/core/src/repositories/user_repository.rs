@@ -286,9 +286,9 @@ pub mod mock {
             if users.values().any(|u| {
                 u.phone_hash == user.phone_hash && u.country_code == user.country_code
             }) {
-                return Err(DomainError::Validation(
-                    "Phone number already registered".to_string(),
-                ));
+                return Err(DomainError::Validation {
+                    message: "Phone number already registered".to_string(),
+                });
             }
             
             users.insert(user.id, user.clone());
@@ -299,7 +299,9 @@ pub mod mock {
             let mut users = self.users.write().await;
             
             if !users.contains_key(&user.id) {
-                return Err(DomainError::NotFound("User not found".to_string()));
+                return Err(DomainError::NotFound {
+                    resource: "User".to_string(),
+                });
             }
             
             users.insert(user.id, user.clone());
@@ -392,7 +394,7 @@ mod tests {
         let result = repo.create(user2).await;
         
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), DomainError::Validation(_)));
+        assert!(matches!(result.unwrap_err(), DomainError::Validation { .. }));
     }
 
     #[tokio::test]

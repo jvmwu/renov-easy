@@ -54,6 +54,7 @@ tmp/
 temp/
 *.tmp
 
-
-# node_modules
+# node
+yarn.lock
+package-lock.json
 node_modules/
