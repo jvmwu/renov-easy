@@ -24,5 +24,8 @@ thiserror.workspace = true
 # Random number generation
 rand.workspace = true
 
+# Async trait support
+async-trait = "0.1"
+
 [dev-dependencies]
 # Testing utilities

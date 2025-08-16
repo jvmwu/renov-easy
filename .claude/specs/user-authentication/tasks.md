@@ -126,21 +126,21 @@
 
 ### 5. 缓存和外部服务集成
 
-- [ ] 15. 实现 Redis 缓存连接
+- [x] 15. 实现 Redis 缓存连接
   - 文件: server/infrastructure/src/cache/redis_client.rs
   - 配置 Redis 连接池
   - 实现基本操作: set_with_expiry, get, delete
   - 添加连接重试逻辑
   - _Requirements: 2.3_
 
-- [ ] 16. 创建验证码缓存服务
+- [x] 16. 创建验证码缓存服务
   - 文件: server/infrastructure/src/cache/verification_cache.rs
   - 实现验证码存储 (5分钟过期)
   - 实现尝试次数记录
   - 实现验证码验证逻辑
   - _Requirements: 2.1, 2.2_
 
-- [ ] 17. 创建 SMS 服务接口和 Mock 实现
+- [x] 17. 创建 SMS 服务接口和 Mock 实现
   - 文件: server/infrastructure/src/sms/sms_service.rs
   - 文件: server/infrastructure/src/sms/mock_sms.rs
   - 定义 SmsService trait

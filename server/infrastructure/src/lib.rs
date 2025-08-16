@@ -23,28 +23,14 @@
 pub use renov_core::errors::*;
 
 /// Database module - MySQL implementations using SQLx
+#[cfg(feature = "mysql")]
 pub mod database;
 
 /// SMS service module - External SMS providers
-pub mod sms {
-    //! SMS service integrations for verification codes
-    //! 
-    //! Supports:
-    //! - Twilio SMS API
-    //! - AWS SNS (future)
-    //! - Mock implementation for testing
-}
+pub mod sms;
 
 /// Cache module - Redis client and operations  
-pub mod cache {
-    //! Redis caching layer for performance and rate limiting
-    //! 
-    //! Provides:
-    //! - Redis connection pooling
-    //! - Cache operations (get, set, delete, expire)
-    //! - Rate limiting counters
-    //! - Session storage
-}
+pub mod cache;
 
 /// Configuration module for infrastructure services
 pub mod config {
