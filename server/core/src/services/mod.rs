@@ -1,13 +1,13 @@
 //! Business services containing domain logic and use cases.
 
-pub mod auth_service;
-pub mod token_service;
-pub mod verification_service;
+pub mod auth;
+pub mod token;
+pub mod verification;
 
 // Re-export commonly used types
-pub use auth_service::{AuthService, AuthServiceConfig, RateLimiterTrait};
-pub use token_service::{TokenService, TokenServiceConfig};
-pub use verification_service::{
+pub use auth::{AuthService, AuthServiceConfig, RateLimiterTrait};
+pub use token::{TokenService, TokenServiceConfig};
+pub use verification::{
     VerificationService, VerificationServiceConfig, 
     SendCodeResult, VerifyCodeResult,
     SmsServiceTrait, CacheServiceTrait,
