@@ -3,7 +3,7 @@ resolver = "2"
 members = [
     "api",
     "core", 
-    "infrastructure",
+    "infra",
     # "ffi"       # TODO: Add ffi crate manifest
 ]
 

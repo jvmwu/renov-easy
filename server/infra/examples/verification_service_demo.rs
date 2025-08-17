@@ -12,7 +12,7 @@ use renov_core::services::{
     VerificationService, VerificationServiceConfig,
     SmsServiceTrait, CacheServiceTrait,
 };
-use renov_infrastructure::{
+use renov_infra:{
     cache::{verification_cache::VerificationCache, RedisClient},
     config::{CacheConfig, InfrastructureConfig},
     sms::{sms_service::SmsService, mock_sms::MockSmsService},
@@ -34,7 +34,7 @@ impl SmsServiceTrait for SmsServiceAdapter {
     }
 
     fn is_valid_phone_number(&self, phone: &str) -> bool {
-        renov_infrastructure::sms::sms_service::is_valid_phone_number(phone)
+        renov_infra::sms::sms_service::is_valid_phone_number(phone)
     }
 }
 

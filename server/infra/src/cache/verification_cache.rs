@@ -45,7 +45,7 @@ impl VerificationCache {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::{RedisClient, verification_cache::VerificationCache};
+    /// use renov_infra::cache::{RedisClient, verification_cache::VerificationCache};
     /// 
     /// async fn create_service(redis_client: RedisClient) {
     ///     let service = VerificationCache::new(redis_client);
@@ -69,7 +69,7 @@ impl VerificationCache {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::verification_cache::VerificationCache;
+    /// use renov_infra::cache::verification_cache::VerificationCache;
     /// 
     /// async fn store_code(service: &VerificationCache) {
     ///     let phone = "1234567890";
@@ -125,7 +125,7 @@ impl VerificationCache {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::verification_cache::VerificationCache;
+    /// use renov_infra::cache::verification_cache::VerificationCache;
     /// 
     /// async fn verify_code(service: &VerificationCache) {
     ///     let phone = "1234567890";
@@ -219,7 +219,7 @@ impl VerificationCache {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::verification_cache::VerificationCache;
+    /// use renov_infra::cache::verification_cache::VerificationCache;
     /// 
     /// async fn check_attempts(service: &VerificationCache, phone: &str) {
     ///     let remaining = service.get_remaining_attempts(phone).await.unwrap();
@@ -259,7 +259,7 @@ impl VerificationCache {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::verification_cache::VerificationCache;
+    /// use renov_infra::cache::verification_cache::VerificationCache;
     /// 
     /// async fn check_code_exists(service: &VerificationCache, phone: &str) {
     ///     if service.code_exists(phone).await.unwrap() {
@@ -282,7 +282,7 @@ impl VerificationCache {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::verification_cache::VerificationCache;
+    /// use renov_infra::cache::verification_cache::VerificationCache;
     /// 
     /// async fn check_ttl(service: &VerificationCache, phone: &str) {
     ///     if let Some(ttl) = service.get_code_ttl(phone).await.unwrap() {
@@ -307,7 +307,7 @@ impl VerificationCache {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::verification_cache::VerificationCache;
+    /// use renov_infra::cache::verification_cache::VerificationCache;
     /// 
     /// async fn clear_code(service: &VerificationCache, phone: &str) {
     ///     service.clear_verification(phone).await.unwrap();

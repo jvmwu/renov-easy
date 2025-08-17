@@ -1,9 +1,9 @@
 //! Integration tests for Redis cache client
 //! 
 //! These tests require a running Redis instance to execute.
-//! Run with: cargo test -p infrastructure --test redis_integration -- --ignored
+//! Run with: cargo test -p infra --test redis_integration -- --ignored
 
-use infrastructure::cache::{CacheConfig, RedisClient};
+use infra::cache::{CacheConfig, RedisClient};
 
 #[tokio::test]
 #[ignore] // Requires Redis server

@@ -1,7 +1,7 @@
 //! Integration tests for SMS service functionality
 
-use renov_infrastructure::sms::{SmsService, MockSmsService, mask_phone_number, is_valid_phone_number, create_sms_service};
-use renov_infrastructure::config::SmsConfig;
+use renov_infra::sms::{SmsService, MockSmsService, mask_phone_number, is_valid_phone_number, create_sms_service};
+use renov_infra::config::SmsConfig;
 
 #[tokio::test]
 async fn test_complete_sms_workflow() {

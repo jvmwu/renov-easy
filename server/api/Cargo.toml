@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 # Core dependencies from workspace
 core = { path = "../core" }
-infrastructure = { path = "../infrastructure" }
+infra = { path = "../infra" }
 
 # Web framework
 actix-web = "4.5"

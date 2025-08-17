@@ -1,6 +1,6 @@
 //! Example demonstrating the SMS service functionality
 
-use infrastructure::sms::{SmsService, MockSmsService};
+use infra::sms::{SmsService, MockSmsService};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

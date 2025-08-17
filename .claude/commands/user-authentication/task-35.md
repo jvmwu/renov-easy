@@ -368,7 +368,7 @@ renov-easy/
 │   │   │   ├── repositories/  # Repository traits
 │   │   │   └── errors/        # Domain errors
 │   │   └── tests/             # Unit tests
-│   ├── infrastructure/         # Infrastructure implementations
+│   ├── infra/                  # Infrastructure implementations
 │   │   ├── Cargo.toml         # Infrastructure crate
 │   │   ├── src/
 │   │   │   ├── database/      # Database implementations
@@ -400,7 +400,7 @@ renov-easy/
 members = [
     "server/api",
     "server/core",
-    "server/infrastructure",
+    "server/infra",
     "server/ffi"
 ]
 
@@ -484,7 +484,7 @@ src/
     └── response/
 ```
 
-#### Infrastructure (`server/infrastructure/`)
+#### Infrastructure (`server/infra/`)
 ```
 src/
 ├── database/
@@ -771,7 +771,7 @@ pub struct Config {
 按照 Cargo workspace 结构组织代码：
 - `server/core/` - 领域模型和业务逻辑
 - `server/api/` - RESTful API 端点和中间件
-- `server/infrastructure/` - 数据库和外部服务适配器
+- `server/infra/` - 数据库和外部服务适配器
 - `server/ffi/` - 平台特定的 FFI 绑定（未来阶段）
 
 ## Code Reuse Analysis
@@ -856,7 +856,7 @@ graph TD
 - **Dependencies:** JWT library (jsonwebtoken), TokenRepository
 - **Reuses:** JWT 配置和密钥管理模式
 
-### Component 3: Verification Service (server/infrastructure/sms/verification_service.rs)
+### Component 3: Verification Service (server/infra/sms/verification_service.rs)
 - **Purpose:** 处理短信验证码的发送和验证
 - **Interfaces:**
   - `send_sms(phone: &str, code: &str) -> Result<(), SmsError>`

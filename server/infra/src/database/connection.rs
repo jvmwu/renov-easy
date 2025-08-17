@@ -38,8 +38,8 @@ impl DatabasePool {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::config::DatabaseConfig;
-    /// use renov_infrastructure::database::connection::DatabasePool;
+    /// use renov_infra::config::DatabaseConfig;
+    /// use renov_infra::database::connection::DatabasePool;
     /// 
     /// async fn create_pool() -> Result<DatabasePool, Box<dyn std::error::Error>> {
     ///     let config = DatabaseConfig {
@@ -109,7 +109,7 @@ impl DatabasePool {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::database::connection::DatabasePool;
+    /// use renov_infra::database::connection::DatabasePool;
     /// 
     /// async fn check_health(pool: &DatabasePool) {
     ///     match pool.health_check().await {

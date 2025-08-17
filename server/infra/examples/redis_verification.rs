@@ -3,10 +3,10 @@
 //! This example demonstrates how to use the Redis client for storing
 //! and validating SMS verification codes with expiry and rate limiting.
 //! 
-//! Run with: cargo run --example redis_verification -p infrastructure
+//! Run with: cargo run --example redis_verification -p infra
 
-use infrastructure::cache::{CacheConfig, RedisClient};
-use infrastructure::InfrastructureError;
+use infra::cache::{CacheConfig, RedisClient};
+use infra::InfrastructureError;
 use rand::Rng;
 use std::time::Duration;
 

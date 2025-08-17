@@ -1,8 +1,8 @@
 //! Integration tests for database repositories
 
-use renov_infrastructure::database::mysql::{MySqlUserRepository, MySqlTokenRepository};
-use renov_infrastructure::database::DatabasePool;
-use renov_infrastructure::config::DatabaseConfig;
+use renov_infra::database::mysql::{MySqlUserRepository, MySqlTokenRepository};
+use renov_infra::database::DatabasePool;
+use renov_infra::config::DatabaseConfig;
 use renov_core::repositories::user::UserRepository;
 use renov_core::repositories::token::TokenRepository;
 use renov_core::domain::entities::user::User;

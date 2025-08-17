@@ -2,8 +2,8 @@
 //! 
 //! Run with: cargo run --example verification_cache_demo
 
-use infrastructure::cache::{RedisClient, VerificationCache};
-use infrastructure::config::CacheConfig;
+use infra::cache::{RedisClient, VerificationCache};
+use infra::config::CacheConfig;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

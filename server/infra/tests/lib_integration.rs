@@ -1,6 +1,6 @@
 //! Integration tests for infrastructure initialization
 
-use renov_infrastructure::{initialize, config};
+use renov_infra::{initialize, config};
 
 #[tokio::test]
 #[ignore] // Requires actual infrastructure services

@@ -4,62 +4,73 @@
 
 ```
 renov-easy/
-├── .claude/                     # Claude AI configuration
-│   └── steering/                # Project steering documents
-├── docs/                        # Documentation (date-based per CLAUDE.md)
-│   └── {YYYY_MM_DD}/           # Date-organized folders
-│       ├── tasks/              # Task lists and TODOs
-│       ├── specs/              # Requirements specifications
-│       └── design/             # Design documents
-├── platform/                   # Native platform implementations (future)
-│   ├── android/                # Android app (Kotlin)
-│   ├── ios/                    # iOS app (Swift)
-│   └── harmony/                # HarmonyOS app (ArkTS)
-├── prototype/                   # HTML/CSS UI reference
-│   ├── auth/                   # Authentication flow mockups
-│   ├── styles/                 # Design system reference
-│   └── *.html                  # Page mockups for UI reference
-├── server/                      # Rust backend (current priority)
-│   ├── Cargo.toml              # Workspace configuration
-│   ├── api/                    # REST API server
-│   │   ├── Cargo.toml         # API crate configuration
+├── .claude/                       # Claude AI configuration
+│   └── steering/                  # Project steering documents
+├── docs/                          # Documentation (date-based per CLAUDE.md)
+│   └── {YYYY_MM_DD}/              # Date-organized folders
+│       ├── tasks/                 # Task lists and TODOs
+│       ├── specs/                 # Requirements specifications
+│       └── design/                # Design documents
+├── platform/                      # Native platform implementations (future)
+│   ├── android/                   # Android app (Kotlin)
+│   ├── ios/                       # iOS app (Swift)
+│   └── harmony/                   # HarmonyOS app (ArkTS)
+├── prototype/                     # HTML/CSS UI reference
+│   ├── auth/                      # Authentication flow mockups
+│   ├── styles/                    # Design system reference
+│   └── *.html                     # Page mockups for UI reference
+├── server/                        # Rust backend (current priority)
+│   ├── Cargo.toml                 # Workspace configuration
+│   ├── api/                       # REST API server
+│   │   ├── Cargo.toml             # API crate configuration
 │   │   ├── src/
-│   │   │   ├── main.rs        # Server entry point
-│   │   │   ├── routes/        # API route handlers
-│   │   │   ├── middleware/    # Request middleware
-│   │   │   └── handlers/      # Request handlers
-│   │   └── tests/             # API integration tests
-│   ├── core/                   # Core business logic
-│   │   ├── Cargo.toml         # Core crate configuration
+│   │   │   ├── main.rs            # Server entry point
+│   │   │   ├── routes/            # API route handlers
+│   │   │   ├── middleware/        # Request middleware
+│   │   │   └── handlers/          # Request handlers
+│   │   └── tests/                 # API integration tests
+│   ├── core/                      # Core business logic
+│   │   ├── Cargo.toml             # Core crate configuration
 │   │   ├── src/
-│   │   │   ├── lib.rs         # Library entry point
-│   │   │   ├── domain/        # Domain models and entities
-│   │   │   ├── services/      # Business services
-│   │   │   ├── repositories/  # Repository traits
-│   │   │   └── errors/        # Domain errors
-│   │   └── tests/             # Unit tests
-│   ├── infrastructure/         # Infrastructure implementations
-│   │   ├── Cargo.toml         # Infrastructure crate
+│   │   │   ├── lib.rs             # Library entry point
+│   │   │   ├── domain/            # Domain models and entities
+│   │   │   │   ├── entities/      # Business entities
+│   │   │   │   │   └── tests/     # Entity unit tests
+│   │   │   │   └── value_objects/ # Value objects
+│   │   │   │       └── tests/     # Value object unit tests
+│   │   │   ├── services/          # Business services
+│   │   │   │   └── tests/         # Service unit tests
+│   │   │   ├── repositories/      # Repository traits
+│   │   │   │   └── tests/         # Repository trait tests
+│   │   │   └── errors/            # Domain errors
+│   │   └── tests/                 # Integration tests
+│   ├── infra/                     # Infrastructure implementations
+│   │   ├── Cargo.toml             # Infrastructure crate
 │   │   ├── src/
-│   │   │   ├── database/      # Database implementations
-│   │   │   ├── sms/           # SMS service adapters
-│   │   │   ├── maps/          # Maps service adapters
-│   │   │   └── cache/         # Caching implementations
-│   │   └── tests/
-│   ├── ffi/                    # Foreign Function Interface (future)
-│   │   ├── Cargo.toml         # FFI crate configuration
+│   │   │   ├── database/          # Database implementations
+│   │   │   │   ├── mysql/         # MySQL specific implementations
+│   │   │   │   └── tests/         # Database unit tests
+│   │   │   ├── sms/               # SMS service adapters
+│   │   │   │   └── tests/         # SMS service unit tests
+│   │   │   ├── maps/              # Maps service adapters
+│   │   │   │   └── tests/         # Maps service unit tests
+│   │   │   └── cache/             # Caching implementations
+│   │   │       └── tests/         # Cache unit tests
+│   │   └── tests/                 # Infrastructure integration tests
+│   ├── ffi/                       # Foreign Function Interface (future)
+│   │   ├── Cargo.toml             # FFI crate configuration
 │   │   └── src/
-│   │       ├── lib.rs         # C-compatible exports
-│   │       ├── android.rs     # Android-specific bindings
-│   │       ├── ios.rs         # iOS-specific bindings
-│   │       └── harmony.rs     # HarmonyOS-specific bindings
-│   ├── migrations/             # Database migrations
-│   │   └── *.sql              # SQL migration files
-│   └── tests/                  # End-to-end tests
-│       └── integration/        # Integration test suites
-└── tests/                       # Cross-platform E2E tests (future)
-    ├── api/                    # API test scenarios
-    └── load/                   # Load testing scripts
+│   │       ├── lib.rs             # C-compatible exports
+│   │       ├── android.rs         # Android-specific bindings
+│   │       ├── ios.rs             # iOS-specific bindings
+│   │       └── harmony.rs         # HarmonyOS-specific bindings
+│   ├── migrations/                # Database migrations
+│   │   └── *.sql                  # SQL migration files
+│   └── tests/                     # End-to-end tests
+│       └── integration/           # Integration test suites
+└── tests/                         # Cross-platform E2E tests (future)
+    ├── api/                       # API test scenarios
+    └── load/                      # Load testing scripts
 ```
 
 ## Cargo Workspace Structure
@@ -70,7 +81,7 @@ renov-easy/
 members = [
     "server/api",
     "server/core",
-    "server/infrastructure",
+    "server/infra",
     "server/ffi"
 ]
 
@@ -154,7 +165,7 @@ src/
     └── response/
 ```
 
-#### Infrastructure (`server/infrastructure/`)
+#### Infrastructure (`server/infra/`)
 ```
 src/
 ├── database/

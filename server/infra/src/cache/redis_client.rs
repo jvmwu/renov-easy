@@ -43,8 +43,8 @@ impl RedisClient {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::config::CacheConfig;
-    /// use renov_infrastructure::cache::redis_client::RedisClient;
+    /// use renov_infra::config::CacheConfig;
+    /// use renov_infra::cache::redis_client::RedisClient;
     /// 
     /// async fn create_client() -> Result<RedisClient, Box<dyn std::error::Error>> {
     ///     let config = CacheConfig {
@@ -153,7 +153,7 @@ impl RedisClient {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::redis_client::RedisClient;
+    /// use renov_infra::cache::redis_client::RedisClient;
     /// 
     /// async fn cache_verification_code(client: &RedisClient) {
     ///     let phone = "1234567890";
@@ -206,7 +206,7 @@ impl RedisClient {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::redis_client::RedisClient;
+    /// use renov_infra::cache::redis_client::RedisClient;
     /// 
     /// async fn get_verification_code(client: &RedisClient, phone: &str) {
     ///     let key = format!("verification:{}", phone);
@@ -257,7 +257,7 @@ impl RedisClient {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infrastructure::cache::redis_client::RedisClient;
+    /// use renov_infra::cache::redis_client::RedisClient;
     /// 
     /// async fn invalidate_verification_code(client: &RedisClient, phone: &str) {
     ///     let key = format!("verification:{}", phone);
