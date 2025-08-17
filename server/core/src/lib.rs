@@ -9,8 +9,18 @@ pub mod services;
 pub mod repositories;
 pub mod errors;
 
-// Re-export commonly used types for convenience
-pub use domain::*;
-pub use services::*;
-pub use repositories::*;
-pub use errors::*;
+// Re-export specific types to avoid naming conflicts
+// Domain exports
+pub use domain::entities;
+pub use domain::value_objects;
+
+// Service exports  
+pub use services::auth::{AuthService, AuthServiceConfig, RateLimiterTrait};
+
+// Repository exports
+pub use repositories::user::UserRepository;
+pub use repositories::token::TokenRepository;
+
+// Error exports
+pub use errors::{AuthError, TokenError, ValidationError, ErrorResponse};
+pub use errors::{extract_english_message, extract_chinese_message};

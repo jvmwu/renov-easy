@@ -1,7 +1,5 @@
 //! Unit tests for mock user repository
 
-use uuid::Uuid;
-
 use crate::domain::entities::user::{User, UserType};
 use crate::errors::DomainError;
 use crate::repositories::user::{UserRepository, MockUserRepository};

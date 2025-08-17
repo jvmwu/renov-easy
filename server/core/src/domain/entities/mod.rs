@@ -4,6 +4,9 @@ pub mod token;
 pub mod user;
 pub mod verification_code;
 
+#[cfg(test)]
+mod tests;
+
 // Placeholder for future entity modules
 // pub mod worker;
 // pub mod order;

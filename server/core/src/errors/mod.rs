@@ -2,6 +2,9 @@
 
 mod domain_error;
 
+#[cfg(test)]
+mod tests;
+
 // Re-export all error types and utilities
 pub use domain_error::{
     AuthError, ErrorResponse, TokenError, ValidationError,
