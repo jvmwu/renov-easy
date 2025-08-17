@@ -53,10 +53,10 @@ impl MySqlUserRepository {
     /// Maps database columns to User struct fields
     fn row_to_user(row: &sqlx::mysql::MySqlRow) -> Result<User, DomainError> {
         let id: String = row.try_get("id")
-            .map_err(|e| DomainError::Database(format!("Failed to get id: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to get id: {}", e) })?;
         
         let user_type_str: Option<String> = row.try_get("user_type")
-            .map_err(|e| DomainError::Database(format!("Failed to get user_type: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to get user_type: {}", e) })?;
         
         let user_type = user_type_str.map(|s| match s.as_str() {
             "customer" => UserType::Customer,
@@ -66,22 +66,22 @@ impl MySqlUserRepository {
 
         Ok(User {
             id: Uuid::parse_str(&id)
-                .map_err(|e| DomainError::Database(format!("Invalid UUID: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Invalid UUID: {}", e) })?,
             phone_hash: row.try_get("phone_hash")
-                .map_err(|e| DomainError::Database(format!("Failed to get phone_hash: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get phone_hash: {}", e) })?,
             country_code: row.try_get("country_code")
-                .map_err(|e| DomainError::Database(format!("Failed to get country_code: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get country_code: {}", e) })?,
             user_type,
             created_at: row.try_get::<DateTime<Utc>, _>("created_at")
-                .map_err(|e| DomainError::Database(format!("Failed to get created_at: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get created_at: {}", e) })?,
             updated_at: row.try_get::<DateTime<Utc>, _>("updated_at")
-                .map_err(|e| DomainError::Database(format!("Failed to get updated_at: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get updated_at: {}", e) })?,
             last_login_at: row.try_get("last_login_at")
-                .map_err(|e| DomainError::Database(format!("Failed to get last_login_at: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get last_login_at: {}", e) })?,
             is_verified: row.try_get("is_verified")
-                .map_err(|e| DomainError::Database(format!("Failed to get is_verified: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get is_verified: {}", e) })?,
             is_blocked: row.try_get("is_blocked")
-                .map_err(|e| DomainError::Database(format!("Failed to get is_blocked: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get is_blocked: {}", e) })?,
         })
     }
 }
@@ -107,7 +107,7 @@ impl UserRepository for MySqlUserRepository {
             .bind(country_code)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Database query failed: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Database query failed: {}", e) })?;
 
         match result {
             Some(row) => Ok(Some(Self::row_to_user(&row)?)),
@@ -129,7 +129,7 @@ impl UserRepository for MySqlUserRepository {
             .bind(id.to_string())
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Database query failed: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Database query failed: {}", e) })?;
 
         match result {
             Some(row) => Ok(Some(Self::row_to_user(&row)?)),
@@ -140,9 +140,9 @@ impl UserRepository for MySqlUserRepository {
     async fn create(&self, user: User) -> Result<User, DomainError> {
         // Check for duplicate phone first
         if self.exists_by_phone(&user.phone_hash, &user.country_code).await? {
-            return Err(DomainError::Validation(
-                "Phone number already registered".to_string(),
-            ));
+            return Err(DomainError::Validation { 
+                message: "Phone number already registered".to_string()
+            });
         }
 
         let user_type_str = user.user_type.map(|ut| match ut {
@@ -170,7 +170,7 @@ impl UserRepository for MySqlUserRepository {
             .bind(user.is_blocked)
             .execute(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to create user: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to create user: {}", e) })?;
 
         Ok(user)
     }
@@ -204,10 +204,10 @@ impl UserRepository for MySqlUserRepository {
             .bind(user.id.to_string())
             .execute(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to update user: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to update user: {}", e) })?;
 
         if result.rows_affected() == 0 {
-            return Err(DomainError::NotFound("User not found".to_string()));
+            return Err(DomainError::NotFound { resource: "User".to_string() });
         }
 
         // Return the updated user with new timestamp
@@ -223,7 +223,7 @@ impl UserRepository for MySqlUserRepository {
             .bind(id.to_string())
             .execute(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to delete user: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to delete user: {}", e) })?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -245,10 +245,10 @@ impl UserRepository for MySqlUserRepository {
             .bind(country_code)
             .fetch_one(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to check user existence: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to check user existence: {}", e) })?;
 
         let exists: i8 = result.try_get("user_exists")
-            .map_err(|e| DomainError::Database(format!("Failed to get existence result: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to get existence result: {}", e) })?;
 
         Ok(exists == 1)
     }
@@ -286,10 +286,10 @@ impl UserRepository for MySqlUserRepository {
         };
 
         let row = result
-            .map_err(|e| DomainError::Database(format!("Failed to count users: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to count users: {}", e) })?;
 
         let count: i64 = row.try_get("count")
-            .map_err(|e| DomainError::Database(format!("Failed to get count: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to get count: {}", e) })?;
 
         Ok(count as u64)
     }

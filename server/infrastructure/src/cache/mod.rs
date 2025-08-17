@@ -6,6 +6,9 @@
 pub mod redis_client;
 pub mod verification_cache;
 
+#[cfg(test)]
+mod tests;
+
 pub use redis_client::RedisClient;
 pub use verification_cache::VerificationCache;
 

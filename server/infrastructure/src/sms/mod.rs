@@ -29,7 +29,7 @@ pub use mock_sms::MockSmsService;
 // pub mod aws_sns;
 
 #[cfg(test)]
-mod test_integration;
+mod tests;
 
 /// Create an SMS service based on configuration
 ///
@@ -56,38 +56,5 @@ pub fn create_sms_service(config: &crate::config::SmsConfig) -> Box<dyn SmsServi
             );
             Box::new(MockSmsService::new())
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::SmsConfig;
-
-    #[test]
-    fn test_create_mock_service() {
-        let config = SmsConfig {
-            provider: "mock".to_string(),
-            api_key: String::new(),
-            api_secret: String::new(),
-            from_number: "+1234567890".to_string(),
-        };
-
-        let service = create_sms_service(&config);
-        assert_eq!(service.provider_name(), "Mock");
-    }
-
-    #[test]
-    fn test_create_unknown_provider_fallback() {
-        let config = SmsConfig {
-            provider: "unknown".to_string(),
-            api_key: String::new(),
-            api_secret: String::new(),
-            from_number: "+1234567890".to_string(),
-        };
-
-        let service = create_sms_service(&config);
-        // Should fallback to mock
-        assert_eq!(service.provider_name(), "Mock");
     }
 }

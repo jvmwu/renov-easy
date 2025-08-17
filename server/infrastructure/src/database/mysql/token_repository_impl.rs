@@ -53,24 +53,24 @@ impl MySqlTokenRepository {
     /// Maps database columns to RefreshToken struct fields
     fn row_to_token(row: &sqlx::mysql::MySqlRow) -> Result<RefreshToken, DomainError> {
         let id: String = row.try_get("id")
-            .map_err(|e| DomainError::Database(format!("Failed to get id: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to get id: {}", e) })?;
         
         let user_id: String = row.try_get("user_id")
-            .map_err(|e| DomainError::Database(format!("Failed to get user_id: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to get user_id: {}", e) })?;
 
         Ok(RefreshToken {
             id: Uuid::parse_str(&id)
-                .map_err(|e| DomainError::Database(format!("Invalid token UUID: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Invalid token UUID: {}", e) })?,
             user_id: Uuid::parse_str(&user_id)
-                .map_err(|e| DomainError::Database(format!("Invalid user UUID: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Invalid user UUID: {}", e) })?,
             token_hash: row.try_get("token_hash")
-                .map_err(|e| DomainError::Database(format!("Failed to get token_hash: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get token_hash: {}", e) })?,
             created_at: row.try_get::<DateTime<Utc>, _>("created_at")
-                .map_err(|e| DomainError::Database(format!("Failed to get created_at: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get created_at: {}", e) })?,
             expires_at: row.try_get::<DateTime<Utc>, _>("expires_at")
-                .map_err(|e| DomainError::Database(format!("Failed to get expires_at: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get expires_at: {}", e) })?,
             is_revoked: row.try_get("is_revoked")
-                .map_err(|e| DomainError::Database(format!("Failed to get is_revoked: {}", e)))?,
+                .map_err(|e| DomainError::Internal { message: format!("Failed to get is_revoked: {}", e) })?,
         })
     }
 }
@@ -84,13 +84,13 @@ impl TokenRepository for MySqlTokenRepository {
             .bind(&token.token_hash)
             .fetch_one(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to check token existence: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to check token existence: {}", e) })?;
         
         let exists: i8 = exists_row.try_get("exists")
-            .map_err(|e| DomainError::Database(format!("Failed to get existence result: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to get existence result: {}", e) })?;
         
         if exists == 1 {
-            return Err(DomainError::Validation("Token already exists".to_string()));
+            return Err(DomainError::Validation { message: "Token already exists".to_string() });
         }
 
         let query = r#"
@@ -108,7 +108,7 @@ impl TokenRepository for MySqlTokenRepository {
             .bind(token.is_revoked)
             .execute(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to save refresh token: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to save refresh token: {}", e) })?;
 
         Ok(token)
     }
@@ -125,7 +125,7 @@ impl TokenRepository for MySqlTokenRepository {
             .bind(token_hash)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to find refresh token: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to find refresh token: {}", e) })?;
 
         match result {
             Some(row) => Ok(Some(Self::row_to_token(&row)?)),
@@ -145,7 +145,7 @@ impl TokenRepository for MySqlTokenRepository {
             .bind(id.to_string())
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to find token by id: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to find token by id: {}", e) })?;
 
         match result {
             Some(row) => Ok(Some(Self::row_to_token(&row)?)),
@@ -168,7 +168,7 @@ impl TokenRepository for MySqlTokenRepository {
             .bind(Utc::now())
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to find user tokens: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to find user tokens: {}", e) })?;
 
         let mut tokens = Vec::new();
         for row in rows {
@@ -189,7 +189,7 @@ impl TokenRepository for MySqlTokenRepository {
             .bind(token_hash)
             .execute(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to revoke token: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to revoke token: {}", e) })?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -205,7 +205,7 @@ impl TokenRepository for MySqlTokenRepository {
             .bind(user_id.to_string())
             .execute(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to revoke user tokens: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to revoke user tokens: {}", e) })?;
 
         Ok(result.rows_affected() as usize)
     }
@@ -222,7 +222,7 @@ impl TokenRepository for MySqlTokenRepository {
             .bind(now)
             .execute(&self.pool)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to delete expired tokens: {}", e)))?;
+            .map_err(|e| DomainError::Internal { message: format!("Failed to delete expired tokens: {}", e) })?;
 
         Ok(result.rows_affected() as usize)
     }
