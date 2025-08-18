@@ -200,21 +200,21 @@
 
 ### 7. API 层和中间件
 
-- [ ] 25. 创建速率限制中间件
+- [x] 25. 创建速率限制中间件
   - 文件: server/api/src/middleware/rate_limiter.rs
   - 使用 Redis 记录请求次数
   - 实现每手机号每小时3次SMS限制
   - 返回 429 错误码当超限
   - _Requirements: 5.1, 5.2_
 
-- [ ] 26. 创建 JWT 认证中间件
-  - 文件: server/api/src/middleware/auth_middleware.rs
+- [x] 26. 创建 JWT 认证中间件
+  - 文件: server/api/src/middleware/auth.rs
   - 从 Authorization header 提取 token
   - 验证 token 有效性
   - 注入用户上下文到请求
   - _Requirements: 4.1, 6.1_
 
-- [ ] 27. 创建 CORS 和安全中间件
+- [x] 27. 创建 CORS 和安全中间件
   - 文件: server/api/src/middleware/cors.rs
   - 文件: server/api/src/middleware/security.rs
   - 配置 CORS 允许移动端访问

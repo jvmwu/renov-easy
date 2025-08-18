@@ -12,6 +12,12 @@ infra = { path = "../infra" }
 actix-web = "4.5"
 actix-cors = "0.7"
 
+# Redis for rate limiting
+redis = { version = "0.24", features = ["tokio-comp", "aio"] }
+
+# Futures utilities for middleware
+futures-util = "0.3"
+
 # Authentication
 jsonwebtoken = "9.3"
 

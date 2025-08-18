@@ -875,7 +875,7 @@ graph TD
 - **Dependencies:** Redis Cache, Time utilities
 - **Reuses:** 可扩展到其他需要限流的 API 端点
 
-### Component 5: Auth Middleware (server/api/middleware/auth_middleware.rs)
+### Component 5: Auth Middleware (server/api/src/middleware/auth.rs)
 - **Purpose:** 验证请求中的 JWT 令牌并注入用户上下文
 - **Interfaces:**
   - `verify_request(req: HttpRequest) -> Result<AuthContext, AuthError>`

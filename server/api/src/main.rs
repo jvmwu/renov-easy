@@ -1,4 +1,3 @@
-use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 use log::info;
@@ -9,6 +8,8 @@ mod dto;
 mod handlers;
 mod middleware;
 mod routes;
+
+use middleware::{cors::create_cors, security::SecurityMiddleware};
 
 async fn health_check() -> HttpResponse {
     HttpResponse::Ok().json(serde_json::json!({
@@ -41,17 +42,17 @@ async fn main() -> std::io::Result<()> {
     
     // Create HTTP server
     HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
+        // Configure CORS using our custom middleware
+        let cors = create_cors();
+        
+        // Configure security middleware
+        let security = SecurityMiddleware::new();
         
         App::new()
-            // Add middleware
-            .wrap(cors)
+            // Add middleware (order matters: security first, then CORS, then logging)
             .wrap(Logger::default())
+            .wrap(cors)
+            .wrap(security)
             
             // Health check endpoint
             .route("/health", web::get().to(health_check))

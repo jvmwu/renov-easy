@@ -121,7 +121,7 @@ graph TD
 - **Dependencies:** Redis Cache, Time utilities
 - **Reuses:** Extensible to other API endpoints requiring rate limiting
 
-### Component 5: Auth Middleware (server/api/middleware/auth_middleware.rs)
+### Component 5: Auth Middleware (server/api/src/middleware/auth.rs)
 - **Purpose:** Verify JWT tokens in requests and inject user context
 - **Interfaces:**
   - `verify_request(req: HttpRequest) -> Result<AuthContext, AuthError>`
