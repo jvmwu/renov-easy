@@ -461,7 +461,7 @@ src/
 │   ├── user_repository.rs
 │   └── order_repository.rs
 └── errors/                    # Domain errors
-    └── domain_error.rs
+    └── types.rs
 ```
 
 #### API Server (`server/api/`)

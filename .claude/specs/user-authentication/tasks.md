@@ -72,7 +72,7 @@
   - _Requirements: 4.1_
 
 - [x] 8. 创建领域错误类型
-  - 文件: server/core/src/errors/domain_error.rs
+  - 文件: server/core/src/errors/types.rs
   - 使用 thiserror 定义 AuthError, TokenError, ValidationError
   - 实现错误转换和消息格式化
   - 支持中英文错误消息
