@@ -1,12 +1,12 @@
 //! Domain-specific error types and error handling.
 
-mod domain_error;
+mod types;
 
 #[cfg(test)]
 mod tests;
 
 // Re-export all error types and utilities
-pub use domain_error::{
+pub use types::{
     AuthError, ErrorResponse, TokenError, ValidationError,
     extract_chinese_message, extract_english_message,
 };

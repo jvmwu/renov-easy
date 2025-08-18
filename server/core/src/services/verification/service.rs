@@ -78,6 +78,8 @@ impl<S: SmsServiceTrait, C: CacheServiceTrait> VerificationService<S, C> {
                             cooldown_remaining
                         ),
                         message_zh: format!("请等待 {} 秒后再请求新的验证码", cooldown_remaining),
+                        limit: 1,
+                        window_seconds: self.config.resend_cooldown_seconds as u64,
                     }));
                 }
             }
