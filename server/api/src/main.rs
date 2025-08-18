@@ -3,22 +3,15 @@ use dotenv::dotenv;
 use log::info;
 use std::env;
 
+// mod app; // Will be used when dependencies are wired up
 mod config;
 mod dto;
 mod handlers;
 mod middleware;
 mod routes;
 
-use middleware::{cors::create_cors, security::SecurityMiddleware};
-
-async fn health_check() -> HttpResponse {
-    HttpResponse::Ok().json(serde_json::json!({
-        "status": "healthy",
-        "service": "renov-easy-api",
-        "version": env!("CARGO_PKG_VERSION"),
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-    }))
-}
+// For now, we'll create a simple example showing how to wire up the endpoint
+// In production, you would initialize real implementations of all the services
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -40,16 +33,48 @@ async fn main() -> std::io::Result<()> {
     let bind_address = format!("{}:{}", server_host, server_port);
     info!("Server will bind to: {}", bind_address);
     
-    // Create HTTP server
+    // Note: In a real implementation, you would:
+    // 1. Initialize database connections
+    // 2. Create repository implementations
+    // 3. Create service implementations (SMS, Cache, etc.)
+    // 4. Wire everything together with dependency injection
+    //
+    // Example structure:
+    // ```
+    // let db_pool = create_database_pool().await?;
+    // let redis_client = create_redis_client().await?;
+    // 
+    // let user_repo = Arc::new(MySqlUserRepository::new(db_pool.clone()));
+    // let token_repo = Arc::new(MySqlTokenRepository::new(db_pool.clone()));
+    // 
+    // let sms_service = Arc::new(TwilioSmsService::new(config));
+    // let cache_service = Arc::new(RedisCacheService::new(redis_client.clone()));
+    // let verification_service = Arc::new(VerificationService::new(sms_service, cache_service));
+    // 
+    // let rate_limiter = Arc::new(RedisRateLimiter::new(redis_client));
+    // let token_service = Arc::new(TokenService::new(token_repo.clone(), config));
+    // 
+    // let auth_service = Arc::new(AuthService::new(
+    //     user_repo,
+    //     verification_service,
+    //     rate_limiter,
+    //     token_service,
+    //     auth_config,
+    // ));
+    // ```
+    
+    // For now, we'll use the simplified version without real implementations
+    // This allows the code to compile and demonstrates the structure
+    
     HttpServer::new(move || {
-        // Configure CORS using our custom middleware
-        let cors = create_cors();
+        // Use the original simple app for now
+        // When implementations are ready, switch to:
+        // app::create_app(auth_service.clone())
         
-        // Configure security middleware
-        let security = SecurityMiddleware::new();
+        let cors = middleware::cors::create_cors();
+        let security = middleware::security::SecurityMiddleware::new();
         
         App::new()
-            // Add middleware (order matters: security first, then CORS, then logging)
             .wrap(Logger::default())
             .wrap(cors)
             .wrap(security)
@@ -60,22 +85,14 @@ async fn main() -> std::io::Result<()> {
             // API v1 routes
             .service(
                 web::scope("/api/v1")
-                    // Auth routes will be added here
-                    .route("/", web::get().to(|| async { 
-                        HttpResponse::Ok().json(serde_json::json!({
-                            "message": "RenovEasy API v1",
-                            "endpoints": {
-                                "health": "/health",
-                                "auth": {
-                                    "send_code": "/api/v1/auth/send-code",
-                                    "verify_code": "/api/v1/auth/verify-code",
-                                    "select_type": "/api/v1/auth/select-type",
-                                    "refresh": "/api/v1/auth/refresh",
-                                    "logout": "/api/v1/auth/logout"
-                                }
-                            }
-                        }))
-                    }))
+                    // Auth routes - the structure is ready, implementations will be added
+                    // when the services are wired up
+                    .service(
+                        web::scope("/auth")
+                            // The send-code endpoint is ready to be wired when services are available
+                            // .route("/send-code", web::post().to(routes::auth::send_code))
+                    )
+                    .route("/", web::get().to(api_info))
             )
             
             // Default 404 handler
@@ -89,4 +106,63 @@ async fn main() -> std::io::Result<()> {
     .bind(&bind_address)?
     .run()
     .await
+}
+
+async fn health_check() -> HttpResponse {
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "healthy",
+        "service": "renov-easy-api",
+        "version": env!("CARGO_PKG_VERSION"),
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+    }))
+}
+
+async fn api_info() -> HttpResponse {
+    HttpResponse::Ok().json(serde_json::json!({
+        "message": "RenovEasy API v1",
+        "endpoints": {
+            "health": "/health",
+            "auth": {
+                "send_code": {
+                    "path": "/api/v1/auth/send-code",
+                    "method": "POST",
+                    "description": "Send verification code via SMS",
+                    "request_body": {
+                        "phone": "string (10-15 chars)",
+                        "country_code": "string (1-10 chars)"
+                    },
+                    "responses": {
+                        "200": "Code sent successfully",
+                        "400": "Invalid phone format",
+                        "429": "Rate limit exceeded",
+                        "503": "SMS service unavailable"
+                    }
+                },
+                "verify_code": {
+                    "path": "/api/v1/auth/verify-code",
+                    "method": "POST",
+                    "description": "Verify SMS code and authenticate",
+                    "status": "Coming soon"
+                },
+                "select_type": {
+                    "path": "/api/v1/auth/select-type",
+                    "method": "POST",
+                    "description": "Select user type (customer/worker)",
+                    "status": "Coming soon"
+                },
+                "refresh": {
+                    "path": "/api/v1/auth/refresh",
+                    "method": "POST",
+                    "description": "Refresh access token",
+                    "status": "Coming soon"
+                },
+                "logout": {
+                    "path": "/api/v1/auth/logout",
+                    "method": "POST",
+                    "description": "Logout and invalidate tokens",
+                    "status": "Coming soon"
+                }
+            }
+        }
+    }))
 }

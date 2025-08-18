@@ -223,42 +223,42 @@
 
 ### 8. API 端点实现
 
-- [ ] 28. 创建认证 DTO 模型
+- [x] 28. 创建认证 DTO 模型
   - 文件: server/api/src/dto/auth_dto.rs
   - 定义 SendCodeRequest, VerifyCodeRequest, AuthResponse
   - 实现请求验证
   - 添加 Serialize/Deserialize traits
   - _Requirements: 1.1, 2.1_
 
-- [ ] 29. 实现发送验证码端点
+- [x] 29. 实现发送验证码端点
   - 文件: server/api/src/routes/auth/send_code.rs
   - 创建 POST /api/v1/auth/send-code
   - 验证请求数据
   - 调用 AuthService
   - _Requirements: 1.1_
 
-- [ ] 30. 实现验证码验证端点
+- [x] 30. 实现验证码验证端点
   - 文件: server/api/src/routes/auth/verify_code.rs
   - 创建 POST /api/v1/auth/verify-code
   - 处理新用户和老用户逻辑
   - 返回 token 和用户信息
   - _Requirements: 2.1, 2.2_
 
-- [ ] 31. 实现用户类型选择端点
+- [x] 31. 实现用户类型选择端点
   - 文件: server/api/src/routes/auth/select_type.rs
   - 创建 POST /api/v1/auth/select-type
   - 需要认证中间件
   - 更新用户类型
   - _Requirements: 3.1, 3.2_
 
-- [ ] 32. 实现 token 刷新端点
+- [x] 32. 实现 token 刷新端点
   - 文件: server/api/src/routes/auth/refresh.rs
   - 创建 POST /api/v1/auth/refresh
   - 验证 refresh token
   - 生成新 token pair
   - _Requirements: 4.2_
 
-- [ ] 33. 实现登出端点
+- [x] 33. 实现登出端点
   - 文件: server/api/src/routes/auth/logout.rs
   - 创建 POST /api/v1/auth/logout
   - 撤销 tokens

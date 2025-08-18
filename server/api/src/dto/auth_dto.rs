@@ -43,3 +43,8 @@ pub struct SendCodeResponse {
     pub message: String,
     pub resend_after: i64, // seconds until can resend
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogoutResponse {
+    pub message: String,
+}

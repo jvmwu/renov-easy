@@ -1,6 +1,7 @@
 //! Main authentication service implementation
 
 use std::sync::Arc;
+use uuid::Uuid;
 use crate::domain::entities::user::User;
 use crate::domain::value_objects::AuthResponse;
 use crate::errors::{AuthError, DomainError, DomainResult, ValidationError};
@@ -358,7 +359,7 @@ where
     /// ```
     pub async fn select_user_type(
         &self, 
-        user_id: uuid::Uuid, 
+        user_id: Uuid, 
         user_type: crate::domain::entities::user::UserType
     ) -> DomainResult<()> {
         // Step 1: Fetch the user from the repository
@@ -390,6 +391,115 @@ where
                     message: format!("Failed to update user type: {}", e),
                 }
             })?;
+        
+        Ok(())
+    }
+
+    /// Refresh access token using a refresh token
+    ///
+    /// This method:
+    /// 1. Verifies the refresh token
+    /// 2. Gets the user to check their current state
+    /// 3. Generates new token pair
+    /// 4. Revokes the old refresh token
+    ///
+    /// # Arguments
+    ///
+    /// * `refresh_token` - The refresh token to use
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(AuthResponse)` - New tokens and user information
+    /// * `Err(DomainError)` - If refresh token is invalid, expired, or user is blocked
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use renov_core::services::auth_service::AuthService;
+    /// 
+    /// async fn refresh(auth_service: &AuthService, refresh_token: &str) {
+    ///     match auth_service.refresh_token(refresh_token).await {
+    ///         Ok(response) => println!("New access token: {}", response.access_token),
+    ///         Err(e) => eprintln!("Failed to refresh token: {}", e),
+    ///     }
+    /// }
+    /// ```
+    pub async fn refresh_token(&self, refresh_token: &str) -> DomainResult<AuthResponse> {
+        // Step 1: Verify the refresh token and get user ID
+        let user_id = self.token_service
+            .verify_refresh_token(refresh_token)
+            .await?;
+
+        // Step 2: Get the user from repository
+        let user = self.user_repository
+            .find_by_id(user_id)
+            .await
+            .map_err(|e| {
+                DomainError::Internal {
+                    message: format!("Failed to query user: {}", e),
+                }
+            })?
+            .ok_or_else(|| DomainError::Auth(AuthError::UserNotFound))?;
+
+        // Step 3: Check if user is blocked
+        if user.is_blocked {
+            return Err(DomainError::Auth(AuthError::UserBlocked));
+        }
+
+        // Step 4: Generate new token pair
+        let token_pair = self.token_service
+            .generate_tokens(
+                user.id,
+                user.user_type.clone(),
+                user.is_verified,
+            )
+            .await?;
+
+        // Step 5: Revoke old refresh token (optional but recommended)
+        // Ignore errors as it's not critical if revocation fails
+        let _ = self.token_service
+            .revoke_refresh_token(refresh_token)
+            .await;
+
+        // Step 6: Create and return authentication response
+        let auth_response = AuthResponse::from_token_pair(
+            token_pair,
+            user.user_type,
+        );
+
+        Ok(auth_response)
+    }
+
+    /// Logout a user by revoking all their tokens
+    ///
+    /// This method revokes all access and refresh tokens for a user,
+    /// effectively logging them out from all sessions.
+    ///
+    /// # Arguments
+    ///
+    /// * `user_id` - The ID of the user to logout
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - User successfully logged out
+    /// * `Err(DomainError)` - If token revocation fails
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use renov_core::services::auth_service::AuthService;
+    /// use uuid::Uuid;
+    /// 
+    /// async fn logout(auth_service: &AuthService, user_id: Uuid) {
+    ///     match auth_service.logout(user_id).await {
+    ///         Ok(()) => println!("User logged out successfully"),
+    ///         Err(e) => eprintln!("Logout failed: {}", e),
+    ///     }
+    /// }
+    /// ```
+    pub async fn logout(&self, user_id: Uuid) -> DomainResult<()> {
+        // Revoke all tokens for the user
+        self.token_service.revoke_tokens(user_id).await?;
         
         Ok(())
     }
