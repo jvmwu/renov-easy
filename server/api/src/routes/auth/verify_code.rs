@@ -1,9 +1,9 @@
-use actix_web::{web, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 use validator::Validate;
 
 use crate::dto::auth_dto::{VerifyCodeRequest, AuthResponse};
 use crate::dto::error_dto::ErrorResponse;
-use crate::handlers::error::handle_domain_error;
+use crate::handlers::error::{handle_domain_error_with_lang, Language};
 
 use core::services::auth::AuthService;
 use core::repositories::{UserRepository, TokenRepository};
@@ -46,6 +46,7 @@ use super::AppState;
 /// - 429 Too Many Requests: Max verification attempts exceeded
 /// - 500 Internal Server Error: Database or token generation failure
 pub async fn verify_code<U, S, C, R, T>(
+    req: HttpRequest,
     state: web::Data<AppState<U, S, C, R, T>>,
     request: web::Json<VerifyCodeRequest>,
 ) -> HttpResponse
@@ -56,14 +57,22 @@ where
     R: RateLimiterTrait + 'static,
     T: TokenRepository + 'static,
 {
+    // Detect language preference from request headers
+    let lang = Language::from_request(&req);
+    
     // Validate request data
     if let Err(errors) = request.validate() {
         let mut details = std::collections::HashMap::new();
         details.insert("validation_errors".to_string(), serde_json::json!(errors));
         
+        let message = match lang {
+            Language::English => "Invalid request data",
+            Language::Chinese => "请求数据无效",
+        };
+        
         return HttpResponse::BadRequest().json(ErrorResponse {
             error: "validation_error".to_string(),
-            message: "Invalid request data".to_string(),
+            message: message.to_string(),
             details: Some(details),
             timestamp: chrono::Utc::now(),
         });
@@ -88,7 +97,7 @@ where
                 requires_type_selection: auth_response.requires_type_selection,
             })
         }
-        Err(error) => handle_domain_error(error),
+        Err(error) => handle_domain_error_with_lang(error, lang),
     }
 }
 

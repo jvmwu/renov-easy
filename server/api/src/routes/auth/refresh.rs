@@ -1,7 +1,7 @@
-use actix_web::{web, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 
 use crate::dto::auth_dto::{RefreshTokenRequest, AuthResponse as DtoAuthResponse};
-use crate::handlers::error::handle_domain_error;
+use crate::handlers::error::{handle_domain_error_with_lang, Language};
 
 use core::repositories::{UserRepository, TokenRepository};
 use core::services::verification::{SmsServiceTrait, CacheServiceTrait};
@@ -39,6 +39,7 @@ use super::AppState;
 /// - 403 Forbidden: Token has been revoked or user is blocked
 /// - 500 Internal Server Error: Token generation failure or other internal errors
 pub async fn refresh_token<U, S, C, R, T>(
+    req: HttpRequest,
     state: web::Data<AppState<U, S, C, R, T>>,
     request: web::Json<RefreshTokenRequest>,
 ) -> HttpResponse
@@ -49,6 +50,9 @@ where
     R: RateLimiterTrait + 'static,
     T: TokenRepository + 'static,
 {
+    // Detect language preference from request headers
+    let lang = Language::from_request(&req);
+    
     // Call the auth service to refresh the token
     match state.auth_service.refresh_token(&request.refresh_token).await {
         Ok(auth_response) => {
@@ -63,7 +67,7 @@ where
             
             HttpResponse::Ok().json(response)
         }
-        Err(error) => handle_domain_error(error),
+        Err(error) => handle_domain_error_with_lang(error, lang),
     }
 }
 

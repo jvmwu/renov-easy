@@ -1,7 +1,7 @@
-use actix_web::{web, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 
 use crate::dto::auth_dto::LogoutResponse;
-use crate::handlers::error::handle_domain_error;
+use crate::handlers::error::{handle_domain_error_with_lang, Language};
 use crate::middleware::auth::AuthContext;
 
 use core::repositories::{UserRepository, TokenRepository};
@@ -34,6 +34,7 @@ use super::AppState;
 /// - 401 Unauthorized: Missing or invalid access token
 /// - 500 Internal Server Error: Token revocation failure
 pub async fn logout<U, S, C, R, T>(
+    req: HttpRequest,
     state: web::Data<AppState<U, S, C, R, T>>,
     auth: AuthContext,
 ) -> HttpResponse
@@ -44,15 +45,23 @@ where
     R: RateLimiterTrait + 'static,
     T: TokenRepository + 'static,
 {
+    // Detect language preference from request headers
+    let lang = Language::from_request(&req);
+    
     // Call the auth service to logout the user
     match state.auth_service.logout(auth.user_id).await {
         Ok(()) => {
+            let message = match lang {
+                Language::English => "Logged out successfully",
+                Language::Chinese => "登出成功",
+            };
+            
             let response = LogoutResponse {
-                message: "Logged out successfully".to_string(),
+                message: message.to_string(),
             };
             HttpResponse::Ok().json(response)
         }
-        Err(error) => handle_domain_error(error),
+        Err(error) => handle_domain_error_with_lang(error, lang),
     }
 }
 

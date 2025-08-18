@@ -272,15 +272,15 @@
 
 ### 9. 错误处理和日志
 
-- [ ] 34. 创建统一错误处理器
+- [x] 34. 创建统一错误处理器
   - 文件: server/api/src/handlers/error.rs
   - 捕获所有错误类型
   - 格式化错误响应
   - 支持中英文错误消息
   - _Requirements: 错误处理设计_
 
-- [ ] 35. 实现审计日志服务
-  - 文件: server/core/src/services/audit_service.rs
+- [x] 35. 实现审计日志服务
+  - 文件: server/core/src/services/audit/service.rs
   - 记录认证尝试
   - 记录失败原因
   - 异步写入数据库

@@ -1,10 +1,12 @@
 //! Business services containing domain logic and use cases.
 
+pub mod audit;
 pub mod auth;
 pub mod token;
 pub mod verification;
 
 // Re-export commonly used types
+pub use audit::{AuditService, AuditServiceConfig};
 pub use auth::{AuthService, AuthServiceConfig, RateLimiterTrait};
 pub use token::{TokenService, TokenServiceConfig};
 pub use verification::{

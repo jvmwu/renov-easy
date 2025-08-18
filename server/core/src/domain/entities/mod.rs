@@ -1,5 +1,6 @@
 //! Domain entities representing core business objects.
 
+pub mod audit;
 pub mod token;
 pub mod user;
 pub mod verification_code;
@@ -12,6 +13,7 @@ mod tests;
 // pub mod order;
 
 // Re-export commonly used types
+pub use audit::{AuditLog, actions as audit_actions};
 pub use token::{
     Claims, RefreshToken, TokenPair,
     ACCESS_TOKEN_EXPIRY_MINUTES, REFRESH_TOKEN_EXPIRY_DAYS,

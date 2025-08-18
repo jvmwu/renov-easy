@@ -1,9 +1,9 @@
-use actix_web::{web, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 use validator::Validate;
 
 use crate::dto::auth_dto::SelectTypeRequest;
 use crate::dto::error_dto::ErrorResponse;
-use crate::handlers::error::handle_domain_error;
+use crate::handlers::error::{handle_domain_error_with_lang, Language};
 use crate::middleware::auth::AuthContext;
 
 use core::services::auth::AuthService;
@@ -50,6 +50,7 @@ use super::AppState;
 /// - 404 Not Found: User not found
 /// - 500 Internal Server Error: Database update failure
 pub async fn select_type<U, S, C, R, T>(
+    req: HttpRequest,
     state: web::Data<AppState<U, S, C, R, T>>,
     auth: AuthContext,
     request: web::Json<SelectTypeRequest>,
@@ -61,6 +62,9 @@ where
     R: RateLimiterTrait + 'static,
     T: TokenRepository + 'static,
 {
+    // Detect language preference from request headers
+    let lang = Language::from_request(&req);
+    
     // Parse user type from request
     let user_type = match request.user_type.to_lowercase().as_str() {
         "customer" => UserType::Customer,
@@ -76,9 +80,14 @@ where
                 serde_json::json!(["customer", "worker"])
             );
             
+            let message = match lang {
+                Language::English => "Invalid user type. Must be 'customer' or 'worker'",
+                Language::Chinese => "无效的用户类型。必须是 'customer' 或 'worker'",
+            };
+            
             return HttpResponse::BadRequest().json(ErrorResponse {
                 error: "validation_error".to_string(),
-                message: "Invalid user type. Must be 'customer' or 'worker'".to_string(),
+                message: message.to_string(),
                 details: Some(details),
                 timestamp: chrono::Utc::now(),
             });
@@ -88,13 +97,18 @@ where
     // Call the auth service to update user type
     match state.auth_service.select_user_type(auth.user_id, user_type).await {
         Ok(()) => {
-            // Success response
+            // Success response with localized message
+            let message = match lang {
+                Language::English => "User type successfully selected",
+                Language::Chinese => "用户类型选择成功",
+            };
+            
             HttpResponse::Ok().json(serde_json::json!({
-                "message": "User type successfully selected",
+                "message": message,
                 "user_type": request.user_type.to_lowercase()
             }))
         }
-        Err(error) => handle_domain_error(error),
+        Err(error) => handle_domain_error_with_lang(error, lang),
     }
 }
 
