@@ -3,10 +3,14 @@ use dotenv::dotenv;
 use log::info;
 use std::env;
 
+// Re-export the core crate to avoid naming conflicts  
+extern crate core as renov_core;
+
 // mod app; // Will be used when dependencies are wired up
 mod config;
 mod dto;
 mod handlers;
+mod i18n;
 mod middleware;
 mod routes;
 

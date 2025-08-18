@@ -1,7 +1,7 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 
-use crate::dto::auth_dto::{RefreshTokenRequest, AuthResponse as DtoAuthResponse};
-use crate::handlers::error::{handle_domain_error_with_lang, Language};
+use crate::dto::auth::{RefreshTokenRequest, AuthResponse as DtoAuthResponse};
+use crate::handlers::error::{handle_domain_error_with_lang, Language, extract_language};
 
 use core::repositories::{UserRepository, TokenRepository};
 use core::services::verification::{SmsServiceTrait, CacheServiceTrait};
@@ -51,7 +51,7 @@ where
     T: TokenRepository + 'static,
 {
     // Detect language preference from request headers
-    let lang = Language::from_request(&req);
+    let lang = extract_language(&req);
     
     // Call the auth service to refresh the token
     match state.auth_service.refresh_token(&request.refresh_token).await {
@@ -67,14 +67,14 @@ where
             
             HttpResponse::Ok().json(response)
         }
-        Err(error) => handle_domain_error_with_lang(error, lang),
+        Err(error) => handle_domain_error_with_lang(&error, lang),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::auth_dto::RefreshTokenRequest;
+    use crate::dto::auth::RefreshTokenRequest;
 
     #[test]
     fn test_refresh_token_request_structure() {

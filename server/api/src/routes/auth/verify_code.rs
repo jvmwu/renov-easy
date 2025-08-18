@@ -1,9 +1,9 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 use validator::Validate;
 
-use crate::dto::auth_dto::{VerifyCodeRequest, AuthResponse};
-use crate::dto::error_dto::ErrorResponse;
-use crate::handlers::error::{handle_domain_error_with_lang, Language};
+use crate::dto::auth::{VerifyCodeRequest, AuthResponse};
+use crate::dto::error::ErrorResponse;
+use crate::handlers::error::{handle_domain_error_with_lang, extract_language, Language};
 
 use core::services::auth::AuthService;
 use core::repositories::{UserRepository, TokenRepository};
@@ -58,7 +58,7 @@ where
     T: TokenRepository + 'static,
 {
     // Detect language preference from request headers
-    let lang = Language::from_request(&req);
+    let lang = extract_language(&req);
     
     // Validate request data
     if let Err(errors) = request.validate() {
@@ -97,7 +97,7 @@ where
                 requires_type_selection: auth_response.requires_type_selection,
             })
         }
-        Err(error) => handle_domain_error_with_lang(error, lang),
+        Err(error) => handle_domain_error_with_lang(&error, lang),
     }
 }
 

@@ -43,6 +43,8 @@ log = "0.4"
 # Configuration
 dotenv = "0.15"
 config = "0.14"
+toml = "0.8"
+once_cell = "1.19"
 
 # Error handling
 thiserror = "1.0"

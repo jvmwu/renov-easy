@@ -1,5 +1,5 @@
-pub mod auth_dto;
-pub mod error_dto;
+pub mod auth;
+pub mod error;
 
-pub use auth_dto::*;
-pub use error_dto::*;
+pub use auth::*;
+pub use error::*;

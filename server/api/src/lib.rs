@@ -6,5 +6,6 @@ extern crate core as renov_core;
 pub mod config;
 pub mod dto;
 pub mod handlers;
+pub mod i18n;
 pub mod middleware;
 pub mod routes;

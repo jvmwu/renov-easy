@@ -1,7 +1,7 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 
-use crate::dto::auth_dto::LogoutResponse;
-use crate::handlers::error::{handle_domain_error_with_lang, Language};
+use crate::dto::auth::LogoutResponse;
+use crate::handlers::error::{handle_domain_error_with_lang, Language, extract_language};
 use crate::middleware::auth::AuthContext;
 
 use core::repositories::{UserRepository, TokenRepository};
@@ -46,7 +46,7 @@ where
     T: TokenRepository + 'static,
 {
     // Detect language preference from request headers
-    let lang = Language::from_request(&req);
+    let lang = extract_language(&req);
     
     // Call the auth service to logout the user
     match state.auth_service.logout(auth.user_id).await {
@@ -61,14 +61,14 @@ where
             };
             HttpResponse::Ok().json(response)
         }
-        Err(error) => handle_domain_error_with_lang(error, lang),
+        Err(error) => handle_domain_error_with_lang(&error, lang),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dto::auth_dto::LogoutResponse;
+    use crate::dto::auth::LogoutResponse;
     use uuid::Uuid;
 
     #[test]
