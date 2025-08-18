@@ -3,7 +3,7 @@ use validator::Validate;
 
 use crate::dto::auth_dto::{VerifyCodeRequest, AuthResponse};
 use crate::dto::error_dto::ErrorResponse;
-use crate::handlers::error_handler::handle_domain_error;
+use crate::handlers::error::handle_domain_error;
 
 use core::services::auth::AuthService;
 use core::repositories::{UserRepository, TokenRepository};

@@ -1,7 +1,7 @@
 use actix_web::{web, HttpResponse};
 
 use crate::dto::auth_dto::LogoutResponse;
-use crate::handlers::error_handler::handle_domain_error;
+use crate::handlers::error::handle_domain_error;
 use crate::middleware::auth::AuthContext;
 
 use core::repositories::{UserRepository, TokenRepository};

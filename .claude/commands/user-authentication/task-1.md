@@ -457,7 +457,7 @@ src/
 │   ├── order_service.rs       # Order management
 │   ├── user_service.rs        # User management
 │   └── worker_service.rs      # Worker management
-├── repositories/               # Repository traits
+├── repositories/              # Repository traits
 │   ├── user_repository.rs
 │   └── order_repository.rs
 └── errors/                    # Domain errors
@@ -474,12 +474,12 @@ src/
 │   ├── orders.rs             # Order routes
 │   └── mod.rs
 ├── handlers/
-│   └── error_handler.rs      # Global error handling
+│   └── error.rs              # Global error handling
 ├── middleware/
 │   ├── auth.rs               # JWT authentication
 │   ├── cors.rs               # CORS configuration
 │   └── rate_limit.rs         # Rate limiting
-└── dto/                       # Data transfer objects
+└── dto/                      # Data transfer objects
     ├── request/
     └── response/
 ```

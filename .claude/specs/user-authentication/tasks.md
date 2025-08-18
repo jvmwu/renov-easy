@@ -273,7 +273,7 @@
 ### 9. 错误处理和日志
 
 - [ ] 34. 创建统一错误处理器
-  - 文件: server/api/src/handlers/error_handler.rs
+  - 文件: server/api/src/handlers/error.rs
   - 捕获所有错误类型
   - 格式化错误响应
   - 支持中英文错误消息

@@ -3,7 +3,7 @@ use validator::Validate;
 
 use crate::dto::auth_dto::SelectTypeRequest;
 use crate::dto::error_dto::ErrorResponse;
-use crate::handlers::error_handler::handle_domain_error;
+use crate::handlers::error::handle_domain_error;
 use crate::middleware::auth::AuthContext;
 
 use core::services::auth::AuthService;
