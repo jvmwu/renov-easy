@@ -15,6 +15,7 @@ path = "src/main.rs"
 # Core dependencies from workspace
 core = { path = "../core" }
 infra = { path = "../infra" }
+shared = { path = "../shared" }
 
 # Web framework
 actix-web = "4.5"

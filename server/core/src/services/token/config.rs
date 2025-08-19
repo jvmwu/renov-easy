@@ -1,6 +1,7 @@
 //! Configuration for the token service
 
 use jsonwebtoken::Algorithm;
+use shared::config::auth::AuthConfig;
 
 /// Configuration for the token service
 #[derive(Debug, Clone)]
@@ -17,11 +18,23 @@ pub struct TokenServiceConfig {
 
 impl Default for TokenServiceConfig {
     fn default() -> Self {
+        let auth_config = AuthConfig::default();
         Self {
-            jwt_secret: "development-secret-please-change-in-production".to_string(),
+            jwt_secret: auth_config.jwt_secret().to_string(),
             algorithm: Algorithm::HS256,
-            access_token_expiry_minutes: 15,
-            refresh_token_expiry_days: 7,
+            access_token_expiry_minutes: auth_config.access_token_expiry_seconds() / 60,
+            refresh_token_expiry_days: auth_config.refresh_token_expiry_seconds() / (60 * 60 * 24),
+        }
+    }
+}
+
+impl From<AuthConfig> for TokenServiceConfig {
+    fn from(config: AuthConfig) -> Self {
+        Self {
+            jwt_secret: config.jwt_secret().to_string(),
+            algorithm: Algorithm::HS256,
+            access_token_expiry_minutes: config.access_token_expiry_seconds() / 60,
+            refresh_token_expiry_days: config.refresh_token_expiry_seconds() / (60 * 60 * 24),
         }
     }
 }

@@ -20,7 +20,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::dto::ErrorResponse;
+use crate::dto::error::{ErrorResponse, ErrorResponseExt};
 
 /// Rate limit configuration for different actions
 #[derive(Debug, Clone)]

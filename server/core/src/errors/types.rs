@@ -4,10 +4,11 @@
 //! and validation operations. The actual error messages are configured externally
 //! in the presentation layer for internationalization support.
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use shared::types::response::ErrorResponse;
 use thiserror::Error;
+
+// Re-export shared ErrorResponse for backward compatibility
+pub use shared::types::response::ErrorResponse as DomainErrorResponse;
 
 /// Authentication-related errors
 /// 
@@ -148,50 +149,8 @@ pub enum ValidationError {
     },
 }
 
-/// Standardized error response structure
-/// 
-/// This structure is used for API error responses with consistent formatting.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ErrorResponse {
-    /// Error code for client-side handling
-    pub error: String,
-    
-    /// Human-readable error message
-    pub message: String,
-    
-    /// Optional additional error details
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub details: Option<HashMap<String, serde_json::Value>>,
-    
-    /// Timestamp of when the error occurred
-    pub timestamp: DateTime<Utc>,
-}
-
-impl ErrorResponse {
-    /// Create a new error response
-    pub fn new(error: String, message: String) -> Self {
-        Self {
-            error,
-            message,
-            details: None,
-            timestamp: Utc::now(),
-        }
-    }
-
-    /// Create an error response with additional details
-    pub fn with_details(
-        error: String, 
-        message: String, 
-        details: HashMap<String, serde_json::Value>
-    ) -> Self {
-        Self {
-            error,
-            message,
-            details: Some(details),
-            timestamp: Utc::now(),
-        }
-    }
-}
+// The ErrorResponse struct is now imported from shared module
+// We only need to add any core-specific extension methods if needed
 
 // Utility functions for extracting language-specific messages
 // These are kept for backward compatibility but actual i18n is handled in the presentation layer

@@ -44,6 +44,27 @@ impl Default for DatabaseConfig {
 }
 
 impl DatabaseConfig {
+    /// Create from environment variables
+    pub fn from_env() -> Self {
+        let url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "mysql://root:password@localhost:3306/renoveasy".to_string());
+        let max_connections = std::env::var("DATABASE_MAX_CONNECTIONS")
+            .unwrap_or_else(|_| "10".to_string())
+            .parse()
+            .unwrap_or(10);
+        let connect_timeout = std::env::var("DATABASE_CONNECT_TIMEOUT")
+            .unwrap_or_else(|_| "30".to_string())
+            .parse()
+            .unwrap_or(30);
+            
+        Self {
+            url,
+            max_connections,
+            connect_timeout,
+            ..Default::default()
+        }
+    }
+    
     /// Create a new database configuration with URL
     pub fn new(url: impl Into<String>) -> Self {
         Self {

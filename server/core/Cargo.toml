@@ -8,6 +8,9 @@ description = "Core business logic and domain layer for RenovEasy backend"
 repository.workspace = true
 
 [dependencies]
+# Shared module
+shared = { path = "../shared" }
+
 # Serialization
 serde.workspace = true
 serde_json.workspace = true

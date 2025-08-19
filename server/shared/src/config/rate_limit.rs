@@ -155,6 +155,16 @@ impl Default for RateLimitConfig {
 }
 
 impl RateLimitConfig {
+    /// Get max requests (backward compatibility - returns SMS per hour)
+    pub fn max_requests(&self) -> u32 {
+        self.sms.per_phone_per_hour
+    }
+    
+    /// Get window seconds (backward compatibility - returns 3600 for 1 hour)
+    pub fn window_seconds(&self) -> u64 {
+        3600  // 1 hour window for SMS rate limiting
+    }
+    
     /// Add a custom endpoint limit
     pub fn add_custom_limit(mut self, name: impl Into<String>, limit: EndpointLimit) -> Self {
         self.custom_limits.insert(name.into(), limit);

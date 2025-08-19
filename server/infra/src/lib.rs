@@ -42,7 +42,11 @@ pub mod config {
     //! - SMS service credentials  
     //! - Environment-specific settings
     
+    use shared::config::{database::DatabaseConfig, cache::CacheConfig};
     use serde::{Deserialize, Serialize};
+    
+    // Re-export shared configs for backward compatibility
+    pub use shared::config::{database::DatabaseConfig as InfraDatabaseConfig, cache::CacheConfig as InfraCacheConfig};
     
     /// Infrastructure configuration settings
     #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -53,28 +57,6 @@ pub mod config {
         pub cache: CacheConfig,
         /// SMS service configuration
         pub sms: SmsConfig,
-    }
-    
-    /// Database configuration
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct DatabaseConfig {
-        /// Database connection URL
-        pub url: String,
-        /// Maximum number of connections in pool
-        pub max_connections: u32,
-        /// Connection timeout in seconds
-        pub connect_timeout: u64,
-    }
-    
-    /// Redis cache configuration
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct CacheConfig {
-        /// Redis connection URL
-        pub url: String,
-        /// Connection pool size
-        pub pool_size: u32,
-        /// Default TTL for cache entries in seconds
-        pub default_ttl: u64,
     }
     
     /// SMS service configuration
@@ -93,16 +75,8 @@ pub mod config {
     impl Default for InfrastructureConfig {
         fn default() -> Self {
             Self {
-                database: DatabaseConfig {
-                    url: "mysql://localhost:3306/renoveasty".to_string(),
-                    max_connections: 10,
-                    connect_timeout: 30,
-                },
-                cache: CacheConfig {
-                    url: "redis://localhost:6379".to_string(),
-                    pool_size: 10,
-                    default_ttl: 3600, // 1 hour
-                },
+                database: DatabaseConfig::default(),
+                cache: CacheConfig::default(),
                 sms: SmsConfig {
                     provider: "mock".to_string(),
                     api_key: String::new(),
@@ -162,9 +136,23 @@ pub async fn initialize() -> Result<InfrastructureServices, InfrastructureError>
 fn load_config() -> Result<config::InfrastructureConfig, InfrastructureError> {
     dotenvy::dotenv().ok(); // Load .env file if present
     
-    // For now, use default config
-    // TODO: Load from environment variables and config files
-    Ok(config::InfrastructureConfig::default())
+    // Use shared config loaders
+    let database = shared::config::database::DatabaseConfig::from_env();
+    let cache = shared::config::cache::CacheConfig::from_env();
+    
+    // Load SMS config (still local to infra)
+    let sms = config::SmsConfig {
+        provider: std::env::var("SMS_PROVIDER").unwrap_or_else(|_| "mock".to_string()),
+        api_key: std::env::var("SMS_API_KEY").unwrap_or_default(),
+        api_secret: std::env::var("SMS_API_SECRET").unwrap_or_default(),
+        from_number: std::env::var("SMS_FROM_NUMBER").unwrap_or_else(|_| "+1234567890".to_string()),
+    };
+    
+    Ok(config::InfrastructureConfig {
+        database,
+        cache,
+        sms,
+    })
 }
 
 /// Infrastructure-specific error types

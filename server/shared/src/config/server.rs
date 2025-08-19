@@ -57,6 +57,27 @@ impl Default for ServerConfig {
 }
 
 impl ServerConfig {
+    /// Create from environment variables
+    pub fn from_env() -> Self {
+        let host = std::env::var("SERVER_HOST")
+            .unwrap_or_else(|_| "127.0.0.1".to_string());
+        let port = std::env::var("SERVER_PORT")
+            .unwrap_or_else(|_| "8080".to_string())
+            .parse()
+            .unwrap_or(8080);
+        let workers = std::env::var("SERVER_WORKERS")
+            .unwrap_or_else(|_| "0".to_string())
+            .parse()
+            .unwrap_or(0);
+            
+        Self {
+            host,
+            port,
+            workers,
+            ..Default::default()
+        }
+    }
+    
     /// Create a new server configuration
     pub fn new(host: impl Into<String>, port: u16) -> Self {
         Self {

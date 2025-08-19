@@ -136,6 +136,60 @@ pub struct AuthConfig {
     pub oauth2: Option<OAuth2Providers>,
 }
 
+impl AuthConfig {
+    /// Create from environment variables
+    pub fn from_env() -> Self {
+        let jwt_secret = std::env::var("JWT_SECRET")
+            .unwrap_or_else(|_| "development-secret-please-change-in-production".to_string());
+        let access_token_expiry = std::env::var("JWT_ACCESS_TOKEN_EXPIRY")
+            .unwrap_or_else(|_| "900".to_string())
+            .parse()
+            .unwrap_or(900);
+        let refresh_token_expiry = std::env::var("JWT_REFRESH_TOKEN_EXPIRY")
+            .unwrap_or_else(|_| "604800".to_string())
+            .parse()
+            .unwrap_or(604800);
+            
+        Self {
+            jwt: JwtConfig {
+                secret: jwt_secret,
+                access_token_expiry,
+                refresh_token_expiry,
+                issuer: String::from("renoveasy"),
+                audience: None,
+                algorithm: default_algorithm(),
+            },
+            session: SessionConfig::default(),
+            oauth2: None,
+        }
+    }
+    
+    /// Get JWT secret (backward compatibility)
+    pub fn jwt_secret(&self) -> &str {
+        &self.jwt.secret
+    }
+    
+    /// Get access token expiry in seconds (backward compatibility)
+    pub fn access_token_expiry_seconds(&self) -> i64 {
+        self.jwt.access_token_expiry
+    }
+    
+    /// Get refresh token expiry in seconds (backward compatibility)
+    pub fn refresh_token_expiry_seconds(&self) -> i64 {
+        self.jwt.refresh_token_expiry
+    }
+}
+
+impl Default for AuthConfig {
+    fn default() -> Self {
+        Self {
+            jwt: JwtConfig::default(),
+            session: SessionConfig::default(),
+            oauth2: None,
+        }
+    }
+}
+
 /// OAuth2 provider configurations
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OAuth2Providers {

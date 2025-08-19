@@ -50,12 +50,43 @@ impl Default for CacheConfig {
 }
 
 impl CacheConfig {
+    /// Create from environment variables
+    pub fn from_env() -> Self {
+        let url = std::env::var("REDIS_URL")
+            .unwrap_or_else(|_| "redis://localhost:6379".to_string());
+        let max_connections = std::env::var("REDIS_MAX_CONNECTIONS")
+            .unwrap_or_else(|_| "10".to_string())
+            .parse()
+            .unwrap_or(10);
+            
+        Self {
+            url,
+            max_connections,
+            ..Default::default()
+        }
+    }
+    
     /// Create a new cache configuration with URL
     pub fn new(url: impl Into<String>) -> Self {
         Self {
             url: url.into(),
             ..Default::default()
         }
+    }
+    
+    /// Get Redis URL (backward compatibility)
+    pub fn redis_url(&self) -> &str {
+        &self.url
+    }
+    
+    /// Get pool size (backward compatibility)
+    pub fn pool_size(&self) -> u32 {
+        self.max_connections
+    }
+    
+    /// Get default TTL in seconds (backward compatibility)
+    pub fn default_ttl_seconds(&self) -> u64 {
+        self.default_ttl
     }
     
     /// Set the key prefix for all cache keys

@@ -13,7 +13,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{debug, error, info, warn};
 
-use crate::config::CacheConfig;
+use shared::config::cache::CacheConfig;
 use crate::InfrastructureError;
 
 /// Redis cache client with connection pooling and retry logic
@@ -43,15 +43,11 @@ impl RedisClient {
     /// 
     /// # Example
     /// ```no_run
-    /// use renov_infra::config::CacheConfig;
+    /// use shared::config::cache::CacheConfig;
     /// use renov_infra::cache::redis_client::RedisClient;
     /// 
     /// async fn create_client() -> Result<RedisClient, Box<dyn std::error::Error>> {
-    ///     let config = CacheConfig {
-    ///         url: "redis://localhost:6379".to_string(),
-    ///         pool_size: 10,
-    ///         default_ttl: 3600,
-    ///     };
+    ///     let config = CacheConfig::new("redis://localhost:6379");
     ///     let client = RedisClient::new(config).await?;
     ///     Ok(client)
     /// }
@@ -76,12 +72,12 @@ impl RedisClient {
     ) -> Result<Self, InfrastructureError> {
         info!(
             "Creating Redis client with URL: {} and pool size: {}",
-            mask_url(&config.url),
-            config.pool_size
+            mask_url(config.redis_url()),
+            config.pool_size()
         );
 
         // Parse Redis URL and create client
-        let client = Client::open(config.url.as_str()).map_err(|e| {
+        let client = Client::open(config.redis_url()).map_err(|e| {
             error!("Failed to parse Redis URL: {}", e);
             InfrastructureError::Config(format!("Invalid Redis URL: {}", e))
         })?;

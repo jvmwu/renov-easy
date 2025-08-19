@@ -7,7 +7,7 @@ mod tests;
 
 // Re-export all error types and utilities
 pub use types::{
-    AuthError, ErrorResponse, TokenError, ValidationError,
+    AuthError, DomainErrorResponse as ErrorResponse, TokenError, ValidationError,
     extract_chinese_message, extract_english_message,
 };
 

@@ -2,7 +2,7 @@ use actix_web::{web, HttpRequest, HttpResponse};
 use validator::Validate;
 
 use crate::dto::auth::SelectTypeRequest;
-use crate::dto::error::ErrorResponse;
+use crate::dto::error::{ErrorResponse, ErrorResponseExt};
 use crate::handlers::error::{handle_domain_error_with_lang, Language, extract_language};
 use crate::middleware::auth::AuthContext;
 

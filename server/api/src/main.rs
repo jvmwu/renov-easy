@@ -1,7 +1,6 @@
 use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 use log::info;
-use std::env;
 
 // Re-export the core crate to avoid naming conflicts  
 extern crate core as renov_core;
@@ -28,14 +27,12 @@ async fn main() -> std::io::Result<()> {
     info!("Starting RenovEasy API Server");
     
     // Load configuration
-    let server_host = env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
-    let server_port = env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8080".to_string())
-        .parse::<u16>()
-        .expect("SERVER_PORT must be a valid port number");
+    let config = config::Config::from_env()
+        .expect("Failed to load configuration");
     
-    let bind_address = format!("{}:{}", server_host, server_port);
+    let bind_address = format!("{}:{}", config.server.host, config.server.port);
     info!("Server will bind to: {}", bind_address);
+    info!("Environment: {:?}", config.environment);
     
     // Note: In a real implementation, you would:
     // 1. Initialize database connections

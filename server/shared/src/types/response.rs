@@ -234,6 +234,41 @@ pub struct HealthResponse {
     pub version: String,
 }
 
+/// Standardized error response structure for domain errors
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErrorResponse {
+    /// Error code for client-side handling
+    pub error: String,
+    
+    /// Human-readable error message
+    pub message: String,
+    
+    /// Optional additional error details
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub details: Option<HashMap<String, serde_json::Value>>,
+    
+    /// Timestamp of when the error occurred
+    pub timestamp: DateTime<Utc>,
+}
+
+impl ErrorResponse {
+    /// Create a new error response
+    pub fn new(error: String, message: String) -> Self {
+        Self {
+            error,
+            message,
+            details: None,
+            timestamp: Utc::now(),
+        }
+    }
+
+    /// Create an error response with additional details
+    pub fn with_details(mut self, details: HashMap<String, serde_json::Value>) -> Self {
+        self.details = Some(details);
+        self
+    }
+}
+
 /// Health status enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
