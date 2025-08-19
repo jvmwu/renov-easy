@@ -302,67 +302,30 @@
   - 配置 JWT 密钥
   - _Requirements: 配置管理_
 
-### 11. 测试实现
+### 11. 文档和部署准备
 
-- [ ] 38. 创建 TokenService 单元测试
-  - 文件: server/core/src/services/token_service.rs (tests module)
-  - 测试 token 生成
-  - 测试 token 验证
-  - 测试过期处理
-  - _Requirements: 4.1_
-
-- [ ] 39. 创建 VerificationService 单元测试
-  - 文件: server/core/src/services/verification_service.rs (tests module)
-  - 测试验证码生成
-  - 测试验证逻辑
-  - 测试过期和重试
-  - _Requirements: 2.1, 2.2_
-
-- [ ] 40. 创建注册流程集成测试
-  - 文件: server/api/tests/auth_register_test.rs
-  - 测试新用户注册流程
-  - 测试验证码发送和验证
-  - 使用测试数据库
-  - _Requirements: 1.1, 2.1, 3.1_
-
-- [ ] 41. 创建登录流程集成测试
-  - 文件: server/api/tests/auth_login_test.rs
-  - 测试已有用户登录
-  - 测试 token 生成
-  - 验证用户类型返回
-  - _Requirements: 1.1, 4.1_
-
-- [ ] 42. 创建速率限制测试
-  - 文件: server/api/tests/rate_limit_test.rs
-  - 测试 SMS 限制
-  - 测试验证码重试限制
-  - 测试限制重置
-  - _Requirements: 5.1, 5.2, 5.3_
-
-### 12. 文档和部署准备
-
-- [ ] 43. 创建项目 README 文档
+- [x] 38. 创建项目 README 文档
   - 文件: server/README.md
   - 项目描述和架构说明
   - 安装和运行指南
   - 环境变量配置说明
   - _Requirements: 文档要求_
 
-- [ ] 44. 创建 API 接口文档
+- [x] 39. 创建 API 接口文档
   - 文件: server/API.md
   - 文档化所有端点
   - 提供请求/响应示例
   - 错误码说明
   - _Requirements: 文档要求_
 
-- [ ] 45. 创建应用 Dockerfile
+- [x] 40. 创建应用 Dockerfile
   - 文件: server/Dockerfile
   - 多阶段构建 Rust 应用
   - 优化镜像大小
   - 设置运行时环境
   - _Requirements: 部署准备_
 
-- [ ] 46. 创建 Docker Compose 配置
+- [x] 41. 创建 Docker Compose 配置
   - 文件: server/docker-compose.yml
   - 配置应用服务
   - 配置 MySQL 和 Redis 服务

@@ -1,0 +1,207 @@
+version: '3.8'
+
+# ============================================
+# Docker Compose Override for Development
+# ============================================
+# This file automatically overrides settings in docker-compose.yml
+# when running docker-compose commands without specifying files.
+# It contains development-specific configurations.
+# ============================================
+
+services:
+  # ============================================
+  # MySQL Development Overrides
+  # ============================================
+  mysql:
+    environment:
+      # Less secure passwords acceptable in development
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: renoveasy_dev_2025
+    ports:
+      # Expose MySQL for external tools (MySQL Workbench, DBeaver, etc.)
+      - "3306:3306"
+    volumes:
+      # Mount migrations for development
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+      # Mount for backup/restore operations
+      - ./backups/mysql:/backups
+
+  # ============================================
+  # Redis Development Overrides
+  # ============================================
+  redis:
+    # No password in development for easier access
+    command: redis-server --appendonly yes
+    ports:
+      # Expose Redis for external tools (RedisInsight, redis-cli, etc.)
+      - "6379:6379"
+    environment:
+      # Remove password requirement for development
+      REDIS_PASSWORD: ""
+
+  # ============================================
+  # Backend Development Overrides
+  # ============================================
+  backend:
+    build:
+      target: development
+      cache_from:
+        - rust:1.75
+    environment:
+      # Development environment
+      ENVIRONMENT: development
+      
+      # Development database (no password complexity)
+      DATABASE_URL: mysql://renoveasy:renoveasy_dev_2025@mysql:3306/renoveasy_dev
+      
+      # Development Redis (no password)
+      REDIS_URL: redis://redis:6379/0
+      
+      # Simple JWT secret for development
+      JWT_SECRET: dev_secret_key_please_change_in_production_minimum_32_chars_long
+      
+      # Mock SMS provider for development
+      SMS_PROVIDER: mock
+      
+      # Verbose logging for development
+      RUST_LOG: debug
+      LOG_LEVEL: debug
+      LOG_SQL_QUERIES: "true"
+      
+      # Disable rate limiting for easier testing
+      RATE_LIMIT_ENABLED: "false"
+      
+      # Enable development features
+      SWAGGER_ENABLED: "true"
+      DEBUG_ENDPOINTS_ENABLED: "true"
+      
+      # Hot reload support
+      CARGO_WATCH: "true"
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/target  # Exclude target directory
+      - /app/.git    # Exclude git directory
+      
+      # Mount cargo cache to speed up builds
+      - cargo-cache:/usr/local/cargo/registry
+      - cargo-git:/usr/local/cargo/git
+      
+      # Mount for live config updates
+      - ./.env.development:/app/.env:ro
+    ports:
+      # Expose additional ports for debugging
+      - "8080:8080"  # Main application
+      - "9090:9090"  # Metrics (if enabled)
+      - "9229:9229"  # Debug port
+    # Override command for development with auto-reload
+    command: |
+      sh -c "
+        if [ -f /app/.env ]; then
+          export \$$(cat /app/.env | grep -v '^#' | xargs)
+        fi
+        cargo watch -x 'run --bin api' -w src -w Cargo.toml
+      "
+    # More lenient health check for development
+    healthcheck:
+      interval: 60s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  # ============================================
+  # Additional Development Services
+  # ============================================
+  
+  # phpMyAdmin for MySQL management
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: renoveasy-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: renoveasy
+      PMA_PASSWORD: renoveasy_dev_2025
+      UPLOAD_LIMIT: 100M
+    ports:
+      - "8081:80"
+    networks:
+      - renoveasy-network
+    depends_on:
+      - mysql
+    profiles:
+      - dev-tools
+
+  # RedisInsight for Redis management
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: renoveasy-redis-insight
+    restart: unless-stopped
+    ports:
+      - "8082:8001"
+    volumes:
+      - redis-insight-data:/db
+    networks:
+      - renoveasy-network
+    depends_on:
+      - redis
+    profiles:
+      - dev-tools
+
+  # Mailhog for email testing (future use)
+  mailhog:
+    image: mailhog/mailhog
+    container_name: renoveasy-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI
+    networks:
+      - renoveasy-network
+    profiles:
+      - dev-tools
+
+# ============================================
+# Additional Development Volumes
+# ============================================
+volumes:
+  cargo-cache:
+    driver: local
+    name: renoveasy-cargo-cache
+  cargo-git:
+    driver: local
+    name: renoveasy-cargo-git
+  redis-insight-data:
+    driver: local
+    name: renoveasy-redis-insight-data
+
+# ============================================
+# Development Usage:
+# ============================================
+# Start development environment:
+#   docker-compose up -d
+#
+# Start with development tools:
+#   docker-compose --profile dev-tools up -d
+#
+# Watch logs:
+#   docker-compose logs -f backend
+#
+# Rebuild after code changes:
+#   docker-compose up -d --build backend
+#
+# Access services:
+#   - Backend API: http://localhost:8080
+#   - phpMyAdmin: http://localhost:8081
+#   - RedisInsight: http://localhost:8082
+#   - MailHog: http://localhost:8025
+#
+# Run tests in container:
+#   docker-compose exec backend cargo test
+#
+# Access backend shell:
+#   docker-compose exec backend /bin/bash
+#
+# Reset everything:
+#   docker-compose down -v
+#   docker-compose up -d --build

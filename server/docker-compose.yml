@@ -1,0 +1,210 @@
+version: '3.8'
+
+# ============================================
+# RenovEasy Backend Docker Compose Configuration
+# ============================================
+# This file orchestrates the entire backend stack including:
+# - Rust backend application
+# - MySQL database
+# - Redis cache
+# ============================================
+
+services:
+  # ============================================
+  # MySQL Database Service
+  # ============================================
+  mysql:
+    image: mysql:8.0
+    container_name: renoveasy-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_change_me}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-renoveasy}
+      MYSQL_USER: ${MYSQL_USER:-renoveasy}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-renoveasy_password_change_me}
+      # MySQL configuration
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      # Data persistence
+      - mysql_data:/var/lib/mysql
+      # Initial scripts (if any)
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+      # Custom MySQL configuration
+      - ./config/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    networks:
+      - renoveasy-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password_change_me}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ============================================
+  # Redis Cache Service
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: renoveasy-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password_change_me}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      # Data persistence
+      - redis_data:/data
+      # Custom Redis configuration (optional)
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - renoveasy-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-redis_password_change_me}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ============================================
+  # Backend Application Service
+  # ============================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-production}
+      args:
+        - RUST_VERSION=${RUST_VERSION:-1.75}
+    image: renoveasy-backend:${IMAGE_TAG:-latest}
+    container_name: renoveasy-backend
+    restart: unless-stopped
+    environment:
+      # Environment
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      
+      # Server configuration
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+      
+      # Database configuration
+      DATABASE_URL: mysql://${MYSQL_USER:-renoveasy}:${MYSQL_PASSWORD:-renoveasy_password_change_me}@mysql:3306/${MYSQL_DATABASE:-renoveasy}
+      
+      # Redis configuration
+      REDIS_URL: redis://default:${REDIS_PASSWORD:-redis_password_change_me}@redis:6379/0
+      
+      # JWT configuration
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_change_me_in_production}
+      JWT_ACCESS_TOKEN_EXPIRY: ${JWT_ACCESS_TOKEN_EXPIRY:-900}
+      JWT_REFRESH_TOKEN_EXPIRY: ${JWT_REFRESH_TOKEN_EXPIRY:-604800}
+      
+      # SMS configuration
+      SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      
+      # Logging
+      RUST_LOG: ${RUST_LOG:-info}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      
+      # Rate limiting
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      SMS_RATE_LIMIT_MAX_ATTEMPTS: ${SMS_RATE_LIMIT_MAX_ATTEMPTS:-3}
+      API_RATE_LIMIT_MAX_REQUESTS: ${API_RATE_LIMIT_MAX_REQUESTS:-60}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      # Migrations (if running migrations from app)
+      - ./migrations:/app/migrations:ro
+      # i18n files
+      - ./api/i18n:/app/i18n:ro
+      # Logs (optional)
+      - ./logs:/app/logs
+    networks:
+      - renoveasy-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # Database Migration Service (Optional)
+  # ============================================
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: renoveasy-migrate
+    command: |
+      sh -c "
+        echo 'Waiting for MySQL to be ready...'
+        sleep 10
+        echo 'Running database migrations...'
+        sqlx migrate run --database-url 'mysql://${MYSQL_USER:-renoveasy}:${MYSQL_PASSWORD:-renoveasy_password_change_me}@mysql:3306/${MYSQL_DATABASE:-renoveasy}'
+        echo 'Migrations completed!'
+      "
+    volumes:
+      - ./migrations:/usr/src/renoveasy/migrations:ro
+    networks:
+      - renoveasy-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    profiles:
+      - migrate
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  renoveasy-network:
+    driver: bridge
+    name: renoveasy-network
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  mysql_data:
+    driver: local
+    name: renoveasy-mysql-data
+  redis_data:
+    driver: local
+    name: renoveasy-redis-data
+
+# ============================================
+# Usage Examples:
+# ============================================
+# Start all services:
+#   docker-compose up -d
+#
+# Start with build:
+#   docker-compose up -d --build
+#
+# View logs:
+#   docker-compose logs -f backend
+#
+# Run migrations:
+#   docker-compose --profile migrate up migrate
+#
+# Stop all services:
+#   docker-compose down
+#
+# Stop and remove volumes:
+#   docker-compose down -v
+#
+# Scale backend service:
+#   docker-compose up -d --scale backend=3
+#
+# Use with override file:
+#   docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d

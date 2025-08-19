@@ -1,0 +1,82 @@
+# .dockerignore for RenovEasy Backend
+# Excludes unnecessary files from Docker build context
+
+# Git files
+.git/
+.gitignore
+
+# Environment files - Never include in image
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+target/
+**/*.rs.bk
+*.pdb
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation (not needed in runtime)
+*.md
+!README.md
+docs/
+
+# Test files (not needed in production)
+**/tests/
+**/examples/
+**/*_test.rs
+**/*_test.toml
+
+# Development files
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# OS specific files
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Coverage reports
+tarpaulin-report.html
+cobertura.xml
+coverage/
+
+# SQLx offline mode cache
+.sqlx/
+
+# Node modules (if any frontend exists)
+node_modules/
+package-lock.json
+
+# Python virtual environments (if any scripts)
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Cargo registry cache (will be rebuilt)
+# Keep Cargo.lock for reproducible builds
+# /Cargo.lock
+
+# Keep only necessary configuration
+# All other configs should come from environment
