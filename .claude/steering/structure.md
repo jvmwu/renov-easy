@@ -19,55 +19,106 @@ renov-easy/
 │   ├── auth/                      # Authentication flow mockups
 │   ├── styles/                    # Design system reference
 │   └── *.html                     # Page mockups for UI reference
-├── server/                        # Rust backend (current priority)
+├── server/                        # Rust backend
 │   ├── Cargo.toml                 # Workspace configuration
-│   ├── api/                       # REST API server
+│   ├── api/                       # REST API server ✅
 │   │   ├── Cargo.toml             # API crate configuration
+│   │   ├── i18n/                  # Internationalization ✅
+│   │   │   └── error_messages.toml # Error message translations
 │   │   ├── src/
 │   │   │   ├── main.rs            # Server entry point
-│   │   │   ├── routes/            # API route handlers
-│   │   │   ├── middleware/        # Request middleware
-│   │   │   └── handlers/          # Request handlers
-│   │   └── tests/                 # API integration tests
-│   ├── core/                      # Core business logic
+│   │   │   ├── lib.rs             # Library exports
+│   │   │   ├── app.rs             # Application setup
+│   │   │   ├── config.rs          # Configuration management
+│   │   │   ├── dto/               # Data transfer objects ✅
+│   │   │   │   ├── auth.rs        # Authentication DTOs
+│   │   │   │   └── error.rs       # Error response DTOs
+│   │   │   ├── handlers/          # Request handlers ✅
+│   │   │   │   └── error.rs       # Error handling with i18n
+│   │   │   ├── i18n/              # I18n module ✅
+│   │   │   │   └── mod.rs         # Language support
+│   │   │   ├── middleware/        # Security middleware ✅
+│   │   │   │   ├── auth.rs        # JWT authentication
+│   │   │   │   ├── cors.rs        # CORS configuration
+│   │   │   │   ├── rate_limit.rs  # Rate limiting
+│   │   │   │   └── security.rs    # Security headers
+│   │   │   └── routes/            # API routes ✅
+│   │   │       └── auth/          # Authentication endpoints
+│   │   │           ├── send_code.rs    # SMS verification
+│   │   │           ├── verify_code.rs  # Code validation
+│   │   │           ├── select_type.rs  # User type selection
+│   │   │           ├── refresh.rs      # Token refresh
+│   │   │           └── logout.rs       # User logout
+│   │   └── tests/                 # Comprehensive test suite ✅
+│   │       ├── i18n_test.rs      # I18n tests
+│   │       ├── error_handling_test.rs  # Error handling tests
+│   │       └── auth_middleware_test.rs # Auth tests
+│   ├── core/                      # Core business logic ✅
 │   │   ├── Cargo.toml             # Core crate configuration
 │   │   ├── src/
 │   │   │   ├── lib.rs             # Library entry point
-│   │   │   ├── domain/            # Domain models and entities
+│   │   │   ├── domain/            # Domain models ✅
 │   │   │   │   ├── entities/      # Business entities
+│   │   │   │   │   ├── user.rs    # User entity
+│   │   │   │   │   ├── token.rs   # Token entity
+│   │   │   │   │   ├── audit.rs   # Audit log entity ✅
+│   │   │   │   │   ├── verification_code.rs # Verification codes
 │   │   │   │   │   └── tests/     # Entity unit tests
-│   │   │   │   └── value_objects/ # Value objects
-│   │   │   │       └── tests/     # Value object unit tests
-│   │   │   ├── services/          # Business services
+│   │   │   │   ├── events/        # Domain events ✅
+│   │   │   │   └── value_objects/ # Value objects ✅
+│   │   │   │       └── tests/     # Value object tests
+│   │   │   ├── services/          # Business services ✅
+│   │   │   │   ├── auth/          # Authentication service
+│   │   │   │   ├── audit/         # Audit service ✅
+│   │   │   │   ├── token/         # Token management
+│   │   │   │   ├── verification/  # Verification service
 │   │   │   │   └── tests/         # Service unit tests
-│   │   │   ├── repositories/      # Repository traits
-│   │   │   │   └── tests/         # Repository trait tests
-│   │   │   └── errors/            # Domain errors
+│   │   │   ├── repositories/      # Repository traits ✅
+│   │   │   │   ├── user/          # User repository trait
+│   │   │   │   ├── token/         # Token repository trait
+│   │   │   │   ├── audit/         # Audit repository trait ✅
+│   │   │   │   └── tests/         # Repository tests
+│   │   │   └── errors/            # Domain errors ✅
+│   │   │       ├── mod.rs         # Error module
+│   │   │       └── types.rs       # Error type definitions
 │   │   └── tests/                 # Integration tests
-│   ├── infra/                     # Infrastructure implementations
+│   ├── infra/                     # Infrastructure layer ✅
 │   │   ├── Cargo.toml             # Infrastructure crate
+│   │   ├── README.md              # Infrastructure documentation
 │   │   ├── src/
-│   │   │   ├── database/          # Database implementations
-│   │   │   │   ├── mysql/         # MySQL specific implementations
-│   │   │   │   └── tests/         # Database unit tests
-│   │   │   ├── sms/               # SMS service adapters
-│   │   │   │   └── tests/         # SMS service unit tests
-│   │   │   ├── maps/              # Maps service adapters
-│   │   │   │   └── tests/         # Maps service unit tests
-│   │   │   └── cache/             # Caching implementations
-│   │   │       └── tests/         # Cache unit tests
-│   │   └── tests/                 # Infrastructure integration tests
-│   ├── ffi/                       # Foreign Function Interface (future)
-│   │   ├── Cargo.toml             # FFI crate configuration
-│   │   └── src/
-│   │       ├── lib.rs             # C-compatible exports
-│   │       ├── android.rs         # Android-specific bindings
-│   │       ├── ios.rs             # iOS-specific bindings
-│   │       └── harmony.rs         # HarmonyOS-specific bindings
-│   ├── migrations/                # Database migrations
-│   │   └── *.sql                  # SQL migration files
-│   └── tests/                     # End-to-end tests
-│       └── integration/           # Integration test suites
+│   │   │   ├── lib.rs             # Library exports
+│   │   │   ├── cache/             # Redis cache ✅
+│   │   │   │   ├── redis_client.rs # Redis client
+│   │   │   │   ├── verification_cache.rs # Verification cache
+│   │   │   │   └── tests/         # Cache tests
+│   │   │   ├── database/          # Database layer ✅
+│   │   │   │   ├── connection.rs  # Connection pool
+│   │   │   │   ├── mysql/         # MySQL implementations
+│   │   │   │   │   ├── user_repository_impl.rs
+│   │   │   │   │   └── token_repository_impl.rs
+│   │   │   │   └── tests/         # Database tests
+│   │   │   └── sms/               # SMS service ✅
+│   │   │       ├── sms_service.rs # SMS service trait
+│   │   │       ├── mock_sms.rs    # Mock implementation
+│   │   │       └── tests/         # SMS tests
+│   │   ├── examples/              # Usage examples
+│   │   └── tests/                 # Integration tests ✅
+│   │       ├── database_integration.rs
+│   │       ├── redis_integration.rs
+│   │       └── sms_integration.rs
+│   ├── shared/                    # Shared utilities ✅
+│   │   ├── config/                # Configuration types
+│   │   ├── errors/                # Common errors
+│   │   ├── types/                 # Common types
+│   │   └── utils/                 # Utility functions
+│   ├── ffi/                       # Foreign Function Interface ✅
+│   │   ├── android/               # Android bindings
+│   │   ├── ios/                   # iOS bindings
+│   │   └── harmony/               # HarmonyOS bindings
+│   ├── migrations/                # Database migrations ✅
+│   │   ├── 001_create_users_table.sql
+│   │   └── 002_create_tokens_audit_tables.sql
+│   └── build/                     # Build artifacts
 └── tests/                         # Cross-platform E2E tests (future)
     ├── api/                       # API test scenarios
     └── load/                      # Load testing scripts
@@ -117,89 +168,127 @@ sqlx = { version = "0.7", features = ["mysql", "runtime-tokio"] }
 
 ## Module Organization
 
-### Server Crates
+### Server Crates (Current Implementation Status)
 
 #### Core Domain (`server/core/`)
 ```
 src/
 ├── domain/
-│   ├── entities/               # Business entities
-│   │   ├── user.rs
-│   │   ├── worker.rs
-│   │   ├── order.rs
-│   │   └── mod.rs
-│   ├── value_objects/         # Value objects
-│   │   ├── phone_number.rs
-│   │   ├── location.rs
-│   │   └── mod.rs
-│   └── events/                # Domain events
-├── services/
-│   ├── auth_service.rs        # Authentication logic
-│   ├── order_service.rs       # Order management
-│   ├── user_service.rs        # User management
-│   └── worker_service.rs      # Worker management
-├── repositories/              # Repository traits
-│   ├── user_repository.rs
-│   └── order_repository.rs
-└── errors/                    # Domain errors
-    └── types.rs
+│   ├── entities/                  # Business entities ✅
+│   │   ├── user.rs                # User entity with roles
+│   │   ├── token.rs               # JWT token management
+│   │   ├── audit.rs               # Audit logging entity
+│   │   ├── verification_code.rs   # SMS verification
+│   │   └── tests/                 # Entity unit tests
+│   ├── value_objects/             # Value objects ✅
+│   │   ├── phone_number.rs        # Phone validation
+│   │   ├── email.rs               # Email validation
+│   │   ├── user_role.rs           # User roles enum
+│   │   └── tests/                 # Value object tests
+│   └── events/                    # Domain events ✅
+│       └── audit_event.rs         # Audit event types
+├── services/                      # Business services ✅
+│   ├── auth/                      # Authentication service
+│   │   ├── service.rs             # Auth business logic
+│   │   ├── rate_limiter.rs        # Rate limiting trait
+│   │   └── tests/
+│   ├── audit/                     # Audit service ✅
+│   │   ├── service.rs             # Audit logging
+│   │   └── tests/
+│   ├── token/                     # Token management
+│   │   ├── service.rs             # JWT operations
+│   │   └── tests/
+│   └── verification/              # Verification service
+│       ├── service.rs             # SMS code verification
+│       └── tests/
+├── repositories/                  # Repository traits ✅
+│   ├── user/                      # User repository
+│   ├── token/                     # Token repository
+│   └── audit/                     # Audit repository
+└── errors/                        # Domain errors ✅
+    ├── mod.rs                     # Error aggregation
+    └── types.rs                   # Error type definitions
 ```
 
 #### API Server (`server/api/`)
 ```
 src/
 ├── routes/
-│   ├── auth.rs               # Authentication routes
-│   ├── users.rs              # User management routes
-│   ├── workers.rs            # Worker routes
-│   ├── orders.rs             # Order routes
-│   └── mod.rs
+│   └── auth/                      # Authentication routes ✅
+│       ├── send_code.rs           # POST /api/v1/auth/send-code
+│       ├── verify_code.rs         # POST /api/v1/auth/verify-code
+│       ├── select_type.rs         # POST /api/v1/auth/select-type
+│       ├── refresh.rs             # POST /api/v1/auth/refresh
+│       └── logout.rs              # POST /api/v1/auth/logout
 ├── handlers/
-│   └── error.rs              # Global error handling
-├── middleware/
-│   ├── auth.rs               # JWT authentication
-│   ├── cors.rs               # CORS configuration
-│   └── rate_limit.rs         # Rate limiting
-└── dto/                      # Data transfer objects
-    ├── request/
-    └── response/
+│   └── error.rs                   # Global error handling with i18n ✅
+├── middleware/                    # Security middleware ✅
+│   ├── auth.rs                    # JWT authentication
+│   ├── cors.rs                    # CORS configuration
+│   ├── rate_limit.rs              # Rate limiting (Redis-based)
+│   └── security.rs                # Security headers
+├── dto/                           # Data transfer objects ✅
+│   ├── auth.rs                    # Auth request/response DTOs
+│   └── error.rs                   # Error response DTOs
+├── i18n/                          # Internationalization ✅
+│   └── mod.rs                     # Language support (EN/ZH)
+└── config.rs                      # Application configuration
 ```
 
 #### Infrastructure (`server/infra/`)
 ```
 src/
-├── database/
+├── cache/                         # Redis implementation ✅
+│   ├── redis_client.rs            # Redis connection pool
+│   ├── verification_cache.rs      # Verification code cache
+│   └── tests/
+├── database/                      # MySQL implementation ✅
+│   ├── connection.rs              # Connection pool (sqlx)
 │   ├── mysql/
-│   │   ├── connection.rs     # Connection pool
-│   │   └── repositories/     # Repository implementations
-│   └── migrations.rs         # Migration runner
-├── sms/
-│   ├── twilio.rs             # Twilio adapter
-│   └── mock.rs               # Mock for testing
-└── maps/
-    └── google_maps.rs        # Google Maps adapter
+│   │   ├── user_repository_impl.rs  # User CRUD
+│   │   └── token_repository_impl.rs # Token storage
+│   └── tests/
+└── sms/                           # SMS service ✅
+    ├── sms_service.rs             # SMS service trait
+    ├── mock_sms.rs                # Mock for development
+    └── tests/
+```
+
+#### Shared Module (`server/shared/`)
+```
+├── config/                        # Shared configuration types
+├── errors/                        # Common error types
+├── types/                         # Common type definitions
+└── utils/                         # Utility functions
+```
+
+#### FFI Module (`server/ffi/`)
+```
+├── android/                       # Android JNI bindings
+├── ios/                           # iOS bindings
+└── harmony/                       # HarmonyOS bindings
 ```
 
 ## API Design Standards
 
 ### RESTful Endpoints
 ```
-GET    /api/v1/users           # List users
-POST   /api/v1/users           # Create user
-GET    /api/v1/users/{id}      # Get user
-PUT    /api/v1/users/{id}      # Update user
-DELETE /api/v1/users/{id}      # Delete user
+GET    /api/v1/users               # List users
+POST   /api/v1/users               # Create user
+GET    /api/v1/users/{id}          # Get user
+PUT    /api/v1/users/{id}          # Update user
+DELETE /api/v1/users/{id}          # Delete user
 
-POST   /api/v1/auth/login      # User login
-POST   /api/v1/auth/verify     # SMS verification
-POST   /api/v1/auth/refresh    # Token refresh
+POST   /api/v1/auth/login          # User login
+POST   /api/v1/auth/verify         # SMS verification
+POST   /api/v1/auth/refresh        # Token refresh
 
-GET    /api/v1/orders          # List orders
-POST   /api/v1/orders          # Create order
-GET    /api/v1/orders/{id}     # Get order details
-PUT    /api/v1/orders/{id}     # Update order status
+GET    /api/v1/orders              # List orders
+POST   /api/v1/orders              # Create order
+GET    /api/v1/orders/{id}         # Get order details
+PUT    /api/v1/orders/{id}         # Update order status
 
-WS     /api/v1/ws/chat         # WebSocket for chat
+WS     /api/v1/ws/chat             # WebSocket for chat
 ```
 
 ### Response Format
