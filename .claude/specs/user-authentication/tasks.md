@@ -288,14 +288,14 @@
 
 ### 10. 配置和环境管理
 
-- [ ] 36. 创建配置管理模块
+- [x] 36. 创建配置管理模块
   - 文件: server/api/src/config.rs
   - 从环境变量读取配置
   - 定义 Config struct
   - 验证必需配置项
   - _Requirements: 配置管理_
 
-- [ ] 37. 创建开发环境配置文件
+- [x] 37. 创建开发环境配置文件
   - 文件: server/.env.development
   - 配置数据库连接
   - 配置 Redis 连接

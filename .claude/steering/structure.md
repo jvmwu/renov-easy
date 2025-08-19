@@ -107,10 +107,29 @@ renov-easy/
 │   │       ├── redis_integration.rs
 │   │       └── sms_integration.rs
 │   ├── shared/                    # Shared utilities ✅
-│   │   ├── config/                # Configuration types
-│   │   ├── errors/                # Common errors
-│   │   ├── types/                 # Common types
-│   │   └── utils/                 # Utility functions
+│   │   ├── Cargo.toml             # Shared crate configuration
+│   │   ├── src/
+│   │   │   ├── lib.rs             # Library exports
+│   │   │   ├── config/            # Configuration types
+│   │   │   │   ├── mod.rs         # Config module exports
+│   │   │   │   ├── auth.rs        # Authentication config (JWT, OAuth2, Session)
+│   │   │   │   ├── cache.rs       # Cache config (Redis, Memory)
+│   │   │   │   ├── database.rs    # Database config
+│   │   │   │   ├── environment.rs # Environment config (Dev/Staging/Prod)
+│   │   │   │   ├── rate_limit.rs  # Rate limiting config
+│   │   │   │   └── server.rs      # Server config (host, port, TLS)
+│   │   │   ├── errors/            # Common errors
+│   │   │   │   └── mod.rs         # Error exports
+│   │   │   ├── types/             # Common types
+│   │   │   │   ├── mod.rs         # Type exports
+│   │   │   │   ├── common.rs      # Common type definitions
+│   │   │   │   ├── language.rs    # Language support types
+│   │   │   │   ├── pagination.rs  # Pagination types
+│   │   │   │   └── response.rs    # API response types (ErrorResponse, etc.)
+│   │   │   └── utils/             # Utility functions
+│   │   │       ├── mod.rs         # Utils exports
+│   │   │       ├── phone.rs       # Phone number utilities
+│   │   │       └── validation.rs  # Input validation utilities
 │   ├── ffi/                       # Foreign Function Interface ✅
 │   │   ├── android/               # Android bindings
 │   │   ├── ios/                   # iOS bindings
@@ -133,6 +152,7 @@ members = [
     "server/api",
     "server/core",
     "server/infra",
+    "server/shared",
     "server/ffi"
 ]
 
@@ -256,10 +276,61 @@ src/
 
 #### Shared Module (`server/shared/`)
 ```
-├── config/                        # Shared configuration types
-├── errors/                        # Common error types
-├── types/                         # Common type definitions
-└── utils/                         # Utility functions
+src/
+├── lib.rs                         # Library exports
+├── config/                        # Shared configuration types ✅
+│   ├── mod.rs                     # Module exports
+│   ├── auth.rs                    # Authentication config
+│   │   ├── JwtConfig              # JWT configuration
+│   │   ├── OAuth2Config           # OAuth2 provider config
+│   │   ├── SessionConfig          # Session management
+│   │   └── AuthConfig             # Complete auth config
+│   ├── cache.rs                   # Cache configuration
+│   │   ├── CacheConfig            # Redis cache config
+│   │   ├── MemoryCacheConfig      # In-memory cache config
+│   │   └── CacheStrategyConfig    # Cache strategy selection
+│   ├── database.rs                # Database configuration
+│   │   └── DatabaseConfig         # Connection pool config
+│   ├── environment.rs             # Environment configuration
+│   │   └── Environment            # Dev/Staging/Production
+│   ├── rate_limit.rs              # Rate limiting configuration
+│   │   ├── RateLimitConfig        # Main rate limit config
+│   │   ├── SmsRateLimits          # SMS-specific limits
+│   │   ├── ApiRateLimits          # API rate limits
+│   │   └── AuthRateLimits         # Auth rate limits
+│   └── server.rs                  # Server configuration
+│       ├── ServerConfig           # HTTP server config
+│       └── TlsConfig              # TLS/SSL config
+├── errors/                        # Common error types ✅
+│   └── mod.rs                     # Error definitions
+├── types/                         # Common type definitions ✅
+│   ├── mod.rs                     # Type exports
+│   ├── common.rs                  # Common types
+│   │   ├── Id                     # UUID wrapper
+│   │   ├── Timestamp              # DateTime wrapper
+│   │   └── PhoneNumber            # Phone number type
+│   ├── language.rs                # Language support
+│   │   ├── Language               # Language enum
+│   │   └── LocalizedString        # Multi-language strings
+│   ├── pagination.rs              # Pagination support
+│   │   ├── PaginationRequest      # Page request params
+│   │   └── PaginatedResponse      # Paginated response
+│   └── response.rs                # API response types
+│       ├── ApiResponse            # Standard API response
+│       ├── ErrorResponse          # Error response structure
+│       ├── DetailedResponse       # Detailed response with meta
+│       ├── BatchResponse          # Batch operation response
+│       └── HealthResponse         # Health check response
+└── utils/                         # Utility functions ✅
+    ├── mod.rs                     # Utils exports
+    ├── phone.rs                   # Phone validation/formatting
+    │   ├── validate_phone()       # Phone number validation
+    │   ├── format_phone()         # Phone formatting
+    │   └── hash_phone()           # Phone hashing for privacy
+    └── validation.rs              # Input validation
+        ├── validate_email()       # Email validation
+        ├── validate_password()    # Password strength check
+        └── sanitize_input()       # Input sanitization
 ```
 
 #### FFI Module (`server/ffi/`)
