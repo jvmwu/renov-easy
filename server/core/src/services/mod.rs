@@ -2,12 +2,18 @@
 
 pub mod audit;
 pub mod auth;
+pub mod encryption;
 pub mod token;
 pub mod verification;
 
 // Re-export commonly used types
 pub use audit::{AuditService, AuditServiceConfig};
 pub use auth::{AuthService, AuthServiceConfig, RateLimiterTrait};
+pub use encryption::{
+    AesGcmOtpEncryption, EncryptedOtp, OtpEncryption, OtpEncryptionConfig,
+    KeyManager, KeyRotationConfig, EncryptedCacheServiceTrait, StorageBackend,
+    EncryptedVerificationAdapter,
+};
 pub use token::{TokenService, TokenServiceConfig};
 pub use verification::{
     VerificationService, VerificationServiceConfig, 

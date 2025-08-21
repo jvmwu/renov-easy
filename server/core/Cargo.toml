@@ -37,6 +37,11 @@ jsonwebtoken.workspace = true
 sha2 = "0.10"
 hex = "0.4"
 
+# Encryption for OTP
+aes-gcm = "0.10"
+base64 = "0.22"
+constant_time_eq = "0.3"
+
 # Async runtime for audit service
 tokio = { version = "1.35", features = ["rt", "macros"] }
 

@@ -24,7 +24,7 @@
 
 ### Phase 1: 数据库和基础设施准备
 
-- [ ] 1. 创建 verification_codes 表的数据库迁移脚本
+- [x] 1. 创建 verification_codes 表的数据库迁移脚本
   - File: server/migrations/002_create_verification_codes_table.sql
   - 创建表结构：id, phone_hash, code_encrypted, attempts, max_attempts, expires_at, created_at, is_used, is_locked
   - 添加索引：phone_hash, expires_at, is_used
@@ -33,7 +33,7 @@
   - _Leverage: server/migrations/001_create_users_table.sql 结构参考_
   - _Requirements: 2.1, 4.1, 8.1_
 
-- [ ] 2. 创建 refresh_tokens 表的数据库迁移脚本
+- [x] 2. 创建 refresh_tokens 表的数据库迁移脚本
   - File: server/migrations/003_create_refresh_tokens_table.sql
   - 创建表结构：id, user_id, token_hash, created_at, expires_at, last_used_at, is_revoked
   - 添加设备信息字段：device_info, ip_address
@@ -42,7 +42,7 @@
   - _Leverage: server/migrations/001_create_users_table.sql 结构参考_
   - _Requirements: 5.2, 5.5_
 
-- [ ] 3. 创建 auth_audit_log 表的数据库迁移脚本
+- [x] 3. 创建 auth_audit_log 表的数据库迁移脚本
   - File: server/migrations/004_create_auth_audit_log_table.sql
   - 创建表结构：id, user_id, phone_hash, action, success, ip_address, user_agent
   - 添加错误跟踪字段：error_code, error_message
@@ -54,7 +54,7 @@
 
 ### Phase 2: 核心加密和工具实现
 
-- [ ] 4. 实现 OTP 加密服务模块
+- [x] 4. 实现 OTP 加密服务模块
   - File: server/core/src/services/crypto/otp_encryption.rs
   - 实现 encrypt_otp() 和 decrypt_otp() 使用 AES-256-GCM
   - 添加密钥管理函数 get_encryption_key()
