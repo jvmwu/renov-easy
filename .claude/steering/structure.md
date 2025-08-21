@@ -5,142 +5,24 @@
 ```
 renov-easy/
 ├── .claude/                       # Claude AI configuration
-│   └── steering/                  # Project steering documents
-├── docs/                          # Documentation (date-based per CLAUDE.md)
+│   ├── steering/                  # Project steering documents
+│   └── specs/                     # Feature specifications
+├── docs/                          # Documentation (date-based)
 │   └── {YYYY_MM_DD}/              # Date-organized folders
-│       ├── tasks/                 # Task lists and TODOs
-│       ├── specs/                 # Requirements specifications
-│       └── design/                # Design documents
 ├── platform/                      # Native platform implementations (future)
 │   ├── android/                   # Android app (Kotlin)
-│   ├── ios/                       # iOS app (Swift)
+│   ├── ios/                       # iOS app (Swift) 
 │   └── harmony/                   # HarmonyOS app (ArkTS)
 ├── prototype/                     # HTML/CSS UI reference
-│   ├── auth/                      # Authentication flow mockups
-│   ├── styles/                    # Design system reference
-│   └── *.html                     # Page mockups for UI reference
 ├── server/                        # Rust backend
 │   ├── Cargo.toml                 # Workspace configuration
 │   ├── api/                       # REST API server ✅
-│   │   ├── Cargo.toml             # API crate configuration
-│   │   ├── i18n/                  # Internationalization ✅
-│   │   │   └── error_messages.toml # Error message translations
-│   │   ├── src/
-│   │   │   ├── main.rs            # Server entry point
-│   │   │   ├── lib.rs             # Library exports
-│   │   │   ├── app.rs             # Application setup
-│   │   │   ├── config.rs          # Configuration management
-│   │   │   ├── dto/               # Data transfer objects ✅
-│   │   │   │   ├── auth.rs        # Authentication DTOs
-│   │   │   │   └── error.rs       # Error response DTOs
-│   │   │   ├── handlers/          # Request handlers ✅
-│   │   │   │   └── error.rs       # Error handling with i18n
-│   │   │   ├── i18n/              # I18n module ✅
-│   │   │   │   └── mod.rs         # Language support
-│   │   │   ├── middleware/        # Security middleware ✅
-│   │   │   │   ├── auth.rs        # JWT authentication
-│   │   │   │   ├── cors.rs        # CORS configuration
-│   │   │   │   ├── rate_limit.rs  # Rate limiting
-│   │   │   │   └── security.rs    # Security headers
-│   │   │   └── routes/            # API routes ✅
-│   │   │       └── auth/          # Authentication endpoints
-│   │   │           ├── send_code.rs    # SMS verification
-│   │   │           ├── verify_code.rs  # Code validation
-│   │   │           ├── select_type.rs  # User type selection
-│   │   │           ├── refresh.rs      # Token refresh
-│   │   │           └── logout.rs       # User logout
-│   │   └── tests/                 # Comprehensive test suite ✅
-│   │       ├── i18n_test.rs      # I18n tests
-│   │       ├── error_handling_test.rs  # Error handling tests
-│   │       └── auth_middleware_test.rs # Auth tests
-│   ├── core/                      # Core business logic ✅
-│   │   ├── Cargo.toml             # Core crate configuration
-│   │   ├── src/
-│   │   │   ├── lib.rs             # Library entry point
-│   │   │   ├── domain/            # Domain models ✅
-│   │   │   │   ├── entities/      # Business entities
-│   │   │   │   │   ├── user.rs    # User entity
-│   │   │   │   │   ├── token.rs   # Token entity
-│   │   │   │   │   ├── audit.rs   # Audit log entity ✅
-│   │   │   │   │   ├── verification_code.rs # Verification codes
-│   │   │   │   │   └── tests/     # Entity unit tests
-│   │   │   │   ├── events/        # Domain events ✅
-│   │   │   │   └── value_objects/ # Value objects ✅
-│   │   │   │       └── tests/     # Value object tests
-│   │   │   ├── services/          # Business services ✅
-│   │   │   │   ├── auth/          # Authentication service
-│   │   │   │   ├── audit/         # Audit service ✅
-│   │   │   │   ├── token/         # Token management
-│   │   │   │   ├── verification/  # Verification service
-│   │   │   │   └── tests/         # Service unit tests
-│   │   │   ├── repositories/      # Repository traits ✅
-│   │   │   │   ├── user/          # User repository trait
-│   │   │   │   ├── token/         # Token repository trait
-│   │   │   │   ├── audit/         # Audit repository trait ✅
-│   │   │   │   └── tests/         # Repository tests
-│   │   │   └── errors/            # Domain errors ✅
-│   │   │       ├── mod.rs         # Error module
-│   │   │       └── types.rs       # Error type definitions
-│   │   └── tests/                 # Integration tests
-│   ├── infra/                     # Infrastructure layer ✅
-│   │   ├── Cargo.toml             # Infrastructure crate
-│   │   ├── README.md              # Infrastructure documentation
-│   │   ├── src/
-│   │   │   ├── lib.rs             # Library exports
-│   │   │   ├── cache/             # Redis cache ✅
-│   │   │   │   ├── redis_client.rs # Redis client
-│   │   │   │   ├── verification_cache.rs # Verification cache
-│   │   │   │   └── tests/         # Cache tests
-│   │   │   ├── database/          # Database layer ✅
-│   │   │   │   ├── connection.rs  # Connection pool
-│   │   │   │   ├── mysql/         # MySQL implementations
-│   │   │   │   │   ├── user_repository_impl.rs
-│   │   │   │   │   └── token_repository_impl.rs
-│   │   │   │   └── tests/         # Database tests
-│   │   │   └── sms/               # SMS service ✅
-│   │   │       ├── sms_service.rs # SMS service trait
-│   │   │       ├── mock_sms.rs    # Mock implementation
-│   │   │       └── tests/         # SMS tests
-│   │   ├── examples/              # Usage examples
-│   │   └── tests/                 # Integration tests ✅
-│   │       ├── database_integration.rs
-│   │       ├── redis_integration.rs
-│   │       └── sms_integration.rs
+│   ├── core/                      # Business logic ✅
+│   ├── infra/                     # Infrastructure ✅
 │   ├── shared/                    # Shared utilities ✅
-│   │   ├── Cargo.toml             # Shared crate configuration
-│   │   ├── src/
-│   │   │   ├── lib.rs             # Library exports
-│   │   │   ├── config/            # Configuration types
-│   │   │   │   ├── mod.rs         # Config module exports
-│   │   │   │   ├── auth.rs        # Authentication config (JWT, OAuth2, Session)
-│   │   │   │   ├── cache.rs       # Cache config (Redis, Memory)
-│   │   │   │   ├── database.rs    # Database config
-│   │   │   │   ├── environment.rs # Environment config (Dev/Staging/Prod)
-│   │   │   │   ├── rate_limit.rs  # Rate limiting config
-│   │   │   │   └── server.rs      # Server config (host, port, TLS)
-│   │   │   ├── errors/            # Common errors
-│   │   │   │   └── mod.rs         # Error exports
-│   │   │   ├── types/             # Common types
-│   │   │   │   ├── mod.rs         # Type exports
-│   │   │   │   ├── common.rs      # Common type definitions
-│   │   │   │   ├── language.rs    # Language support types
-│   │   │   │   ├── pagination.rs  # Pagination types
-│   │   │   │   └── response.rs    # API response types (ErrorResponse, etc.)
-│   │   │   └── utils/             # Utility functions
-│   │   │       ├── mod.rs         # Utils exports
-│   │   │       ├── phone.rs       # Phone number utilities
-│   │   │       └── validation.rs  # Input validation utilities
-│   ├── ffi/                       # Foreign Function Interface ✅
-│   │   ├── android/               # Android bindings
-│   │   ├── ios/                   # iOS bindings
-│   │   └── harmony/               # HarmonyOS bindings
-│   ├── migrations/                # Database migrations ✅
-│   │   ├── 001_create_users_table.sql
-│   │   └── 002_create_tokens_audit_tables.sql
-│   └── build/                     # Build artifacts
-└── tests/                         # Cross-platform E2E tests (future)
-    ├── api/                       # API test scenarios
-    └── load/                      # Load testing scripts
+│   ├── ffi/                       # FFI bindings 📝
+│   └── migrations/                # Database migrations ✅
+└── tests/                         # E2E tests (future)
 ```
 
 ## Cargo Workspace Structure
@@ -188,157 +70,41 @@ sqlx = { version = "0.7", features = ["mysql", "runtime-tokio"] }
 
 ## Module Organization
 
-### Server Crates (Current Implementation Status)
+### Server Crates Architecture
 
-#### Core Domain (`server/core/`)
-```
-src/
-├── domain/
-│   ├── entities/                  # Business entities ✅
-│   │   ├── user.rs                # User entity with roles
-│   │   ├── token.rs               # JWT token management
-│   │   ├── audit.rs               # Audit logging entity
-│   │   ├── verification_code.rs   # SMS verification
-│   │   └── tests/                 # Entity unit tests
-│   ├── value_objects/             # Value objects ✅
-│   │   ├── phone_number.rs        # Phone validation
-│   │   ├── email.rs               # Email validation
-│   │   ├── user_role.rs           # User roles enum
-│   │   └── tests/                 # Value object tests
-│   └── events/                    # Domain events ✅
-│       └── audit_event.rs         # Audit event types
-├── services/                      # Business services ✅
-│   ├── auth/                      # Authentication service
-│   │   ├── service.rs             # Auth business logic
-│   │   ├── rate_limiter.rs        # Rate limiting trait
-│   │   └── tests/
-│   ├── audit/                     # Audit service ✅
-│   │   ├── service.rs             # Audit logging
-│   │   └── tests/
-│   ├── token/                     # Token management
-│   │   ├── service.rs             # JWT operations
-│   │   └── tests/
-│   └── verification/              # Verification service
-│       ├── service.rs             # SMS code verification
-│       └── tests/
-├── repositories/                  # Repository traits ✅
-│   ├── user/                      # User repository
-│   ├── token/                     # Token repository
-│   └── audit/                     # Audit repository
-└── errors/                        # Domain errors ✅
-    ├── mod.rs                     # Error aggregation
-    └── types.rs                   # Error type definitions
-```
+#### Core Module (`server/core/`) ✅
+**Purpose**: Domain logic, business rules, and service interfaces
+- **Domain Layer**: Entities, value objects, domain events
+- **Service Layer**: Authentication, verification, audit services  
+- **Repository Interfaces**: Data access contracts
+- **Error Handling**: Domain-specific error types
 
-#### API Server (`server/api/`)
-```
-src/
-├── routes/
-│   └── auth/                      # Authentication routes ✅
-│       ├── send_code.rs           # POST /api/v1/auth/send-code
-│       ├── verify_code.rs         # POST /api/v1/auth/verify-code
-│       ├── select_type.rs         # POST /api/v1/auth/select-type
-│       ├── refresh.rs             # POST /api/v1/auth/refresh
-│       └── logout.rs              # POST /api/v1/auth/logout
-├── handlers/
-│   └── error.rs                   # Global error handling with i18n ✅
-├── middleware/                    # Security middleware ✅
-│   ├── auth.rs                    # JWT authentication
-│   ├── cors.rs                    # CORS configuration
-│   ├── rate_limit.rs              # Rate limiting (Redis-based)
-│   └── security.rs                # Security headers
-├── dto/                           # Data transfer objects ✅
-│   ├── auth.rs                    # Auth request/response DTOs
-│   └── error.rs                   # Error response DTOs
-├── i18n/                          # Internationalization ✅
-│   └── mod.rs                     # Language support (EN/ZH)
-└── config.rs                      # Application configuration
-```
+#### API Module (`server/api/`) ✅  
+**Purpose**: HTTP server, routing, and request handling
+- **Routes**: RESTful endpoint definitions
+- **Middleware**: Security, auth, rate limiting, CORS
+- **DTOs**: Request/response data structures
+- **I18n**: Multi-language support
 
-#### Infrastructure (`server/infra/`)
-```
-src/
-├── cache/                         # Redis implementation ✅
-│   ├── redis_client.rs            # Redis connection pool
-│   ├── verification_cache.rs      # Verification code cache
-│   └── tests/
-├── database/                      # MySQL implementation ✅
-│   ├── connection.rs              # Connection pool (sqlx)
-│   ├── mysql/
-│   │   ├── user_repository_impl.rs  # User CRUD
-│   │   └── token_repository_impl.rs # Token storage
-│   └── tests/
-└── sms/                           # SMS service ✅
-    ├── sms_service.rs             # SMS service trait
-    ├── mock_sms.rs                # Mock for development
-    └── tests/
-```
+#### Infrastructure Module (`server/infra/`) ✅
+**Purpose**: External service integrations and data persistence
+- **Database**: MySQL repository implementations
+- **Cache**: Redis for sessions and temporary data
+- **SMS**: Third-party SMS service integration
+- **File Storage**: S3-compatible object storage (future)
 
-#### Shared Module (`server/shared/`)
-```
-src/
-├── lib.rs                         # Library exports
-├── config/                        # Shared configuration types ✅
-│   ├── mod.rs                     # Module exports
-│   ├── auth.rs                    # Authentication config
-│   │   ├── JwtConfig              # JWT configuration
-│   │   ├── OAuth2Config           # OAuth2 provider config
-│   │   ├── SessionConfig          # Session management
-│   │   └── AuthConfig             # Complete auth config
-│   ├── cache.rs                   # Cache configuration
-│   │   ├── CacheConfig            # Redis cache config
-│   │   ├── MemoryCacheConfig      # In-memory cache config
-│   │   └── CacheStrategyConfig    # Cache strategy selection
-│   ├── database.rs                # Database configuration
-│   │   └── DatabaseConfig         # Connection pool config
-│   ├── environment.rs             # Environment configuration
-│   │   └── Environment            # Dev/Staging/Production
-│   ├── rate_limit.rs              # Rate limiting configuration
-│   │   ├── RateLimitConfig        # Main rate limit config
-│   │   ├── SmsRateLimits          # SMS-specific limits
-│   │   ├── ApiRateLimits          # API rate limits
-│   │   └── AuthRateLimits         # Auth rate limits
-│   └── server.rs                  # Server configuration
-│       ├── ServerConfig           # HTTP server config
-│       └── TlsConfig              # TLS/SSL config
-├── errors/                        # Common error types ✅
-│   └── mod.rs                     # Error definitions
-├── types/                         # Common type definitions ✅
-│   ├── mod.rs                     # Type exports
-│   ├── common.rs                  # Common types
-│   │   ├── Id                     # UUID wrapper
-│   │   ├── Timestamp              # DateTime wrapper
-│   │   └── PhoneNumber            # Phone number type
-│   ├── language.rs                # Language support
-│   │   ├── Language               # Language enum
-│   │   └── LocalizedString        # Multi-language strings
-│   ├── pagination.rs              # Pagination support
-│   │   ├── PaginationRequest      # Page request params
-│   │   └── PaginatedResponse      # Paginated response
-│   └── response.rs                # API response types
-│       ├── ApiResponse            # Standard API response
-│       ├── ErrorResponse          # Error response structure
-│       ├── DetailedResponse       # Detailed response with meta
-│       ├── BatchResponse          # Batch operation response
-│       └── HealthResponse         # Health check response
-└── utils/                         # Utility functions ✅
-    ├── mod.rs                     # Utils exports
-    ├── phone.rs                   # Phone validation/formatting
-    │   ├── validate_phone()       # Phone number validation
-    │   ├── format_phone()         # Phone formatting
-    │   └── hash_phone()           # Phone hashing for privacy
-    └── validation.rs              # Input validation
-        ├── validate_email()       # Email validation
-        ├── validate_password()    # Password strength check
-        └── sanitize_input()       # Input sanitization
-```
+#### Shared Module (`server/shared/`) ✅
+**Purpose**: Cross-cutting concerns and utilities
+- **Configuration**: Unified config structures
+- **Common Types**: Shared data types and responses
+- **Utilities**: Validation, formatting, helpers
+- **Error Types**: Common error definitions
 
-#### FFI Module (`server/ffi/`)
-```
-├── android/                       # Android JNI bindings
-├── ios/                           # iOS bindings
-└── harmony/                       # HarmonyOS bindings
-```
+#### FFI Module (`server/ffi/`) 📝
+**Purpose**: Platform bindings for mobile apps
+- **Android**: JNI bindings for Kotlin/Java
+- **iOS**: C-compatible bindings for Swift
+- **HarmonyOS**: NAPI bindings for ArkTS
 
 ## API Design Standards
 
@@ -410,24 +176,15 @@ Example: feat(backend): implement user authentication
 
 ## Configuration Management
 
-### Environment Files
-```
-.env.development     # Local development
-.env.staging        # Staging environment
-.env.production     # Production (never commit)
-```
+### Environment Strategy
+- **Development**: Local environment with mock services
+- **Staging**: Production-like with test data
+- **Production**: Live environment with real services
 
-### Configuration Structure
-```rust
-// server/api/src/config.rs
-pub struct Config {
-    pub database_url: String,
-    pub jwt_secret: String,
-    pub sms_api_key: String,
-    pub google_maps_key: String,
-    pub server_port: u16,
-}
-```
+### Configuration Sources
+1. Environment variables (highest priority)
+2. Configuration files (`.toml`, `.yaml`)
+3. Default values (fallback)
 
 ## Documentation Requirements
 

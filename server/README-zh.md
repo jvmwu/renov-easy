@@ -538,5 +538,3 @@ docker system prune -a
 - 查看 [API 文档](./API.md)
 
 ---
-
-使用 Rust 🦀 用 ❤️ 构建

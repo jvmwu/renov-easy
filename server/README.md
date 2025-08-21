@@ -538,5 +538,3 @@ For issues and questions:
 - Check the [API documentation](./API.md)
 
 ---
-
-Built with ❤️ using Rust 🦀
