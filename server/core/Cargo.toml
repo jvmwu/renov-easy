@@ -1,5 +1,5 @@
 [package]
-name = "core"
+name = "re_core"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -9,7 +9,7 @@ repository.workspace = true
 
 [dependencies]
 # Shared module
-shared = { path = "../shared" }
+re_shared = { path = "../shared" }
 
 # Serialization
 serde.workspace = true

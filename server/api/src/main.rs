@@ -2,8 +2,6 @@ use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 use log::info;
 
-// Re-export the core crate to avoid naming conflicts  
-extern crate core as renov_core;
 
 // mod app; // Will be used when dependencies are wired up
 mod config;

@@ -1,6 +1,6 @@
 //! Configuration for the authentication service
 
-use shared::config::rate_limit::RateLimitConfig;
+use re_shared::config::rate_limit::RateLimitConfig;
 
 /// Configuration for the authentication service
 #[derive(Debug, Clone)]

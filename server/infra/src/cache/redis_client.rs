@@ -13,7 +13,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{debug, error, info, warn};
 
-use shared::config::cache::CacheConfig;
+use re_shared::config::cache::CacheConfig;
 use crate::InfrastructureError;
 
 /// Redis cache client with connection pooling and retry logic
@@ -43,7 +43,7 @@ impl RedisClient {
     /// 
     /// # Example
     /// ```no_run
-    /// use shared::config::cache::CacheConfig;
+    /// use re_shared::config::cache::CacheConfig;
     /// use renov_infra::cache::redis_client::RedisClient;
     /// 
     /// async fn create_client() -> Result<RedisClient, Box<dyn std::error::Error>> {

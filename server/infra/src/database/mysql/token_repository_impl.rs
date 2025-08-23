@@ -10,9 +10,9 @@ use sha2::{Digest, Sha256};
 use sqlx::{MySqlPool, Row};
 use uuid::Uuid;
 
-use renov_core::domain::entities::token::RefreshToken;
-use renov_core::errors::DomainError;
-use renov_core::repositories::TokenRepository;
+use re_core::domain::entities::token::RefreshToken;
+use re_core::errors::DomainError;
+use re_core::repositories::TokenRepository;
 
 /// MySQL implementation of TokenRepository
 ///

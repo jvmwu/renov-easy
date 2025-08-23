@@ -1,21 +1,21 @@
 [package]
-name = "api"
+name = "re_api"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "api"
+name = "re_api"
 path = "src/lib.rs"
 
 [[bin]]
-name = "api"
+name = "re_api"
 path = "src/main.rs"
 
 [dependencies]
 # Core dependencies from workspace
-core = { path = "../core" }
-infra = { path = "../infra" }
-shared = { path = "../shared" }
+re_core = { path = "../core" }
+re_infra = { path = "../infra" }
+re_shared = { path = "../shared" }
 
 # Web framework
 actix-web = "4.5"

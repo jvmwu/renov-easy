@@ -5,9 +5,9 @@ use chrono::Utc;
 use redis::AsyncCommands;
 use std::sync::Arc;
 
-use renov_core::{DomainError, DomainResult};
-use renov_core::RateLimiterTrait;
-use shared::RateLimitConfig;
+use re_core::{DomainError, DomainResult};
+use re_core::RateLimiterTrait;
+use re_shared::RateLimitConfig;
 
 use crate::cache::redis_client::RedisClient;
 

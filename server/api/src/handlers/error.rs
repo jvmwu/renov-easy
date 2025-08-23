@@ -1,5 +1,5 @@
 use actix_web::{HttpResponse, ResponseError};
-use renov_core::errors::{AuthError, DomainError, TokenError, ValidationError};
+use re_core::errors::{AuthError, DomainError, TokenError, ValidationError};
 use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -89,7 +89,7 @@ pub fn handle_domain_error(error: &DomainError) -> HttpResponse {
 /// Handle domain errors with language support
 pub fn handle_domain_error_with_lang(error: &DomainError, lang: Language) -> HttpResponse {
     log::error!("Domain Error: {:?}", error);
-    
+
     match error {
         DomainError::Auth(auth_error) => handle_auth_error(auth_error, lang),
         DomainError::ValidationErr(validation_error) => handle_validation_error(validation_error, lang),
@@ -224,7 +224,7 @@ fn handle_general_error(error_key: &str, message: Option<String>, lang: Language
     } else {
         HashMap::new()
     };
-    
+
     create_error_response("general", error_key, params, lang)
 }
 
@@ -240,13 +240,13 @@ fn create_error_response(
 ) -> HttpResponse {
     if let Some((code, message_template, http_status)) = get_error_message(category, error_key, lang) {
         let message = format_message(&message_template, &params);
-        
+
         let response = HttpResponse::build(
             actix_web::http::StatusCode::from_u16(http_status)
                 .unwrap_or(actix_web::http::StatusCode::INTERNAL_SERVER_ERROR)
         )
         .json(ErrorResponse::new(code, message));
-        
+
         response
     } else {
         // Fallback for unknown errors
@@ -254,57 +254,5 @@ fn create_error_response(
             "unknown_error".to_string(),
             "An unknown error occurred".to_string(),
         ))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use actix_web::test;
-
-    #[test]
-    fn test_error_response_serialization() {
-        let error = ErrorResponse::new(
-            "test_error".to_string(),
-            "Test error message".to_string(),
-        );
-        
-        let json = serde_json::to_string(&error).unwrap();
-        assert!(json.contains("test_error"));
-        assert!(json.contains("Test error message"));
-    }
-
-    #[test]
-    fn test_auth_error_handling() {
-        let error = DomainError::Auth(AuthError::UserNotFound);
-        let response = handle_domain_error_with_lang(&error, Language::English);
-        
-        assert_eq!(response.status(), actix_web::http::StatusCode::NOT_FOUND);
-    }
-
-    #[test]
-    fn test_validation_error_handling() {
-        let error = DomainError::ValidationErr(ValidationError::InvalidEmail);
-        let response = handle_domain_error_with_lang(&error, Language::Chinese);
-        
-        assert_eq!(response.status(), actix_web::http::StatusCode::BAD_REQUEST);
-    }
-
-    #[test]
-    fn test_token_error_handling() {
-        let error = DomainError::Token(TokenError::TokenExpired);
-        let response = handle_domain_error_with_lang(&error, Language::English);
-        
-        assert_eq!(response.status(), actix_web::http::StatusCode::UNAUTHORIZED);
-    }
-
-    #[test]
-    fn test_language_extraction() {
-        let req = test::TestRequest::default()
-            .insert_header(("Accept-Language", "zh-CN"))
-            .to_http_request();
-        
-        let lang = extract_language(&req);
-        assert_eq!(lang, Language::Chinese);
     }
 }

@@ -3,10 +3,10 @@
 use renov_infra::database::mysql::{MySqlUserRepository, MySqlTokenRepository};
 use renov_infra::database::DatabasePool;
 use renov_infra::config::DatabaseConfig;
-use renov_core::repositories::user::UserRepository;
-use renov_core::repositories::token::TokenRepository;
-use renov_core::domain::entities::user::User;
-use renov_core::domain::entities::token::RefreshToken;
+use re_core::repositories::user::UserRepository;
+use re_core::repositories::token::TokenRepository;
+use re_core::domain::entities::user::User;
+use re_core::domain::entities::token::RefreshToken;
 use uuid::Uuid;
 use chrono::Utc;
 

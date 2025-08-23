@@ -1,5 +1,5 @@
 [package]
-name = "shared"
+name = "re_shared"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

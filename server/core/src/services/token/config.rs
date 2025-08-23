@@ -1,7 +1,7 @@
 //! Configuration for the token service
 
 use jsonwebtoken::Algorithm;
-use shared::config::auth::AuthConfig;
+use re_shared::config::auth::AuthConfig;
 
 /// Configuration for the token service
 #[derive(Debug, Clone)]

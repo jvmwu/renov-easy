@@ -1,5 +1,5 @@
 [package]
-name = "infra"
+name = "re_infra"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -9,9 +9,9 @@ repository.workspace = true
 
 [dependencies]
 # Core domain and error types
-renov_core = { path = "../core", package = "core" }
+re_core = { path = "../core" }
 # Shared module
-shared = { path = "../shared" }
+re_shared = { path = "../shared" }
 
 # Async runtime
 tokio = { workspace = true }

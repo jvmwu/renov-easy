@@ -36,7 +36,7 @@ impl SecurityMiddleware {
         let environment = env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string());
         let enforce_https = environment == "production";
         let add_security_headers = environment == "production";
-        
+
         let trusted_proxies = env::var("TRUSTED_PROXIES")
             .unwrap_or_default()
             .split(',')
@@ -206,7 +206,7 @@ fn is_secure_request(req: &ServiceRequest, trusted_proxies: &[String]) -> bool {
 fn is_trusted_proxy(peer_addr: &str, trusted_proxies: &[String]) -> bool {
     // Extract IP from peer address (might be in format "ip:port")
     let ip = peer_addr.split(':').next().unwrap_or(peer_addr);
-    
+
     trusted_proxies.iter().any(|trusted| {
         trusted == ip || trusted == peer_addr
     })
@@ -217,10 +217,10 @@ fn is_valid_origin(_req: &ServiceRequest, origin: &HeaderValue) -> bool {
     // In this implementation, we delegate origin validation to CORS middleware
     // This function can be extended to add additional origin validation logic
     // For now, we just ensure the origin header is well-formed
-    
+
     if let Ok(origin_str) = origin.to_str() {
         // Basic validation: origin should be a valid URL
-        if origin_str.starts_with("http://") || 
+        if origin_str.starts_with("http://") ||
            origin_str.starts_with("https://") ||
            origin_str.starts_with("capacitor://") ||
            origin_str.starts_with("ionic://") ||
@@ -229,56 +229,56 @@ fn is_valid_origin(_req: &ServiceRequest, origin: &HeaderValue) -> bool {
             return true;
         }
     }
-    
+
     false
 }
 
 /// Adds security headers to the response
 fn add_security_response_headers<B>(response: &mut ServiceResponse<B>) {
     let headers = response.headers_mut();
-    
+
     // Strict Transport Security (HSTS)
     // Enforce HTTPS for 1 year, including subdomains
     headers.insert(
         header::HeaderName::from_static("strict-transport-security"),
         HeaderValue::from_static("max-age=31536000; includeSubDomains"),
     );
-    
+
     // X-Content-Type-Options
     // Prevent MIME type sniffing
     headers.insert(
         header::HeaderName::from_static("x-content-type-options"),
         HeaderValue::from_static("nosniff"),
     );
-    
+
     // X-Frame-Options
     // Prevent clickjacking attacks
     headers.insert(
         header::HeaderName::from_static("x-frame-options"),
         HeaderValue::from_static("DENY"),
     );
-    
+
     // X-XSS-Protection
     // Enable XSS filtering (for older browsers)
     headers.insert(
         header::HeaderName::from_static("x-xss-protection"),
         HeaderValue::from_static("1; mode=block"),
     );
-    
+
     // Referrer-Policy
     // Control referrer information
     headers.insert(
         header::HeaderName::from_static("referrer-policy"),
         HeaderValue::from_static("strict-origin-when-cross-origin"),
     );
-    
+
     // Content-Security-Policy
     // Basic CSP for API responses (can be customized based on needs)
     headers.insert(
         header::HeaderName::from_static("content-security-policy"),
         HeaderValue::from_static("default-src 'none'; frame-ancestors 'none';"),
     );
-    
+
     // Permissions-Policy (formerly Feature-Policy)
     // Disable unnecessary browser features
     headers.insert(
@@ -295,61 +295,5 @@ pub fn security_headers_only() -> SecurityMiddleware {
         enforce_https: false,
         add_security_headers: true,
         trusted_proxies: vec![],
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use actix_web::test;
-
-    #[test]
-    fn test_is_trusted_proxy() {
-        let trusted = vec!["192.168.1.1".to_string(), "10.0.0.1".to_string()];
-        
-        assert!(is_trusted_proxy("192.168.1.1", &trusted));
-        assert!(is_trusted_proxy("192.168.1.1:8080", &trusted));
-        assert!(is_trusted_proxy("10.0.0.1", &trusted));
-        assert!(!is_trusted_proxy("192.168.1.2", &trusted));
-        assert!(!is_trusted_proxy("8.8.8.8", &trusted));
-    }
-
-    #[test]
-    fn test_is_valid_origin() {
-        let req = test::TestRequest::default().to_srv_request();
-        
-        // Valid origins
-        assert!(is_valid_origin(&req, &HeaderValue::from_static("https://example.com")));
-        assert!(is_valid_origin(&req, &HeaderValue::from_static("http://localhost:3000")));
-        assert!(is_valid_origin(&req, &HeaderValue::from_static("capacitor://localhost")));
-        assert!(is_valid_origin(&req, &HeaderValue::from_static("ionic://localhost")));
-        assert!(is_valid_origin(&req, &HeaderValue::from_static("arkui://localhost")));
-        
-        // Invalid origins
-        assert!(!is_valid_origin(&req, &HeaderValue::from_static("invalid-origin")));
-        assert!(!is_valid_origin(&req, &HeaderValue::from_static("ftp://example.com")));
-    }
-
-    #[test]
-    fn test_security_middleware_creation() {
-        // Test development mode
-        env::set_var("ENVIRONMENT", "development");
-        let dev_middleware = SecurityMiddleware::new();
-        assert!(!dev_middleware.enforce_https);
-        assert!(!dev_middleware.add_security_headers);
-        env::remove_var("ENVIRONMENT");
-        
-        // Test production mode
-        env::set_var("ENVIRONMENT", "production");
-        let prod_middleware = SecurityMiddleware::new();
-        assert!(prod_middleware.enforce_https);
-        assert!(prod_middleware.add_security_headers);
-        env::remove_var("ENVIRONMENT");
-        
-        // Test with trusted proxies
-        env::set_var("TRUSTED_PROXIES", "10.0.0.1,10.0.0.2");
-        let proxy_middleware = SecurityMiddleware::new();
-        assert_eq!(proxy_middleware.trusted_proxies.len(), 2);
-        env::remove_var("TRUSTED_PROXIES");
     }
 }

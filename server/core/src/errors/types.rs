@@ -7,7 +7,7 @@
 use thiserror::Error;
 
 // Re-export shared ErrorResponse for backward compatibility
-pub use shared::types::response::ErrorResponse as DomainErrorResponse;
+pub use re_shared::types::response::ErrorResponse as DomainErrorResponse;
 
 /// Authentication-related errors
 /// 

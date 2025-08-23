@@ -3,11 +3,11 @@
 //! These tests require Redis to be running locally on port 6379.
 //! Run with: cargo test --test rate_limiter_integration -- --ignored
 
-use infra::cache::redis_client::RedisClient;
-use infra::services::auth::{RedisRateLimiter, RateLimitStatus};
-use renov_core::services::auth::RateLimiterTrait;
-use shared::config::cache::CacheConfig;
-use shared::config::rate_limit::RateLimitConfig;
+use re_infra::cache::redis_client::RedisClient;
+use re_infra::services::auth::{RedisRateLimiter, RateLimitStatus};
+use re_core::services::auth::RateLimiterTrait;
+use re_shared::config::cache::CacheConfig;
+use re_shared::config::rate_limit::RateLimitConfig;
 use std::sync::Arc;
 use tokio::time::{sleep, Duration};
 

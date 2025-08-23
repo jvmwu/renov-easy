@@ -1,7 +1,7 @@
 //! Unit tests for Redis client
 
 use crate::cache::redis_client::{RedisClient, mask_url, is_retriable_error};
-use shared::config::cache::CacheConfig;
+use re_shared::config::cache::CacheConfig;
 use redis::{RedisError, ErrorKind};
 
 #[test]

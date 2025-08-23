@@ -13,7 +13,7 @@ use actix_web::{
     http::header::AUTHORIZATION,
     web, Error, FromRequest, HttpMessage, HttpRequest,
 };
-use ::core::{
+use re_core::{
     domain::entities::token::Claims,
     errors::{DomainError, TokenError},
     services::token::TokenService,

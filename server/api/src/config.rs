@@ -6,7 +6,7 @@
 //! - Provides sensible defaults for optional configuration
 //! - Integrates with shared configuration types
 
-use shared::config::{
+use re_shared::config::{
     auth::AuthConfig,
     cache::{CacheConfig, CacheStrategyConfig},
     database::DatabaseConfig,
@@ -263,13 +263,13 @@ impl Config {
                 .with_max_connections(50),
             cache: CacheStrategyConfig {
                 enabled: true,
-                cache_type: shared::config::cache::CacheType::Redis,
+                cache_type: re_shared::config::cache::CacheType::Redis,
                 redis: Some(CacheConfig::new(redis_url)),
                 memory: None,
             },
             auth: AuthConfig {
-                jwt: shared::config::auth::JwtConfig::new(jwt_secret),
-                session: shared::config::auth::SessionConfig {
+                jwt: re_shared::config::auth::JwtConfig::new(jwt_secret),
+                session: re_shared::config::auth::SessionConfig {
                     secure: true,
                     ..Default::default()
                 },

@@ -5,10 +5,10 @@ use crate::dto::auth::{VerifyCodeRequest, AuthResponse};
 use crate::dto::error::{ErrorResponse, ErrorResponseExt};
 use crate::handlers::error::{handle_domain_error_with_lang, extract_language, Language};
 
-use core::services::auth::AuthService;
-use core::repositories::{UserRepository, TokenRepository};
-use core::services::verification::{SmsServiceTrait, CacheServiceTrait};
-use core::services::auth::RateLimiterTrait;
+use re_core::services::auth::AuthService;
+use re_core::repositories::{UserRepository, TokenRepository};
+use re_core::services::verification::{SmsServiceTrait, CacheServiceTrait};
+use re_core::services::auth::RateLimiterTrait;
 
 use super::AppState;
 

@@ -3,9 +3,9 @@ use actix_web::{web, HttpRequest, HttpResponse};
 use crate::dto::auth::{RefreshTokenRequest, AuthResponse as DtoAuthResponse};
 use crate::handlers::error::{handle_domain_error_with_lang, Language, extract_language};
 
-use core::repositories::{UserRepository, TokenRepository};
-use core::services::verification::{SmsServiceTrait, CacheServiceTrait};
-use core::services::auth::RateLimiterTrait;
+use re_core::repositories::{UserRepository, TokenRepository};
+use re_core::services::verification::{SmsServiceTrait, CacheServiceTrait};
+use re_core::services::auth::RateLimiterTrait;
 
 use super::AppState;
 

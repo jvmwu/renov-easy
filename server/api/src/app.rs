@@ -9,10 +9,10 @@ use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 use crate::middleware::{cors::create_cors, security::SecurityMiddleware, auth::JwtAuth};
 use crate::routes::auth::{send_code, verify_code, select_type, refresh_token, logout, AppState};
 
-use core::services::auth::{AuthService, AuthServiceConfig, RateLimiterTrait};
-use core::services::verification::{VerificationService, SmsServiceTrait, CacheServiceTrait};
-use core::services::token::TokenService;
-use core::repositories::{UserRepository, TokenRepository};
+use re_core::services::auth::{AuthService, AuthServiceConfig, RateLimiterTrait};
+use re_core::services::verification::{VerificationService, SmsServiceTrait, CacheServiceTrait};
+use re_core::services::token::TokenService;
+use re_core::repositories::{UserRepository, TokenRepository};
 
 /// Create and configure the application with all dependencies
 pub fn create_app<U, S, C, R, T>(

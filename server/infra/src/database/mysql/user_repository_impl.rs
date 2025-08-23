@@ -10,9 +10,9 @@ use sha2::{Digest, Sha256};
 use sqlx::{MySqlPool, Row};
 use uuid::Uuid;
 
-use renov_core::domain::entities::user::{User, UserType};
-use renov_core::errors::DomainError;
-use renov_core::repositories::UserRepository;
+use re_core::domain::entities::user::{User, UserType};
+use re_core::errors::DomainError;
+use re_core::repositories::UserRepository;
 
 /// MySQL implementation of UserRepository
 ///

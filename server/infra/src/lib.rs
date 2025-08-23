@@ -20,7 +20,7 @@
 //! - `mock-services`: Enable mock implementations for testing
 
 // Re-export core types for convenience  
-pub use renov_core::errors::*;
+pub use re_core::errors::*;
 
 /// Database module - MySQL implementations using SQLx
 #[cfg(feature = "mysql")]
@@ -45,11 +45,11 @@ pub mod config {
     //! - SMS service credentials  
     //! - Environment-specific settings
     
-    use shared::config::{database::DatabaseConfig, cache::CacheConfig};
+    use re_shared::config::{database::DatabaseConfig, cache::CacheConfig};
     use serde::{Deserialize, Serialize};
     
     // Re-export shared configs for backward compatibility
-    pub use shared::config::{database::DatabaseConfig as InfraDatabaseConfig, cache::CacheConfig as InfraCacheConfig};
+    pub use re_shared::config::{database::DatabaseConfig as InfraDatabaseConfig, cache::CacheConfig as InfraCacheConfig};
     
     /// Infrastructure configuration settings
     #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -140,8 +140,8 @@ fn load_config() -> Result<config::InfrastructureConfig, InfrastructureError> {
     dotenvy::dotenv().ok(); // Load .env file if present
     
     // Use shared config loaders
-    let database = shared::config::database::DatabaseConfig::from_env();
-    let cache = shared::config::cache::CacheConfig::from_env();
+    let database = re_shared::config::database::DatabaseConfig::from_env();
+    let cache = re_shared::config::cache::CacheConfig::from_env();
     
     // Load SMS config (still local to infra)
     let sms = config::SmsConfig {

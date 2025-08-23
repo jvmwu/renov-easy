@@ -2,7 +2,7 @@
 
 use crate::cache::verification_cache::VerificationCache;
 use crate::cache::redis_client::RedisClient;
-use shared::config::cache::CacheConfig;
+use re_shared::config::cache::CacheConfig;
 
 #[test]
 fn test_format_keys() {

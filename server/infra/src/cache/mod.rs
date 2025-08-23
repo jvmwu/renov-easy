@@ -13,4 +13,4 @@ pub use redis_client::RedisClient;
 pub use verification_cache::VerificationCache;
 
 // Re-export commonly used types
-pub use shared::config::cache::CacheConfig;
+pub use re_shared::config::cache::CacheConfig;

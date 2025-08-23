@@ -1,6 +1,6 @@
 //! Unit tests for database connection pool
 
-use shared::config::database::DatabaseConfig;
+use re_shared::config::database::DatabaseConfig;
 use crate::database::connection::{DatabasePool, PoolStatistics};
 
 #[tokio::test]

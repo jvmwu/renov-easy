@@ -1,5 +1,5 @@
 use actix_web::http::StatusCode;
-pub use shared::types::response::ErrorResponse;
+pub use re_shared::types::response::ErrorResponse;
 
 // Extension trait for ErrorResponse to add actix-web specific methods
 pub trait ErrorResponseExt {

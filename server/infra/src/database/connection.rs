@@ -12,7 +12,7 @@ use std::str::FromStr;
 use std::time::Duration;
 use tracing::log::LevelFilter;
 
-use shared::config::database::DatabaseConfig;
+use re_shared::config::database::DatabaseConfig;
 use crate::InfrastructureError;
 
 /// Database connection pool wrapper
