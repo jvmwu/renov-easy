@@ -80,7 +80,7 @@
 
 ### Phase 3: SMS服务集成
 
-- [ ] 7. 实现 Twilio SMS 服务提供商
+- [x] 7. 实现 Twilio SMS 服务提供商
   - File: server/infra/src/sms/twilio_service.rs
   - 实现 SmsServiceTrait 接口
   - 添加 send_sms() 方法使用 Twilio API

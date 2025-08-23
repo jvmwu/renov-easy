@@ -16,6 +16,12 @@
 pub mod sms_service;
 pub mod mock_sms;
 
+// Twilio SMS service (feature-gated)
+#[cfg(feature = "twilio-sms")]
+pub mod twilio;
+#[cfg(feature = "twilio-sms")]
+pub mod twilio_trait_adapter;
+
 // Re-export commonly used types
 pub use sms_service::{
     SmsService,
@@ -24,8 +30,12 @@ pub use sms_service::{
 };
 pub use mock_sms::MockSmsService;
 
+#[cfg(feature = "twilio-sms")]
+pub use twilio::{TwilioSmsService, TwilioConfig};
+#[cfg(feature = "twilio-sms")]
+pub use twilio_trait_adapter::TwilioSmsServiceAdapter;
+
 // Future implementations will be added here:
-// pub mod twilio;
 // pub mod aws_sns;
 
 #[cfg(test)]
@@ -46,8 +56,28 @@ mod tests;
 pub fn create_sms_service(config: &crate::config::SmsConfig) -> Box<dyn SmsService> {
     match config.provider.as_str() {
         "mock" => Box::new(MockSmsService::new()),
+        #[cfg(feature = "twilio-sms")]
+        "twilio" => {
+            // Create Twilio configuration from the generic SMS config
+            let twilio_config = TwilioConfig {
+                account_sid: config.api_key.clone(),
+                auth_token: config.api_secret.clone(),
+                from_number: config.from_number.clone(),
+                max_retries: 3,
+                retry_delay_ms: 1000,
+                request_timeout_secs: 30,
+            };
+            
+            match TwilioSmsService::new(twilio_config) {
+                Ok(service) => Box::new(service),
+                Err(e) => {
+                    tracing::error!("Failed to initialize Twilio SMS service: {}", e);
+                    tracing::warn!("Falling back to mock SMS service");
+                    Box::new(MockSmsService::new())
+                }
+            }
+        }
         // Future providers:
-        // "twilio" => Box::new(TwilioSmsService::new(config)),
         // "aws-sns" => Box::new(AwsSnsService::new(config)),
         _ => {
             tracing::warn!(

@@ -96,9 +96,25 @@ impl SmsConfig {
     pub fn from_env() -> Self {
         let provider = env::var("SMS_PROVIDER")
             .unwrap_or_else(|_| "mock".to_string());
-        let api_key = env::var("SMS_API_KEY").ok();
-        let api_secret = env::var("SMS_API_SECRET").ok();
-        let sender_id = env::var("SMS_SENDER_ID").ok();
+        
+        // For Twilio, use specific environment variables if available
+        let (api_key, api_secret, sender_id) = if provider == "twilio" {
+            (
+                env::var("TWILIO_ACCOUNT_SID").ok()
+                    .or_else(|| env::var("SMS_API_KEY").ok()),
+                env::var("TWILIO_AUTH_TOKEN").ok()
+                    .or_else(|| env::var("SMS_API_SECRET").ok()),
+                env::var("TWILIO_FROM_NUMBER").ok()
+                    .or_else(|| env::var("SMS_SENDER_ID").ok())
+            )
+        } else {
+            (
+                env::var("SMS_API_KEY").ok(),
+                env::var("SMS_API_SECRET").ok(),
+                env::var("SMS_SENDER_ID").ok()
+            )
+        };
+        
         let template_id = env::var("SMS_TEMPLATE_ID").ok();
         let enabled = env::var("SMS_ENABLED")
             .unwrap_or_else(|_| "true".to_string())
@@ -136,10 +152,18 @@ impl SmsConfig {
             match self.provider.as_str() {
                 "twilio" => {
                     if self.api_secret.is_none() {
-                        return Err(ConfigError::MissingVar("SMS_API_SECRET".to_string()));
+                        return Err(ConfigError::MissingVar("TWILIO_AUTH_TOKEN or SMS_API_SECRET".to_string()));
                     }
                     if self.sender_id.is_none() {
-                        return Err(ConfigError::MissingVar("SMS_SENDER_ID".to_string()));
+                        return Err(ConfigError::MissingVar("TWILIO_FROM_NUMBER or SMS_SENDER_ID".to_string()));
+                    }
+                    // Validate that sender_id is in E.164 format for Twilio
+                    if let Some(ref from_number) = self.sender_id {
+                        if !from_number.starts_with('+') {
+                            return Err(ConfigError::ValidationError(
+                                "Twilio FROM_NUMBER must be in E.164 format (starting with '+')".to_string()
+                            ));
+                        }
                     }
                 }
                 "aliyun" => {

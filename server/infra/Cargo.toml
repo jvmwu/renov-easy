@@ -51,6 +51,12 @@ tracing = { workspace = true }
 # Base64 encoding (for SMS services)
 base64 = { workspace = true }
 
+# Twilio SDK for SMS services
+twilio = { version = "1.0", optional = true }
+
+# Phone number validation
+phonenumber = "0.3"
+
 # Configuration
 config = { workspace = true }
 
@@ -66,5 +72,5 @@ rand = "0.8"
 default = ["mysql", "redis-cache", "twilio-sms"]
 mysql = ["sqlx/mysql"]
 redis-cache = ["redis/tokio-comp"]
-twilio-sms = []
+twilio-sms = ["twilio"]
 mock-services = []
