@@ -2,7 +2,7 @@
 
 use crate::cache::verification_cache::VerificationCache;
 use crate::cache::redis_client::RedisClient;
-use crate::config::CacheConfig;
+use shared::config::cache::CacheConfig;
 
 #[test]
 fn test_format_keys() {
@@ -52,12 +52,10 @@ fn test_mask_phone() {
 #[tokio::test]
 #[ignore] // Requires actual Redis server
 async fn test_store_and_verify_code() {
-    let config = CacheConfig {
-        url: std::env::var("REDIS_URL")
-            .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
-        pool_size: 5,
-        default_ttl: 3600,
-    };
+    let config = CacheConfig::new(
+        std::env::var("REDIS_URL")
+            .unwrap_or_else(|_| "redis://localhost:6379".to_string())
+    );
 
     let redis_client = RedisClient::new(config).await.unwrap();
     let service = VerificationCache::new(redis_client);
@@ -83,12 +81,10 @@ async fn test_store_and_verify_code() {
 #[tokio::test]
 #[ignore] // Requires actual Redis server
 async fn test_verify_incorrect_code() {
-    let config = CacheConfig {
-        url: std::env::var("REDIS_URL")
-            .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
-        pool_size: 5,
-        default_ttl: 3600,
-    };
+    let config = CacheConfig::new(
+        std::env::var("REDIS_URL")
+            .unwrap_or_else(|_| "redis://localhost:6379".to_string())
+    );
 
     let redis_client = RedisClient::new(config).await.unwrap();
     let service = VerificationCache::new(redis_client);
@@ -119,12 +115,10 @@ async fn test_verify_incorrect_code() {
 #[tokio::test]
 #[ignore] // Requires actual Redis server
 async fn test_max_attempts() {
-    let config = CacheConfig {
-        url: std::env::var("REDIS_URL")
-            .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
-        pool_size: 5,
-        default_ttl: 3600,
-    };
+    let config = CacheConfig::new(
+        std::env::var("REDIS_URL")
+            .unwrap_or_else(|_| "redis://localhost:6379".to_string())
+    );
 
     let redis_client = RedisClient::new(config).await.unwrap();
     let service = VerificationCache::new(redis_client);
@@ -157,12 +151,10 @@ async fn test_max_attempts() {
 #[tokio::test]
 #[ignore] // Requires actual Redis server  
 async fn test_get_code_ttl() {
-    let config = CacheConfig {
-        url: std::env::var("REDIS_URL")
-            .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
-        pool_size: 5,
-        default_ttl: 3600,
-    };
+    let config = CacheConfig::new(
+        std::env::var("REDIS_URL")
+            .unwrap_or_else(|_| "redis://localhost:6379".to_string())
+    );
 
     let redis_client = RedisClient::new(config).await.unwrap();
     let service = VerificationCache::new(redis_client);

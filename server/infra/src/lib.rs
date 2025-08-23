@@ -32,6 +32,9 @@ pub mod sms;
 /// Cache module - Redis client and operations  
 pub mod cache;
 
+/// Services module - Infrastructure service implementations
+pub mod services;
+
 /// Configuration module for infrastructure services
 pub mod config {
     //! Configuration management for infrastructure services

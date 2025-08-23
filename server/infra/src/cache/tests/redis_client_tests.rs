@@ -1,7 +1,7 @@
 //! Unit tests for Redis client
 
 use crate::cache::redis_client::{RedisClient, mask_url, is_retriable_error};
-use crate::config::CacheConfig;
+use shared::config::cache::CacheConfig;
 use redis::{RedisError, ErrorKind};
 
 #[test]
@@ -35,11 +35,7 @@ fn test_is_retriable_error() {
 
 #[tokio::test]
 async fn test_client_creation_with_invalid_url() {
-    let config = CacheConfig {
-        url: "invalid://url".to_string(),
-        pool_size: 10,
-        default_ttl: 3600,
-    };
+    let config = CacheConfig::new("invalid://url");
 
     let result = RedisClient::new(config).await;
     assert!(result.is_err());
@@ -48,12 +44,10 @@ async fn test_client_creation_with_invalid_url() {
 #[tokio::test]
 #[ignore] // Requires actual Redis server
 async fn test_basic_operations() {
-    let config = CacheConfig {
-        url: std::env::var("REDIS_URL")
-            .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
-        pool_size: 5,
-        default_ttl: 3600,
-    };
+    let config = CacheConfig::new(
+        std::env::var("REDIS_URL")
+            .unwrap_or_else(|_| "redis://localhost:6379".to_string())
+    );
 
     let client = RedisClient::new(config).await.unwrap();
 
@@ -87,12 +81,10 @@ async fn test_basic_operations() {
 #[tokio::test]
 #[ignore] // Requires actual Redis server
 async fn test_increment_counter() {
-    let config = CacheConfig {
-        url: std::env::var("REDIS_URL")
-            .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
-        pool_size: 5,
-        default_ttl: 3600,
-    };
+    let config = CacheConfig::new(
+        std::env::var("REDIS_URL")
+            .unwrap_or_else(|_| "redis://localhost:6379".to_string())
+    );
 
     let client = RedisClient::new(config).await.unwrap();
 
@@ -116,12 +108,10 @@ async fn test_increment_counter() {
 #[tokio::test]
 #[ignore] // Requires actual Redis server
 async fn test_health_check() {
-    let config = CacheConfig {
-        url: std::env::var("REDIS_URL")
-            .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
-        pool_size: 5,
-        default_ttl: 3600,
-    };
+    let config = CacheConfig::new(
+        std::env::var("REDIS_URL")
+            .unwrap_or_else(|_| "redis://localhost:6379".to_string())
+    );
 
     let client = RedisClient::new(config).await.unwrap();
     

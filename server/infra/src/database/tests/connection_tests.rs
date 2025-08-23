@@ -1,15 +1,12 @@
 //! Unit tests for database connection pool
 
-use crate::config::DatabaseConfig;
+use shared::config::database::DatabaseConfig;
 use crate::database::connection::{DatabasePool, PoolStatistics};
 
 #[tokio::test]
 async fn test_pool_creation_with_invalid_url() {
-    let config = DatabaseConfig {
-        url: "invalid://url".to_string(),
-        max_connections: 10,
-        connect_timeout: 5,
-    };
+    let config = DatabaseConfig::new("invalid://url")
+        .with_max_connections(10);
 
     let result = DatabasePool::new(config).await;
     assert!(result.is_err());
@@ -18,12 +15,10 @@ async fn test_pool_creation_with_invalid_url() {
 #[tokio::test]
 #[ignore] // Requires actual database
 async fn test_pool_health_check() {
-    let config = DatabaseConfig {
-        url: std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "mysql://root:password@localhost/renovesy_test".to_string()),
-        max_connections: 5,
-        connect_timeout: 10,
-    };
+    let config = DatabaseConfig::new(
+        std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "mysql://root:password@localhost/renovesy_test".to_string())
+    ).with_max_connections(5);
 
     let pool = DatabasePool::new(config).await.unwrap();
     let health = pool.health_check().await.unwrap();
@@ -33,12 +28,10 @@ async fn test_pool_health_check() {
 #[tokio::test]
 #[ignore] // Requires actual database
 async fn test_pool_get_connection() {
-    let config = DatabaseConfig {
-        url: std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "mysql://root:password@localhost/renovesy_test".to_string()),
-        max_connections: 5,
-        connect_timeout: 10,
-    };
+    let config = DatabaseConfig::new(
+        std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "mysql://root:password@localhost/renovesy_test".to_string())
+    ).with_max_connections(5);
 
     let pool = DatabasePool::new(config).await.unwrap();
     // Pool is ready if creation succeeded

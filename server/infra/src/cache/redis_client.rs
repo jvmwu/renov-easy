@@ -449,6 +449,17 @@ impl RedisClient {
         }
     }
 
+    /// Get a clone of the Redis connection for advanced operations
+    /// 
+    /// This method is provided for operations that need direct access to Redis commands
+    /// not exposed through the high-level API.
+    /// 
+    /// # Returns
+    /// * `MultiplexedConnection` - Cloned Redis connection
+    pub fn get_connection(&self) -> MultiplexedConnection {
+        self.connection.clone()
+    }
+
     /// Get time-to-live for a key
     /// 
     /// # Arguments

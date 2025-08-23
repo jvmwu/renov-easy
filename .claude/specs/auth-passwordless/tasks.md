@@ -70,7 +70,7 @@
   - _Leverage: 现有 is_valid_phone_format() 函数_
   - _Requirements: 1.1, 1.6, 1.7_
 
-- [ ] 6. 实现速率限制服务
+- [x] 6. 实现速率限制服务
   - File: server/infra/src/cache/rate_limiter.rs
   - 实现 RateLimiterTrait 接口
   - 添加 check_phone_limit() 和 check_ip_limit() 方法

@@ -23,4 +23,5 @@ pub use repositories::token::TokenRepository;
 
 // Error exports
 pub use errors::{AuthError, TokenError, ValidationError, ErrorResponse};
+pub use errors::{DomainError, DomainResult};
 pub use errors::{extract_english_message, extract_chinese_message};
