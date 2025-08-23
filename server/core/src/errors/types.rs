@@ -4,7 +4,6 @@
 //! and validation operations. The actual error messages are configured externally
 //! in the presentation layer for internationalization support.
 
-use shared::types::response::ErrorResponse;
 use thiserror::Error;
 
 // Re-export shared ErrorResponse for backward compatibility

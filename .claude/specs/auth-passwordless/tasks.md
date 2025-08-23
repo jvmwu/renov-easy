@@ -62,7 +62,7 @@
   - _Leverage: 使用 aes-gcm crate_
   - _Requirements: 8.1, 8.2_
 
-- [ ] 5. 增强电话号码验证工具
+- [x] 5. 增强电话号码验证工具
   - File: server/core/src/services/auth/phone_utils.rs (修改现有)
   - 添加中国手机号验证 validate_chinese_phone()
   - 添加澳大利亚手机号验证 validate_australian_phone()

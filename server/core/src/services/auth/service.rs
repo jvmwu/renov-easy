@@ -12,7 +12,9 @@ use crate::services::verification::{
 use crate::services::token::TokenService;
 
 use super::config::AuthServiceConfig;
-use super::phone_utils::{is_valid_phone_format, mask_phone, hash_phone, extract_country_code};
+use super::phone_utils::{
+    mask_phone, hash_phone, extract_country_code, validate_phone_with_country
+};
 use super::rate_limiter::RateLimiterTrait;
 
 /// Authentication service for managing the complete authentication flow
@@ -102,8 +104,8 @@ where
     /// }
     /// ```
     pub async fn send_verification_code(&self, phone: &str) -> DomainResult<SendCodeResult> {
-        // Step 1: Validate phone number format
-        if !is_valid_phone_format(phone) {
+        // Step 1: Validate phone number format with country-specific rules
+        if !validate_phone_with_country(phone) {
             return Err(DomainError::Auth(AuthError::InvalidPhoneFormat {
                 phone: mask_phone(phone),
             }));
@@ -198,8 +200,8 @@ where
     /// }
     /// ```
     pub async fn verify_code(&self, phone: &str, code: &str) -> DomainResult<AuthResponse> {
-        // Step 1: Validate phone number format
-        if !is_valid_phone_format(phone) {
+        // Step 1: Validate phone number format with country-specific rules
+        if !validate_phone_with_country(phone) {
             return Err(DomainError::Auth(AuthError::InvalidPhoneFormat {
                 phone: mask_phone(phone),
             }));

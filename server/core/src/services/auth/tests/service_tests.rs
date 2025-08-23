@@ -40,12 +40,12 @@ async fn test_send_verification_code_success() {
         config,
     );
 
-    let result = auth_service.send_verification_code("+1234567890").await;
+    let result = auth_service.send_verification_code("+8613812345678").await;
     assert!(result.is_ok());
 
     let send_result = result.unwrap();
     assert!(send_result.message_id.starts_with("mock-message"));
-    assert_eq!(send_result.verification_code.phone, "+1234567890");
+    assert_eq!(send_result.verification_code.phone, "+8613812345678");
 }
 
 #[tokio::test]
@@ -117,7 +117,7 @@ async fn test_send_verification_code_rate_limit() {
         config,
     );
 
-    let phone = "+1234567890";
+    let phone = "+8613812345678";
 
     // Send 3 codes successfully
     for _ in 0..3 {
@@ -160,7 +160,7 @@ async fn test_verify_code_success() {
         config,
     );
 
-    let result = auth_service.verify_code("+1234567890", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456").await;
     assert!(result.is_ok());
     
     let auth_response = result.unwrap();
@@ -232,7 +232,7 @@ async fn test_verify_code_invalid_code() {
         config,
     );
 
-    let result = auth_service.verify_code("+1234567890", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456").await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::InvalidVerificationCode) => {}
@@ -266,7 +266,7 @@ async fn test_verify_code_max_attempts_exceeded() {
         config,
     );
 
-    let result = auth_service.verify_code("+1234567890", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456").await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::MaxAttemptsExceeded) => {}
@@ -301,7 +301,7 @@ async fn test_verify_code_creates_new_user() {
     );
 
     // Verify code for a new user
-    let result = auth_service.verify_code("+1234567890", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456").await;
     assert!(result.is_ok());
     
     let auth_response = result.unwrap();
@@ -312,8 +312,8 @@ async fn test_verify_code_creates_new_user() {
     assert_eq!(user_repo.count_by_type(None).await.unwrap(), 1);
     
     // Verify user properties
-    let phone_hash = hash_phone("234567890");
-    let user = user_repo.find_by_phone(&phone_hash, "+1").await.unwrap().unwrap();
+    let phone_hash = hash_phone("13812345678");
+    let user = user_repo.find_by_phone(&phone_hash, "+86").await.unwrap().unwrap();
     assert!(user.is_verified);
     assert!(user.last_login_at.is_some());
     assert!(!user.is_blocked);
@@ -322,8 +322,8 @@ async fn test_verify_code_creates_new_user() {
 #[tokio::test]
 async fn test_verify_code_existing_user_login() {
     // Create an existing user with a type
-    let phone_hash = hash_phone("234567890");
-    let mut existing_user = User::new(phone_hash.clone(), "+1".to_string());
+    let phone_hash = hash_phone("13812345678");
+    let mut existing_user = User::new(phone_hash.clone(), "+86".to_string());
     existing_user.verify();
     existing_user.set_user_type(UserType::Customer); // Set user type
     let original_login_time = existing_user.last_login_at;
@@ -356,7 +356,7 @@ async fn test_verify_code_existing_user_login() {
     tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
     
     // Verify code for existing user
-    let result = auth_service.verify_code("+1234567890", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456").await;
     assert!(result.is_ok());
     
     let auth_response = result.unwrap();
@@ -367,15 +367,15 @@ async fn test_verify_code_existing_user_login() {
     assert_eq!(user_repo.count_by_type(None).await.unwrap(), 1);
     
     // Verify user's last login was updated
-    let user = user_repo.find_by_phone(&phone_hash, "+1").await.unwrap().unwrap();
+    let user = user_repo.find_by_phone(&phone_hash, "+86").await.unwrap().unwrap();
     assert!(user.last_login_at > original_login_time);
 }
 
 #[tokio::test]
 async fn test_verify_code_blocked_user() {
     // Create a blocked user
-    let phone_hash = hash_phone("234567890");
-    let mut blocked_user = User::new(phone_hash.clone(), "+1".to_string());
+    let phone_hash = hash_phone("13812345678");
+    let mut blocked_user = User::new(phone_hash.clone(), "+86".to_string());
     blocked_user.block();
     
     let user_repo = Arc::new(MockUserRepository::with_existing_user(blocked_user));
@@ -403,7 +403,7 @@ async fn test_verify_code_blocked_user() {
     );
 
     // Try to verify code for blocked user
-    let result = auth_service.verify_code("+1234567890", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456").await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::UserBlocked) => {}
@@ -439,7 +439,7 @@ async fn test_verify_code_registration_disabled() {
     );
 
     // Try to verify code for new user when registration is disabled
-    let result = auth_service.verify_code("+1234567890", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456").await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::RegistrationDisabled) => {}
@@ -577,7 +577,7 @@ async fn test_select_user_type_user_not_found() {
 
 #[tokio::test]
 async fn test_logout_success() {
-    let phone = "+1234567890";
+    let phone = "+8613812345678";
     let phone_hash = hash_phone(phone);
     
     // Create a verified user with a type
@@ -611,7 +611,7 @@ async fn test_logout_success() {
     );
 
     // Generate tokens for the user (this also stores them via the mock repository)
-    let token_pair = token_service
+    let _token_pair = token_service
         .generate_tokens(user_id, Some(UserType::Customer), true)
         .await
         .unwrap();

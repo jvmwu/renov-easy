@@ -1,6 +1,5 @@
 //! Key management utilities for OTP encryption
 
-use aes_gcm::{Aes256Gcm, Key};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::{DateTime, Utc};
 use rand::{rngs::OsRng, RngCore};
@@ -173,25 +172,25 @@ impl KeyManager {
             // Add old key if we're keeping them
             if self.config.keep_old_keys {
                 all_keys.insert(active_key.id.clone(), active_key.clone());
-                
-                // Remove oldest keys if we exceed the limit
-                if all_keys.len() > self.config.max_old_keys + 1 {
-                    let mut keys_by_age: Vec<_> = all_keys
-                        .values()
-                        .filter(|k| !k.is_active)
-                        .map(|k| (k.created_at, k.id.clone()))
-                        .collect();
-                    keys_by_age.sort_by_key(|k| k.0);
-                    
-                    let keys_to_remove = keys_by_age.len() - self.config.max_old_keys;
-                    for i in 0..keys_to_remove {
-                        all_keys.remove(&keys_by_age[i].1);
-                    }
-                }
             }
             
             // Add new key
             all_keys.insert(new_key_id.clone(), new_encryption_key.clone());
+            
+            // Remove oldest keys if we exceed the limit
+            if self.config.keep_old_keys && all_keys.len() > self.config.max_old_keys + 1 {
+                let mut keys_by_age: Vec<_> = all_keys
+                    .values()
+                    .filter(|k| !k.is_active)
+                    .map(|k| (k.created_at, k.id.clone()))
+                    .collect();
+                keys_by_age.sort_by_key(|k| k.0);
+                
+                let keys_to_remove = keys_by_age.len() - self.config.max_old_keys;
+                for i in 0..keys_to_remove {
+                    all_keys.remove(&keys_by_age[i].1);
+                }
+            }
             
             // Update active key reference
             *active_key = new_encryption_key;
@@ -290,7 +289,7 @@ mod tests {
         
         // Check we have at most max_old_keys + 1 (active) keys
         let all_ids = manager.get_all_key_ids().unwrap();
-        assert!(all_ids.len() <= 3); // 2 old + 1 active
+        assert_eq!(all_ids.len(), 3); // 2 old + 1 active
         
         // Oldest key should be removed
         assert!(manager.get_key(&key_ids[0]).is_err());

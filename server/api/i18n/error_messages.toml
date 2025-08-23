@@ -5,9 +5,27 @@
 # Authentication related errors
 
 [auth.invalid_phone_format]
-en = "Invalid phone number format: {phone}"
-zh = "无效的手机号码格式：{phone}"
+en = "Invalid phone number format. Must include country code (e.g., +86 for China, +61 for Australia): {phone}"
+zh = "无效的手机号码格式。必须包含国家代码（例如：中国 +86，澳大利亚 +61）：{phone}"
 code = "invalid_phone_format"
+http_status = 400
+
+[auth.invalid_chinese_phone]
+en = "Invalid Chinese phone number. Must be 11 digits starting with 13-19 after +86"
+zh = "无效的中国手机号码。+86 后必须是以 13-19 开头的 11 位数字"
+code = "invalid_chinese_phone"
+http_status = 400
+
+[auth.invalid_australian_phone]
+en = "Invalid Australian phone number. Must be 9 digits starting with 4 after +61"
+zh = "无效的澳大利亚手机号码。+61 后必须是以 4 开头的 9 位数字"
+code = "invalid_australian_phone"
+http_status = 400
+
+[auth.missing_country_code]
+en = "Phone number must include country code (e.g., +86 for China, +61 for Australia)"
+zh = "电话号码必须包含国家代码（例如：中国 +86，澳大利亚 +61）"
+code = "missing_country_code"
 http_status = 400
 
 [auth.rate_limit_exceeded]

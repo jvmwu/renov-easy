@@ -18,3 +18,12 @@ mod tests;
 pub use config::AuthServiceConfig;
 pub use rate_limiter::RateLimiterTrait;
 pub use service::AuthService;
+
+// Export selected phone utilities for public use
+pub use phone_utils::{
+    validate_chinese_phone,
+    validate_australian_phone,
+    validate_phone_with_country,
+    normalize_to_e164,
+    CountryCode,
+};
