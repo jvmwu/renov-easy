@@ -81,10 +81,10 @@ impl RateLimiter {
     ) -> Result<RateLimitStatus, redis::RedisError> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
         let key = format!("rate_limit:{}:{}", action, identifier);
-        
+
         // Get current count
         let count: Option<u32> = conn.get(&key).await?;
-        
+
         match count {
             Some(current) if current >= limit => {
                 // Rate limit exceeded
@@ -184,7 +184,7 @@ where
 
         Box::pin(async move {
             let path = req.path();
-            
+
             // Determine rate limit type based on endpoint
             let rate_limit_result = if path.contains("/auth/send-code") {
                 // SMS rate limiting per phone number
@@ -215,7 +215,7 @@ where
                     "timestamp": error_response.timestamp
                 })));
             }
-            
+
             // Rate limit passed, continue with request
             service.call(req).await
         })
@@ -252,7 +252,7 @@ async fn check_sms_rate_limit(
     if is_locked {
         let ttl: i64 = conn.ttl(&lock_key).await.unwrap_or(0);
         let minutes = (ttl.max(0) / 60) + 1;
-        
+
         return Err(ErrorResponse::new(
             "phone_locked".to_string(),
             format!("Too many requests. Please try again in {} minutes | 请求过于频繁，请在 {} 分钟后重试", minutes, minutes),
@@ -275,7 +275,7 @@ async fn check_sms_rate_limit(
         Some(current) if current >= config.sms_per_phone_per_hour => {
             let ttl: i64 = conn.ttl(&key).await.unwrap_or(0);
             let minutes = (ttl.max(0) / 60) + 1;
-            
+
             Err(ErrorResponse::new(
                 "sms_rate_limit_exceeded".to_string(),
                 format!("Too many SMS requests. Please try again in {} minutes | 短信请求过于频繁，请在 {} 分钟后重试", minutes, minutes),
@@ -294,7 +294,7 @@ async fn check_sms_rate_limit(
                     "Unable to update rate limit".to_string(),
                 )
             })?;
-            
+
             // Set expiry on first request
             if count.is_none() {
                 conn.expire(&key, 3600).await.map_err(|e| {
@@ -305,7 +305,7 @@ async fn check_sms_rate_limit(
                     )
                 })?;
             }
-            
+
             Ok(())
         }
     }
@@ -341,7 +341,7 @@ async fn check_verification_rate_limit(
     if is_locked {
         let ttl: i64 = conn.ttl(&lock_key).await.unwrap_or(0);
         let minutes = (ttl.max(0) / 60) + 1;
-        
+
         return Err(ErrorResponse::new(
             "phone_locked".to_string(),
             format!("Account temporarily locked. Please try again in {} minutes | 账户暂时锁定，请在 {} 分钟后重试", minutes, minutes),
@@ -372,10 +372,10 @@ async fn check_verification_rate_limit(
                         "Unable to update rate limit".to_string(),
                     )
                 })?;
-            
+
             // Clear the attempts counter
             let _: u32 = conn.del(&key).await.unwrap_or(0);
-            
+
             Err(ErrorResponse::new(
                 "max_attempts_exceeded".to_string(),
                 "Maximum verification attempts exceeded. Account locked for 30 minutes | 验证尝试次数超限，账户锁定30分钟".to_string(),
@@ -392,7 +392,7 @@ async fn check_verification_rate_limit(
                     "Unable to update rate limit".to_string(),
                 )
             })?;
-            
+
             // Set expiry on first request (5 minutes for verification attempts)
             if count.is_none() {
                 conn.expire(&key, 300).await.map_err(|e| {
@@ -403,7 +403,7 @@ async fn check_verification_rate_limit(
                     )
                 })?;
             }
-            
+
             Ok(())
         }
     }
@@ -438,7 +438,7 @@ async fn check_api_rate_limit(
     match count {
         Some(current) if current >= config.api_calls_per_ip_per_minute => {
             let ttl: i64 = conn.ttl(&key).await.unwrap_or(0);
-            
+
             Err(ErrorResponse::new(
                 "api_rate_limit_exceeded".to_string(),
                 "Too many requests. Please slow down | 请求过多，请放慢速度".to_string(),
@@ -457,7 +457,7 @@ async fn check_api_rate_limit(
                     "Unable to update rate limit".to_string(),
                 )
             })?;
-            
+
             // Set expiry on first request (1 minute for API calls)
             if count.is_none() {
                 conn.expire(&key, 60).await.map_err(|e| {
@@ -468,7 +468,7 @@ async fn check_api_rate_limit(
                     )
                 })?;
             }
-            
+
             Ok(())
         }
     }
@@ -494,18 +494,17 @@ fn get_client_ip(req: &ServiceRequest) -> String {
             }
         }
     }
-    
+
     // Try to get IP from X-Real-IP header
     if let Some(real_ip) = req.headers().get("X-Real-IP") {
         if let Ok(ip_str) = real_ip.to_str() {
             return ip_str.to_string();
         }
     }
-    
+
     // Fall back to connection info
     req.connection_info()
         .peer_addr()
         .unwrap_or("unknown")
         .to_string()
 }
-

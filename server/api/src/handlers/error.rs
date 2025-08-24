@@ -1,6 +1,5 @@
 use actix_web::{HttpResponse, ResponseError};
 use re_core::errors::{AuthError, DomainError, TokenError, ValidationError};
-use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
