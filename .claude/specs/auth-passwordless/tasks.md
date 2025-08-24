@@ -158,7 +158,7 @@
 
 ### Phase 6: JWT令牌管理
 
-- [ ] 16. 配置 JWT RS256 密钥对
+- [x] 16. 配置 JWT RS256 密钥对
   - File: server/core/src/services/token/keys.rs
   - 创建 RSA 密钥管理模块
   - 实现密钥加载和轮换逻辑

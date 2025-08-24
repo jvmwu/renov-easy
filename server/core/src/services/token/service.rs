@@ -1,6 +1,6 @@
 //! Main token service implementation
 
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, Algorithm};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 use rand::Rng;
@@ -11,6 +11,7 @@ use crate::errors::{DomainError, TokenError};
 use crate::repositories::TokenRepository;
 
 use super::config::TokenServiceConfig;
+use super::key_manager::Rs256KeyManager;
 
 /// Service for managing JWT tokens and refresh tokens
 pub struct TokenService<R: TokenRepository> {
@@ -19,6 +20,8 @@ pub struct TokenService<R: TokenRepository> {
     encoding_key: EncodingKey,
     decoding_key: DecodingKey,
     validation: Validation,
+    /// Optional RS256 key manager for asymmetric signing
+    rs256_key_manager: Option<Rs256KeyManager>,
 }
 
 impl<R: TokenRepository> TokenService<R> {
@@ -31,10 +34,65 @@ impl<R: TokenRepository> TokenService<R> {
     ///
     /// # Returns
     ///
+    /// A new `TokenService` instance or error if key loading fails
+    pub fn new(repository: R, config: TokenServiceConfig) -> Result<Self, DomainError> {
+        // Load RS256 keys if configured
+        let (encoding_key, decoding_key, rs256_key_manager) = 
+            if config.algorithm == Algorithm::RS256 {
+                // Load RS256 key manager
+                let manager = config.load_key_manager()?
+                    .ok_or_else(|| DomainError::Internal {
+                        message: "RS256 algorithm requires key configuration".to_string(),
+                    })?;
+                
+                let encoding_key = manager.encoding_key().clone();
+                let decoding_key = manager.decoding_key().clone();
+                
+                (encoding_key, decoding_key, Some(manager))
+            } else {
+                // Use HS256 with symmetric key (backward compatibility)
+                let encoding_key = EncodingKey::from_secret(config.jwt_secret.as_bytes());
+                let decoding_key = DecodingKey::from_secret(config.jwt_secret.as_bytes());
+                (encoding_key, decoding_key, None)
+            };
+        
+        let mut validation = Validation::new(config.algorithm);
+        validation.set_issuer(&["renov-easy"]);
+        validation.set_audience(&["renov-easy-api"]);
+        validation.validate_exp = true;
+        validation.validate_nbf = true;
+        
+        Ok(Self {
+            repository,
+            config,
+            encoding_key,
+            decoding_key,
+            validation,
+            rs256_key_manager,
+        })
+    }
+    
+    /// Creates a new token service with explicit RS256 key manager
+    ///
+    /// # Arguments
+    ///
+    /// * `repository` - Token repository for persistence
+    /// * `config` - Token service configuration
+    /// * `key_manager` - RS256 key manager for asymmetric signing
+    ///
+    /// # Returns
+    ///
     /// A new `TokenService` instance
-    pub fn new(repository: R, config: TokenServiceConfig) -> Self {
-        let encoding_key = EncodingKey::from_secret(config.jwt_secret.as_bytes());
-        let decoding_key = DecodingKey::from_secret(config.jwt_secret.as_bytes());
+    pub fn with_rs256_keys(
+        repository: R,
+        mut config: TokenServiceConfig,
+        key_manager: Rs256KeyManager,
+    ) -> Self {
+        // Ensure config uses RS256
+        config.algorithm = Algorithm::RS256;
+        
+        let encoding_key = key_manager.encoding_key().clone();
+        let decoding_key = key_manager.decoding_key().clone();
         
         let mut validation = Validation::new(config.algorithm);
         validation.set_issuer(&["renov-easy"]);
@@ -48,6 +106,7 @@ impl<R: TokenRepository> TokenService<R> {
             encoding_key,
             decoding_key,
             validation,
+            rs256_key_manager: Some(key_manager),
         }
     }
 

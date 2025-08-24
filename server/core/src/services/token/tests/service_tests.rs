@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use uuid::Uuid;
 use chrono::{Duration, Utc};
 use async_trait::async_trait;
+use jsonwebtoken::Algorithm;
 
 use crate::domain::entities::token::{Claims, RefreshToken};
 use crate::domain::entities::user::UserType;
@@ -89,8 +90,11 @@ impl TokenRepository for MockTokenRepository {
 
 fn create_test_service() -> TokenService<MockTokenRepository> {
     let repository = MockTokenRepository::new();
-    let config = TokenServiceConfig::default();
-    TokenService::new(repository, config)
+    let mut config = TokenServiceConfig::default();
+    // Use HS256 for tests to avoid needing key files
+    config.algorithm = Algorithm::HS256;
+    config.rs256_config = None;
+    TokenService::new(repository, config).expect("Failed to create token service")
 }
 
 #[tokio::test]

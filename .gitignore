@@ -116,3 +116,7 @@ temp/
 yarn.lock
 package-lock.json
 node_modules/
+
+# JWT RS256 keys (never commit these!)
+server/core/keys/
+core/keys/

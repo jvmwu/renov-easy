@@ -21,9 +21,17 @@ pub struct JwtConfig {
     #[serde(default)]
     pub audience: Option<String>,
 
-    /// Algorithm for JWT signing (default: HS256)
+    /// Algorithm for JWT signing (default: RS256)
     #[serde(default = "default_algorithm")]
     pub algorithm: String,
+
+    /// Path to RS256 private key file (for RS256 algorithm)
+    #[serde(default)]
+    pub rs256_private_key_path: Option<String>,
+
+    /// Path to RS256 public key file (for RS256 algorithm)
+    #[serde(default)]
+    pub rs256_public_key_path: Option<String>,
 }
 
 impl Default for JwtConfig {
@@ -35,6 +43,8 @@ impl Default for JwtConfig {
             issuer: String::from("renoveasy"),
             audience: None,
             algorithm: default_algorithm(),
+            rs256_private_key_path: Some(String::from("core/keys/jwt_private_key.pem")),
+            rs256_public_key_path: Some(String::from("core/keys/jwt_public_key.pem")),
         }
     }
 }
@@ -149,6 +159,10 @@ impl AuthConfig {
             .unwrap_or_else(|_| "604800".to_string())
             .parse()
             .unwrap_or(604800);
+        let algorithm = std::env::var("JWT_ALGORITHM")
+            .unwrap_or_else(|_| "RS256".to_string());
+        let rs256_private_key_path = std::env::var("JWT_PRIVATE_KEY_PATH").ok();
+        let rs256_public_key_path = std::env::var("JWT_PUBLIC_KEY_PATH").ok();
 
         Self {
             jwt: JwtConfig {
@@ -157,7 +171,11 @@ impl AuthConfig {
                 refresh_token_expiry,
                 issuer: String::from("renoveasy"),
                 audience: None,
-                algorithm: default_algorithm(),
+                algorithm,
+                rs256_private_key_path: rs256_private_key_path
+                    .or_else(|| Some(String::from("core/keys/jwt_private_key.pem"))),
+                rs256_public_key_path: rs256_public_key_path
+                    .or_else(|| Some(String::from("core/keys/jwt_public_key.pem"))),
             },
             session: SessionConfig::default(),
             oauth2: None,
@@ -204,7 +222,7 @@ pub struct OAuth2Providers {
 }
 
 fn default_algorithm() -> String {
-    String::from("HS256")
+    String::from("RS256")
 }
 
 fn default_http_only() -> bool {

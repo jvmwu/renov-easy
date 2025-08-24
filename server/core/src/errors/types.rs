@@ -93,6 +93,9 @@ pub enum TokenError {
 
     #[error("Missing claim: {claim}")]
     MissingClaim { claim: String },
+
+    #[error("Key load error: {message}")]
+    KeyLoadError { message: String },
 }
 
 /// Validation errors
