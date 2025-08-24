@@ -88,7 +88,7 @@
   - _Leverage: server/core/src/services/verification/traits.rs_
   - _Requirements: 2.9_
 
-- [ ] 8. 实现 AWS SNS SMS 服务提供商
+- [x] 8. 实现 AWS SNS SMS 服务提供商
   - File: server/infra/src/sms/aws_sns_service.rs
   - 实现 SmsServiceTrait 接口
   - 添加 send_sms() 方法使用 AWS SNS API

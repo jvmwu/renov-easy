@@ -8,3 +8,5 @@ pub mod mock_sms_tests;
 pub mod create_service_tests;
 #[cfg(all(test, feature = "twilio-sms"))]
 pub mod twilio_tests;
+#[cfg(all(test, feature = "aws-sns"))]
+pub mod aws_sns_tests;

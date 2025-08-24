@@ -54,6 +54,11 @@ base64 = { workspace = true }
 # Twilio SDK for SMS services
 twilio = { version = "1.0", optional = true }
 
+# AWS SDK for SNS (SMS services)
+aws-config = { version = "1.1", optional = true }
+aws-sdk-sns = { version = "1.15", optional = true }
+aws-credential-types = { version = "1.2", optional = true }
+
 # Phone number validation
 phonenumber = "0.3"
 
@@ -69,8 +74,9 @@ tracing-subscriber = "0.3"
 rand = "0.8"
 
 [features]
-default = ["mysql", "redis-cache", "twilio-sms"]
+default = ["mysql", "redis-cache", "twilio-sms", "aws-sns"]
 mysql = ["sqlx/mysql"]
 redis-cache = ["redis/tokio-comp"]
 twilio-sms = ["twilio"]
+aws-sns = ["aws-config", "aws-sdk-sns", "aws-credential-types"]
 mock-services = []

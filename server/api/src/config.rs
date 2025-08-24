@@ -107,6 +107,17 @@ impl SmsConfig {
                 env::var("TWILIO_FROM_NUMBER").ok()
                     .or_else(|| env::var("SMS_SENDER_ID").ok())
             )
+        } else if provider == "aws-sns" {
+            (
+                env::var("AWS_ACCESS_KEY_ID").ok()
+                    .or_else(|| env::var("AWS_SNS_ACCESS_KEY_ID").ok())
+                    .or_else(|| env::var("SMS_API_KEY").ok()),
+                env::var("AWS_SECRET_ACCESS_KEY").ok()
+                    .or_else(|| env::var("AWS_SNS_SECRET_ACCESS_KEY").ok())
+                    .or_else(|| env::var("SMS_API_SECRET").ok()),
+                env::var("AWS_SNS_SENDER_ID").ok()
+                    .or_else(|| env::var("SMS_SENDER_ID").ok())
+            )
         } else {
             (
                 env::var("SMS_API_KEY").ok(),
@@ -144,7 +155,7 @@ impl SmsConfig {
     /// Validate SMS configuration
     pub fn validate(&self, environment: Environment) -> Result<(), ConfigError> {
         // In production, require real SMS configuration unless explicitly using mock
-        if environment.is_production() && !self.is_mock() {
+        if environment.is_production() && !self.is_mock() && self.provider != "failover" {
             if self.api_key.is_none() {
                 return Err(ConfigError::MissingVar("SMS_API_KEY".to_string()));
             }
@@ -166,12 +177,33 @@ impl SmsConfig {
                         }
                     }
                 }
+                "aws-sns" => {
+                    if self.api_secret.is_none() {
+                        return Err(ConfigError::MissingVar("AWS_SECRET_ACCESS_KEY or SMS_API_SECRET".to_string()));
+                    }
+                    // AWS SNS doesn't require a from number/sender ID in all regions
+                    // so we don't validate it as required
+                }
                 "aliyun" => {
                     if self.template_id.is_none() {
                         return Err(ConfigError::MissingVar("SMS_TEMPLATE_ID".to_string()));
                     }
                 }
                 _ => {}
+            }
+        }
+        // For failover provider, validate both Twilio and AWS SNS configs separately
+        if self.provider == "failover" && environment.is_production() {
+            // Check if at least one provider is configured
+            let has_twilio = env::var("TWILIO_ACCOUNT_SID").is_ok() && 
+                             env::var("TWILIO_AUTH_TOKEN").is_ok();
+            let has_aws = env::var("AWS_ACCESS_KEY_ID").is_ok() && 
+                         env::var("AWS_SECRET_ACCESS_KEY").is_ok();
+            
+            if !has_twilio && !has_aws {
+                return Err(ConfigError::ValidationError(
+                    "Failover SMS provider requires at least one of Twilio or AWS SNS to be configured".to_string()
+                ));
             }
         }
         Ok(())

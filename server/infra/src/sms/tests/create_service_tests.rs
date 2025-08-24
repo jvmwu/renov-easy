@@ -3,8 +3,8 @@
 use crate::sms::create_sms_service;
 use crate::config::SmsConfig;
 
-#[test]
-fn test_create_mock_service() {
+#[tokio::test]
+async fn test_create_mock_service() {
     let config = SmsConfig {
         provider: "mock".to_string(),
         api_key: String::new(),
@@ -12,12 +12,12 @@ fn test_create_mock_service() {
         from_number: "+1234567890".to_string(),
     };
 
-    let service = create_sms_service(&config);
+    let service = create_sms_service(&config).await;
     assert_eq!(service.provider_name(), "Mock");
 }
 
-#[test]
-fn test_create_unknown_provider_fallback() {
+#[tokio::test]
+async fn test_create_unknown_provider_fallback() {
     let config = SmsConfig {
         provider: "unknown".to_string(),
         api_key: String::new(),
@@ -25,7 +25,7 @@ fn test_create_unknown_provider_fallback() {
         from_number: "+1234567890".to_string(),
     };
 
-    let service = create_sms_service(&config);
+    let service = create_sms_service(&config).await;
     // Should fallback to mock
     assert_eq!(service.provider_name(), "Mock");
 }
