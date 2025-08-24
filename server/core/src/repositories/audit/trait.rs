@@ -83,4 +83,22 @@ pub trait AuditLogRepository: Send + Sync {
         ip_address: Option<&str>,
         since: DateTime<Utc>,
     ) -> Result<Vec<AuditLog>, DomainError>;
+    
+    /// Archive old audit logs (90-day retention policy)
+    ///
+    /// Marks audit logs older than 90 days as archived.
+    /// Archived logs can be moved to cold storage or deleted based on requirements.
+    ///
+    /// # Returns
+    /// * Number of records archived
+    async fn archive_old_logs(&self) -> Result<usize, DomainError>;
+    
+    /// Delete archived logs
+    ///
+    /// Permanently removes archived logs from the database.
+    /// Should only be called after logs have been exported to cold storage.
+    ///
+    /// # Returns
+    /// * Number of records deleted
+    async fn delete_archived_logs(&self) -> Result<usize, DomainError>;
 }

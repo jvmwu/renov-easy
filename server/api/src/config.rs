@@ -1,5 +1,5 @@
 //! Configuration management module for the API server
-//! 
+//!
 //! This module provides a centralized configuration management system that:
 //! - Reads configuration from environment variables
 //! - Validates required configuration items
@@ -57,22 +57,22 @@ impl From<env::VarError> for ConfigError {
 pub struct SmsConfig {
     /// SMS service provider (e.g., "mock", "twilio", "aliyun")
     pub provider: String,
-    
+
     /// API key for the SMS service
     pub api_key: Option<String>,
-    
+
     /// API secret for the SMS service (if required)
     pub api_secret: Option<String>,
-    
+
     /// SMS sender ID or phone number
     pub sender_id: Option<String>,
-    
+
     /// Template ID for SMS messages (provider-specific)
     pub template_id: Option<String>,
-    
+
     /// Enable SMS delivery in production
     pub enabled: bool,
-    
+
     /// Use mock provider in development
     pub use_mock_in_dev: bool,
 }
@@ -96,7 +96,7 @@ impl SmsConfig {
     pub fn from_env() -> Self {
         let provider = env::var("SMS_PROVIDER")
             .unwrap_or_else(|_| "mock".to_string());
-        
+
         // For Twilio, use specific environment variables if available
         let (api_key, api_secret, sender_id) = if provider == "twilio" {
             (
@@ -125,7 +125,7 @@ impl SmsConfig {
                 env::var("SMS_SENDER_ID").ok()
             )
         };
-        
+
         let template_id = env::var("SMS_TEMPLATE_ID").ok();
         let enabled = env::var("SMS_ENABLED")
             .unwrap_or_else(|_| "true".to_string())
@@ -135,7 +135,7 @@ impl SmsConfig {
             .unwrap_or_else(|_| "true".to_string())
             .parse()
             .unwrap_or(true);
-            
+
         Self {
             provider,
             api_key,
@@ -146,12 +146,12 @@ impl SmsConfig {
             use_mock_in_dev,
         }
     }
-    
+
     /// Check if using mock provider
     pub fn is_mock(&self) -> bool {
         self.provider == "mock"
     }
-    
+
     /// Validate SMS configuration
     pub fn validate(&self, environment: Environment) -> Result<(), ConfigError> {
         // In production, require real SMS configuration unless explicitly using mock
@@ -195,11 +195,11 @@ impl SmsConfig {
         // For failover provider, validate both Twilio and AWS SNS configs separately
         if self.provider == "failover" && environment.is_production() {
             // Check if at least one provider is configured
-            let has_twilio = env::var("TWILIO_ACCOUNT_SID").is_ok() && 
+            let has_twilio = env::var("TWILIO_ACCOUNT_SID").is_ok() &&
                              env::var("TWILIO_AUTH_TOKEN").is_ok();
-            let has_aws = env::var("AWS_ACCESS_KEY_ID").is_ok() && 
+            let has_aws = env::var("AWS_ACCESS_KEY_ID").is_ok() &&
                          env::var("AWS_SECRET_ACCESS_KEY").is_ok();
-            
+
             if !has_twilio && !has_aws {
                 return Err(ConfigError::ValidationError(
                     "Failover SMS provider requires at least one of Twilio or AWS SNS to be configured".to_string()
@@ -215,34 +215,34 @@ impl SmsConfig {
 pub struct Config {
     /// Environment (development, staging, production)
     pub environment: Environment,
-    
+
     /// Database configuration
     pub database: DatabaseConfig,
-    
+
     /// Cache configuration
     pub cache: CacheStrategyConfig,
-    
+
     /// Authentication configuration
     pub auth: AuthConfig,
-    
+
     /// Server configuration
     pub server: ServerConfig,
-    
+
     /// Rate limiting configuration
     pub rate_limit: RateLimitConfig,
-    
+
     /// CORS configuration
     pub cors: CorsConfig,
-    
+
     /// SMS service configuration
     pub sms: SmsConfig,
-    
+
     /// Logging configuration
     pub logging: LoggingConfig,
-    
+
     /// Monitoring configuration
     pub monitoring: MonitoringConfig,
-    
+
     /// Optional Google Maps API key for location services
     pub google_maps_api_key: Option<String>,
 }
@@ -251,23 +251,23 @@ impl Config {
     /// Create configuration from environment variables
     pub fn from_env() -> Result<Self, ConfigError> {
         let environment = Environment::from_env();
-        
+
         // Create base configuration based on environment
         let mut config = match environment {
             Environment::Development => Self::development(),
             Environment::Staging => Self::staging(),
             Environment::Production => Self::production()?,
         };
-        
+
         // Override with environment variables if present
         config.override_from_env()?;
-        
+
         // Validate the final configuration
         config.validate()?;
-        
+
         Ok(config)
     }
-    
+
     /// Create development configuration with defaults
     fn development() -> Self {
         let environment = Environment::Development;
@@ -289,7 +289,7 @@ impl Config {
             google_maps_api_key: None,
         }
     }
-    
+
     /// Create staging configuration
     fn staging() -> Self {
         let environment = Environment::Staging;
@@ -300,11 +300,11 @@ impl Config {
             .with_max_connections(20);
         config
     }
-    
+
     /// Create production configuration (requires certain environment variables)
     fn production() -> Result<Self, ConfigError> {
         let environment = Environment::Production;
-        
+
         // In production, certain configurations are required
         let database_url = env::var("DATABASE_URL")
             .map_err(|_| ConfigError::MissingVar("DATABASE_URL".to_string()))?;
@@ -312,7 +312,7 @@ impl Config {
             .map_err(|_| ConfigError::MissingVar("REDIS_URL".to_string()))?;
         let jwt_secret = env::var("JWT_SECRET")
             .map_err(|_| ConfigError::MissingVar("JWT_SECRET".to_string()))?;
-        
+
         Ok(Self {
             environment,
             database: DatabaseConfig::new(database_url)
@@ -345,7 +345,7 @@ impl Config {
             google_maps_api_key: env::var("GOOGLE_MAPS_API_KEY").ok(),
         })
     }
-    
+
     /// Override configuration with environment variables
     fn override_from_env(&mut self) -> Result<(), ConfigError> {
         // Override database configuration
@@ -359,14 +359,14 @@ impl Config {
                     value: max_conn,
                 })?;
         }
-        
+
         // Override cache configuration
         if let Some(redis) = &mut self.cache.redis {
             if let Ok(url) = env::var("REDIS_URL") {
                 redis.url = url;
             }
         }
-        
+
         // Override JWT configuration
         if let Ok(secret) = env::var("JWT_SECRET") {
             self.auth.jwt.secret = secret;
@@ -385,7 +385,7 @@ impl Config {
                     value: expiry,
                 })?;
         }
-        
+
         // Override server configuration
         if let Ok(host) = env::var("SERVER_HOST") {
             self.server.host = host;
@@ -397,18 +397,18 @@ impl Config {
                     value: port,
                 })?;
         }
-        
+
         // Override SMS configuration
         self.sms = SmsConfig::from_env();
-        
+
         // Override Google Maps API key
         if let Ok(key) = env::var("GOOGLE_MAPS_API_KEY") {
             self.google_maps_api_key = Some(key);
         }
-        
+
         Ok(())
     }
-    
+
     /// Validate the complete configuration
     pub fn validate(&self) -> Result<(), ConfigError> {
         // Validate JWT configuration
@@ -417,74 +417,25 @@ impl Config {
                 "JWT secret must be changed in production".to_string()
             ));
         }
-        
+
         // Validate database configuration
         if self.environment.is_production() && !self.database.is_production() {
             return Err(ConfigError::ValidationError(
                 "Database URL appears to be localhost in production".to_string()
             ));
         }
-        
+
         // Validate SMS configuration
         self.sms.validate(self.environment)?;
-        
+
         // Validate rate limiting is enabled in production
         if self.environment.is_production() && !self.rate_limit.enabled {
             return Err(ConfigError::ValidationError(
                 "Rate limiting should be enabled in production".to_string()
             ));
         }
-        
+
         Ok(())
     }
-    
-    // Backward compatibility methods
-    
-    pub fn is_development(&self) -> bool {
-        self.environment.is_development()
-    }
 
-    pub fn is_production(&self) -> bool {
-        self.environment.is_production()
-    }
-    
-    pub fn database_url(&self) -> &str {
-        &self.database.url
-    }
-    
-    pub fn redis_url(&self) -> &str {
-        self.cache.redis.as_ref()
-            .map(|c| c.url.as_str())
-            .unwrap_or("redis://localhost:6379")
-    }
-    
-    pub fn jwt_secret(&self) -> &str {
-        &self.auth.jwt.secret
-    }
-    
-    pub fn jwt_access_token_expiry(&self) -> i64 {
-        self.auth.jwt.access_token_expiry
-    }
-    
-    pub fn jwt_refresh_token_expiry(&self) -> i64 {
-        self.auth.jwt.refresh_token_expiry
-    }
-    
-    pub fn server_host(&self) -> &str {
-        &self.server.host
-    }
-    
-    pub fn server_port(&self) -> u16 {
-        self.server.port
-    }
-    
-    // Additional backward compatibility for SMS
-    pub fn sms_provider(&self) -> &str {
-        &self.sms.provider
-    }
-    
-    pub fn sms_api_key(&self) -> Option<&str> {
-        self.sms.api_key.as_deref()
-    }
 }
-

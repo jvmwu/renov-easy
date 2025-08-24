@@ -63,6 +63,16 @@ impl AuditLogRepository for NoOpAuditLogRepository {
         // Return empty list
         Ok(Vec::new())
     }
+    
+    async fn archive_old_logs(&self) -> Result<usize, DomainError> {
+        // No-op - return 0 archived
+        Ok(0)
+    }
+    
+    async fn delete_archived_logs(&self) -> Result<usize, DomainError> {
+        // No-op - return 0 deleted
+        Ok(0)
+    }
 }
 
 // Also implement for () to allow simple type defaults
@@ -104,5 +114,13 @@ impl AuditLogRepository for () {
         _since: DateTime<Utc>,
     ) -> Result<Vec<AuditLog>, DomainError> {
         Ok(Vec::new())
+    }
+    
+    async fn archive_old_logs(&self) -> Result<usize, DomainError> {
+        Ok(0)
+    }
+    
+    async fn delete_archived_logs(&self) -> Result<usize, DomainError> {
+        Ok(0)
     }
 }

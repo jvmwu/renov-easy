@@ -184,7 +184,7 @@
 
 ### Phase 7: 审计日志实现
 
-- [ ] 19. 增强审计日志数据模型
+- [x] 19. 增强审计日志数据模型
   - File: server/core/src/domain/entities/audit.rs (修改现有)
   - 添加认证特定的事件类型枚举
   - 实现手机号脱敏函数 mask_phone_for_audit()

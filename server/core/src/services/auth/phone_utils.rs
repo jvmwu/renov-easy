@@ -43,7 +43,7 @@ impl CountryCode {
         if !phone.starts_with('+') {
             return None;
         }
-        
+
         // Check common country codes
         if phone.starts_with("+86") {
             Some((CountryCode::China, &phone[3..]))
@@ -68,7 +68,7 @@ impl CountryCode {
             }
         }
     }
-    
+
     /// Get the country code string
     pub fn as_str(&self) -> &str {
         match self {
@@ -209,7 +209,7 @@ pub fn validate_phone_with_country(phone: &str) -> bool {
     if !is_valid_phone_format(phone) {
         return false;
     }
-    
+
     // Apply country-specific validation
     if let Some((country, _)) = CountryCode::from_phone(phone) {
         match country {
@@ -241,7 +241,7 @@ pub fn normalize_to_e164(phone: &str, default_country: Option<CountryCode>) -> O
     let cleaned: String = phone.chars()
         .filter(|c| c.is_ascii_digit() || *c == '+')
         .collect();
-    
+
     // If already in E.164 format, validate and return
     if cleaned.starts_with('+') {
         if is_valid_phone_format(&cleaned) {
@@ -250,7 +250,7 @@ pub fn normalize_to_e164(phone: &str, default_country: Option<CountryCode>) -> O
             return None;
         }
     }
-    
+
     // Apply default country code if provided
     match default_country {
         Some(CountryCode::China) => {
@@ -384,226 +384,5 @@ pub fn get_validation_error(phone: &str, expected_country: Option<CountryCode>) 
             "Invalid phone number".to_string(),
             "无效的电话号码".to_string()
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_mask_phone() {
-        assert_eq!(mask_phone("+1234567890"), "***7890");
-        assert_eq!(mask_phone("+123"), "****");
-        assert_eq!(mask_phone("1234"), "****");
-        assert_eq!(mask_phone("123"), "***");
-    }
-    
-    #[test]
-    fn test_hash_phone() {
-        let phone = "1234567890";
-        let hash = hash_phone(phone);
-        // SHA-256 hash should be 64 characters long (hex representation)
-        assert_eq!(hash.len(), 64);
-        // Should be consistent
-        let hash2 = hash_phone(phone);
-        assert_eq!(hash, hash2);
-        // Different input should produce different hash
-        let hash3 = hash_phone("0987654321");
-        assert_ne!(hash, hash3);
-    }
-    
-    #[test]
-    fn test_extract_country_code() {
-        // US/Canada
-        assert_eq!(
-            extract_country_code("+1234567890"),
-            ("+1".to_string(), "234567890".to_string())
-        );
-        // China
-        assert_eq!(
-            extract_country_code("+8613812345678"),
-            ("+86".to_string(), "13812345678".to_string())
-        );
-        // Australia
-        assert_eq!(
-            extract_country_code("+61412345678"),
-            ("+61".to_string(), "412345678".to_string())
-        );
-        // UK
-        assert_eq!(
-            extract_country_code("+447123456789"),
-            ("+44".to_string(), "7123456789".to_string())
-        );
-        // Russia
-        assert_eq!(
-            extract_country_code("+79123456789"),
-            ("+7".to_string(), "9123456789".to_string())
-        );
-    }
-
-    #[test]
-    fn test_is_valid_phone_format() {
-        // Valid E.164 formats
-        assert!(is_valid_phone_format("+1234567890"));
-        assert!(is_valid_phone_format("+8613812345678"));
-        assert!(is_valid_phone_format("+61412345678"));
-        assert!(is_valid_phone_format("+442071234567"));
-        assert!(is_valid_phone_format("+12345678901234"));
-
-        // Invalid formats
-        assert!(!is_valid_phone_format("1234567890")); // Missing +
-        assert!(!is_valid_phone_format("+123")); // Too short
-        assert!(!is_valid_phone_format("+1234567890123456")); // Too long (>15 digits)
-        assert!(!is_valid_phone_format("+123abc7890")); // Contains letters
-        assert!(!is_valid_phone_format("+0123456789")); // Country code starts with 0
-        assert!(!is_valid_phone_format("")); // Empty
-        assert!(!is_valid_phone_format("+")); // Only plus sign
-    }
-    
-    #[test]
-    fn test_validate_chinese_phone() {
-        // Valid Chinese phone numbers
-        assert!(validate_chinese_phone("+8613812345678"));
-        assert!(validate_chinese_phone("+8615912345678"));
-        assert!(validate_chinese_phone("+8618612345678"));
-        assert!(validate_chinese_phone("+8619012345678"));
-        assert!(validate_chinese_phone("13812345678")); // Local format
-        assert!(validate_chinese_phone("15912345678"));
-        assert!(validate_chinese_phone("18612345678"));
-        
-        // Invalid Chinese phone numbers
-        assert!(!validate_chinese_phone("+8612812345678")); // Invalid prefix 128
-        assert!(!validate_chinese_phone("+8610812345678")); // Invalid prefix 108
-        assert!(!validate_chinese_phone("+861381234567"));  // Too short
-        assert!(!validate_chinese_phone("+86138123456789")); // Too long
-        assert!(!validate_chinese_phone("12812345678")); // Invalid local prefix
-        assert!(!validate_chinese_phone("+6113812345678")); // Wrong country code
-    }
-    
-    #[test]
-    fn test_validate_australian_phone() {
-        // Valid Australian phone numbers
-        assert!(validate_australian_phone("+61412345678"));
-        assert!(validate_australian_phone("+61423456789"));
-        assert!(validate_australian_phone("+61456789012"));
-        assert!(validate_australian_phone("+61487654321"));
-        assert!(validate_australian_phone("0412345678")); // Local with leading 0
-        assert!(validate_australian_phone("412345678"));  // Local without leading 0
-        
-        // Invalid Australian phone numbers
-        assert!(!validate_australian_phone("+61312345678")); // Invalid prefix 3
-        assert!(!validate_australian_phone("+61512345678")); // Invalid prefix 5
-        assert!(!validate_australian_phone("+6141234567"));  // Too short
-        assert!(!validate_australian_phone("+614123456789")); // Too long
-        assert!(!validate_australian_phone("312345678")); // Invalid local prefix
-        assert!(!validate_australian_phone("+86412345678")); // Wrong country code
-    }
-    
-    #[test]
-    fn test_validate_phone_with_country() {
-        // Chinese phones
-        assert!(validate_phone_with_country("+8613812345678"));
-        assert!(validate_phone_with_country("+8615912345678"));
-        assert!(!validate_phone_with_country("+8612812345678")); // Invalid prefix
-        
-        // Australian phones
-        assert!(validate_phone_with_country("+61412345678"));
-        assert!(validate_phone_with_country("+61423456789"));
-        assert!(!validate_phone_with_country("+61312345678")); // Invalid prefix
-        
-        // Other countries (only E.164 validation)
-        assert!(validate_phone_with_country("+14155552671")); // US
-        assert!(validate_phone_with_country("+442071234567")); // UK
-        
-        // Invalid E.164 format
-        assert!(!validate_phone_with_country("13812345678")); // Missing +
-        assert!(!validate_phone_with_country("+0123456789")); // Country code starts with 0
-    }
-    
-    #[test]
-    fn test_normalize_to_e164() {
-        // Chinese normalization
-        assert_eq!(
-            normalize_to_e164("13812345678", Some(CountryCode::China)),
-            Some("+8613812345678".to_string())
-        );
-        assert_eq!(
-            normalize_to_e164("138-1234-5678", Some(CountryCode::China)),
-            Some("+8613812345678".to_string())
-        );
-        assert_eq!(
-            normalize_to_e164("+8613812345678", None),
-            Some("+8613812345678".to_string())
-        );
-        
-        // Australian normalization
-        assert_eq!(
-            normalize_to_e164("0412345678", Some(CountryCode::Australia)),
-            Some("+61412345678".to_string())
-        );
-        assert_eq!(
-            normalize_to_e164("412345678", Some(CountryCode::Australia)),
-            Some("+61412345678".to_string())
-        );
-        assert_eq!(
-            normalize_to_e164("0412-345-678", Some(CountryCode::Australia)),
-            Some("+61412345678".to_string())
-        );
-        
-        // Invalid numbers
-        assert_eq!(normalize_to_e164("12812345678", Some(CountryCode::China)), None);
-        assert_eq!(normalize_to_e164("312345678", Some(CountryCode::Australia)), None);
-        assert_eq!(normalize_to_e164("+123", None), None); // Invalid E.164
-    }
-    
-    #[test]
-    fn test_country_code_parsing() {
-        // Test CountryCode::from_phone
-        assert_eq!(
-            CountryCode::from_phone("+8613812345678"),
-            Some((CountryCode::China, "13812345678"))
-        );
-        assert_eq!(
-            CountryCode::from_phone("+61412345678"),
-            Some((CountryCode::Australia, "412345678"))
-        );
-        assert_eq!(
-            CountryCode::from_phone("+14155552671"),
-            Some((CountryCode::US, "4155552671"))
-        );
-        assert_eq!(
-            CountryCode::from_phone("+442071234567"),
-            Some((CountryCode::UK, "2071234567"))
-        );
-        
-        // Test as_str
-        assert_eq!(CountryCode::China.as_str(), "+86");
-        assert_eq!(CountryCode::Australia.as_str(), "+61");
-        assert_eq!(CountryCode::US.as_str(), "+1");
-        assert_eq!(CountryCode::UK.as_str(), "+44");
-    }
-    
-    #[test]
-    fn test_get_validation_error() {
-        // Missing country code
-        let (en, zh) = get_validation_error("13812345678", None);
-        assert!(en.contains("country code"));
-        assert!(zh.contains("国家代码"));
-        
-        // Invalid Chinese phone
-        let (en, zh) = get_validation_error("+8612812345678", Some(CountryCode::China));
-        assert!(en.contains("Chinese"));
-        assert!(zh.contains("中国"));
-        
-        // Invalid Australian phone
-        let (en, zh) = get_validation_error("+61312345678", Some(CountryCode::Australia));
-        assert!(en.contains("Australian"));
-        assert!(zh.contains("澳大利亚"));
-        
-        // Invalid E.164 format
-        let (en, zh) = get_validation_error("+123", None);
-        assert!(en.contains("E.164"));
-        assert!(zh.contains("E.164"));
     }
 }

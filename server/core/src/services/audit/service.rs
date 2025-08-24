@@ -6,10 +6,11 @@
 
 use std::sync::Arc;
 use chrono::{Duration, Utc};
+use serde_json::{json, Value as JsonValue};
 use tokio::task;
 use uuid::Uuid;
 
-use crate::domain::entities::audit::{AuditLog, actions};
+use crate::domain::entities::audit::{AuditLog, AuditEventType, actions};
 use crate::errors::DomainResult;
 use crate::repositories::AuditLogRepository;
 
@@ -55,7 +56,7 @@ where
         Self { repository, config }
     }
 
-    /// Log an authentication attempt
+    /// Log an authentication attempt (backward compatibility)
     ///
     /// # Arguments
     /// * `action` - The action being performed (e.g., login, verify_code)
@@ -67,7 +68,7 @@ where
     /// * `error_message` - Optional error message for failures
     pub async fn log_auth_attempt(
         &self,
-        action: impl Into<String>,
+        action: &str,
         success: bool,
         user_id: Option<Uuid>,
         phone_hash: Option<String>,
@@ -75,7 +76,7 @@ where
         user_agent: Option<String>,
         error_message: Option<String>,
     ) -> DomainResult<()> {
-        let mut audit_log = AuditLog::new(action, success);
+        let mut audit_log = AuditLog::new_legacy(action.to_string(), success);
 
         if let Some(uid) = user_id {
             audit_log = audit_log.with_user(uid);
@@ -178,6 +179,178 @@ where
         .await
     }
 
+    /// Enhanced: Log authentication event with comprehensive details
+    pub async fn log_auth_event(
+        &self,
+        event_type: AuditEventType,
+        ip_address: String,
+        user_id: Option<Uuid>,
+        phone: Option<&str>,
+        phone_hash: Option<String>,
+        user_agent: Option<String>,
+        failure_reason: Option<String>,
+        event_data: Option<JsonValue>,
+    ) -> DomainResult<()> {
+        let mut audit_log = AuditLog::new(event_type, ip_address);
+
+        if let Some(uid) = user_id {
+            audit_log = audit_log.with_user(uid);
+        }
+
+        if let (Some(p), Some(ph)) = (phone, phone_hash.as_ref()) {
+            audit_log = audit_log.with_phone(p, ph);
+        } else if let Some(ph) = phone_hash {
+            audit_log = audit_log.with_phone_hash(ph);
+        }
+
+        if let Some(ua) = user_agent {
+            audit_log.user_agent = Some(ua.clone());
+            audit_log.device_info = Some(AuditLog::extract_device_info(&ua));
+        }
+
+        if let Some(reason) = failure_reason {
+            audit_log = audit_log.with_failure_reason(reason);
+        }
+
+        if let Some(data) = event_data {
+            audit_log = audit_log.with_event_data(data);
+        }
+
+        self.write_log(audit_log).await
+    }
+
+    /// Enhanced: Log login success with comprehensive details
+    pub async fn log_login_success(
+        &self,
+        user_id: Uuid,
+        phone: &str,
+        phone_hash: &str,
+        ip_address: String,
+        user_agent: Option<String>,
+        token_id: Uuid,
+    ) -> DomainResult<()> {
+        let event_data = json!({
+            "token_id": token_id.to_string(),
+            "login_method": "passwordless"
+        });
+
+        let audit_log = AuditLog::new(AuditEventType::LoginSuccess, ip_address)
+            .with_user(user_id)
+            .with_phone(phone, phone_hash)
+            .with_token_id(token_id)
+            .with_event_data(event_data);
+
+        let audit_log = if let Some(ua) = user_agent {
+            let mut log = audit_log;
+            log.user_agent = Some(ua.clone());
+            log.device_info = Some(AuditLog::extract_device_info(&ua));
+            log
+        } else {
+            audit_log
+        };
+
+        self.write_log(audit_log).await
+    }
+
+    /// Enhanced: Log login failure with detailed reason
+    pub async fn log_login_failure(
+        &self,
+        phone_hash: &str,
+        ip_address: String,
+        user_agent: Option<String>,
+        failure_reason: &str,
+    ) -> DomainResult<()> {
+        let event_data = json!({
+            "failure_type": "authentication",
+            "detailed_reason": failure_reason
+        });
+
+        let audit_log = AuditLog::new(AuditEventType::LoginFailure, ip_address)
+            .with_phone_hash(phone_hash)
+            .with_failure_reason(failure_reason)
+            .with_event_data(event_data);
+
+        let audit_log = if let Some(ua) = user_agent {
+            let mut log = audit_log;
+            log.user_agent = Some(ua.clone());
+            log.device_info = Some(AuditLog::extract_device_info(&ua));
+            log
+        } else {
+            audit_log
+        };
+
+        self.write_log(audit_log).await
+    }
+
+    /// Enhanced: Log rate limit violation with details
+    pub async fn log_rate_limit_violation(
+        &self,
+        rate_limit_type: &str,
+        phone: Option<&str>,
+        phone_hash: Option<&str>,
+        ip_address: String,
+        user_agent: Option<String>,
+    ) -> DomainResult<()> {
+        let event_type = match rate_limit_type {
+            "phone" => AuditEventType::RateLimitPhoneExceeded,
+            "ip" => AuditEventType::RateLimitIpExceeded,
+            _ => AuditEventType::RateLimitExceeded,
+        };
+
+        let event_data = json!({
+            "rate_limit_type": rate_limit_type,
+            "violation_time": Utc::now().to_rfc3339()
+        });
+
+        let mut audit_log = AuditLog::new(event_type, ip_address)
+            .with_rate_limit(rate_limit_type)
+            .with_event_data(event_data);
+
+        if let (Some(p), Some(ph)) = (phone, phone_hash) {
+            audit_log = audit_log.with_phone(p, ph);
+        } else if let Some(ph) = phone_hash {
+            audit_log = audit_log.with_phone_hash(ph);
+        }
+
+        if let Some(ua) = user_agent {
+            audit_log.user_agent = Some(ua.clone());
+            audit_log.device_info = Some(AuditLog::extract_device_info(&ua));
+        }
+
+        self.write_log(audit_log).await
+    }
+
+    /// Enhanced: Log token generation event
+    pub async fn log_token_generated(
+        &self,
+        token_id: Uuid,
+        user_id: Uuid,
+        token_type: &str,
+        ip_address: String,
+        user_agent: Option<String>,
+    ) -> DomainResult<()> {
+        let event_data = json!({
+            "token_type": token_type,
+            "generation_time": Utc::now().to_rfc3339()
+        });
+
+        let audit_log = AuditLog::new(AuditEventType::TokenGenerated, ip_address)
+            .with_user(user_id)
+            .with_token_id(token_id)
+            .with_event_data(event_data);
+
+        let audit_log = if let Some(ua) = user_agent {
+            let mut log = audit_log;
+            log.user_agent = Some(ua.clone());
+            log.device_info = Some(AuditLog::extract_device_info(&ua));
+            log
+        } else {
+            audit_log
+        };
+
+        self.write_log(audit_log).await
+    }
+
     /// Log suspicious activity detection
     pub async fn log_suspicious_activity(
         &self,
@@ -209,7 +382,7 @@ where
         ip_address: Option<&str>,
     ) -> DomainResult<bool> {
         let since = Utc::now() - Duration::minutes(self.config.failed_attempts_window_minutes);
-        
+
         let count = self
             .repository
             .count_failed_attempts(action, phone_hash, ip_address, since)
@@ -227,7 +400,7 @@ where
         ip_address: Option<&str>,
     ) -> DomainResult<bool> {
         let since = Utc::now() - Duration::minutes(self.config.suspicious_activity_window_minutes);
-        
+
         let logs = self
             .repository
             .find_suspicious_activity(ip_address, since)
@@ -267,6 +440,28 @@ where
         self.repository.find_by_phone_hash(phone_hash, limit).await
     }
 
+    /// Archive old audit logs based on retention policy (90 days)
+    ///
+    /// This method should be called periodically (e.g., daily) to archive
+    /// old audit logs according to the retention policy.
+    ///
+    /// # Returns
+    /// * Number of records archived
+    pub async fn archive_old_logs(&self) -> DomainResult<usize> {
+        self.repository.archive_old_logs().await
+    }
+
+    /// Delete archived logs from the database
+    ///
+    /// This should only be called after archived logs have been exported
+    /// to cold storage or another long-term storage solution.
+    ///
+    /// # Returns
+    /// * Number of records deleted
+    pub async fn delete_archived_logs(&self) -> DomainResult<usize> {
+        self.repository.delete_archived_logs().await
+    }
+
     /// Internal method to write audit logs
     ///
     /// If async_writes is enabled, the write happens in a background task
@@ -274,7 +469,7 @@ where
     async fn write_log(&self, audit_log: AuditLog) -> DomainResult<()> {
         if self.config.async_writes {
             let repository = Arc::clone(&self.repository);
-            
+
             // Spawn a background task for async write
             task::spawn(async move {
                 if let Err(e) = repository.create(&audit_log).await {
@@ -282,7 +477,7 @@ where
                     eprintln!("Failed to write audit log: {:?}", e);
                 }
             });
-            
+
             Ok(())
         } else {
             // Synchronous write

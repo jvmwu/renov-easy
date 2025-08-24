@@ -31,12 +31,12 @@ impl RedisRateLimiter {
     pub async fn is_phone_locked(&self, phone: &str) -> DomainResult<bool> {
         let key = format!("account_lock:phone:{}", hash_phone(phone));
         let mut conn = self.redis_client.get_connection();
-        
+
         let exists: bool = conn.exists(&key).await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to check lock status: {}", e),
             })?;
-        
+
         Ok(exists)
     }
 
@@ -44,12 +44,12 @@ impl RedisRateLimiter {
     pub async fn is_ip_locked(&self, ip: &str) -> DomainResult<bool> {
         let key = format!("account_lock:ip:{}", ip);
         let mut conn = self.redis_client.get_connection();
-        
+
         let exists: bool = conn.exists(&key).await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to check lock status: {}", e),
             })?;
-        
+
         Ok(exists)
     }
 
@@ -57,16 +57,16 @@ impl RedisRateLimiter {
     async fn lock_phone(&self, phone: &str) -> DomainResult<()> {
         let key = format!("account_lock:phone:{}", hash_phone(phone));
         let mut conn = self.redis_client.get_connection();
-        
+
         let lockout_duration = self.config.auth.account_lock_duration;
         conn.set_ex(&key, "locked", lockout_duration as u64)
             .await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to lock phone: {}", e),
             })?;
-        
+
         // TODO: Add audit logging when AuditRepository is available
-        
+
         Ok(())
     }
 
@@ -74,16 +74,16 @@ impl RedisRateLimiter {
     async fn lock_ip(&self, ip: &str) -> DomainResult<()> {
         let key = format!("account_lock:ip:{}", ip);
         let mut conn = self.redis_client.get_connection();
-        
+
         let lockout_duration = self.config.auth.account_lock_duration;
         conn.set_ex(&key, "locked", lockout_duration as u64)
             .await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to lock IP: {}", e),
             })?;
-        
+
         // TODO: Add audit logging when AuditRepository is available
-        
+
         Ok(())
     }
 
@@ -95,10 +95,10 @@ impl RedisRateLimiter {
         window_seconds: u64,
     ) -> DomainResult<RateLimitStatus> {
         let mut conn = self.redis_client.get_connection();
-        
+
         let now = Utc::now().timestamp_millis();
         let window_start = now - (window_seconds as i64 * 1000);
-        
+
         // Remove old entries outside the window
         // Remove expired entries using raw Redis command
         let _: redis::RedisResult<i64> = redis::cmd("ZREMRANGEBYSCORE")
@@ -107,32 +107,32 @@ impl RedisRateLimiter {
             .arg(window_start)
             .query_async(&mut conn)
             .await;
-        
+
         // Count current entries in the window
         let count: u32 = conn.zcount(key, window_start, "+inf").await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to count rate limit: {}", e),
             })?;
-        
+
         if count >= limit {
             // Get the oldest entry to calculate retry time
             let oldest: Vec<(String, i64)> = conn.zrangebyscore_limit_withscores(
-                key, 
-                window_start, 
-                "+inf", 
-                0, 
+                key,
+                window_start,
+                "+inf",
+                0,
                 1
             ).await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to get rate limit window: {}", e),
             })?;
-            
+
             let retry_after = if let Some((_, timestamp)) = oldest.first() {
                 ((timestamp + (window_seconds as i64 * 1000) - now) / 1000).max(1) as u64
             } else {
                 window_seconds
             };
-            
+
             Ok(RateLimitStatus::Exceeded {
                 retry_after_seconds: retry_after,
                 limit,
@@ -144,13 +144,13 @@ impl RedisRateLimiter {
                 .map_err(|e| DomainError::Internal {
                     message: format!("Failed to update rate limit: {}", e),
                 })?;
-            
+
             // Set expiry on the key
             conn.expire(key, window_seconds as i64).await
                 .map_err(|e| DomainError::Internal {
                     message: format!("Failed to set expiry: {}", e),
                 })?;
-            
+
             Ok(RateLimitStatus::Ok {
                 remaining: limit - count - 1,
                 limit,
@@ -169,7 +169,7 @@ impl RedisRateLimiter {
                 reason: "Phone locked due to excessive failed attempts".to_string(),
             });
         }
-        
+
         let key = format!("rate_limit:sms:{}", hash_phone(phone));
         let limit = self.config.sms.per_phone_per_hour;
         let window = 3600u64; // 1 hour window for SMS
@@ -186,7 +186,7 @@ impl RedisRateLimiter {
                 reason: "IP locked due to excessive requests".to_string(),
             });
         }
-        
+
         let key = format!("rate_limit:ip_verification:{}", ip);
         let limit = self.config.auth.login_per_ip_per_hour;
         let window = 3600; // 1 hour in seconds
@@ -201,15 +201,15 @@ impl RedisRateLimiter {
         } else {
             None
         };
-        
+
         // Get SMS limit status
         let sms_key = format!("rate_limit:sms:{}", hash_phone(phone));
         let sms_count = self.get_current_count(&sms_key).await?;
-        
+
         // Get failed attempts
         let failed_key = format!("failed_attempts:phone:{}", hash_phone(phone));
         let failed_attempts = self.get_current_count(&failed_key).await?;
-        
+
         let limits = vec![
             LimitInfo {
                 limit_type: "sms".to_string(),
@@ -218,7 +218,7 @@ impl RedisRateLimiter {
                 window_seconds: 3600, // 1 hour window
             },
         ];
-        
+
         Ok(RateLimitInfo {
             identifier: phone.to_string(),
             identifier_type: "phone".to_string(),
@@ -238,15 +238,15 @@ impl RedisRateLimiter {
         } else {
             None
         };
-        
+
         // Get verification limit status
         let verification_key = format!("rate_limit:ip_verification:{}", ip);
         let verification_count = self.get_current_count(&verification_key).await?;
-        
+
         // Get failed attempts
         let failed_key = format!("failed_attempts:ip:{}", ip);
         let failed_attempts = self.get_current_count(&failed_key).await?;
-        
+
         let limits = vec![
             LimitInfo {
                 limit_type: "verification".to_string(),
@@ -255,7 +255,7 @@ impl RedisRateLimiter {
                 window_seconds: 3600,
             },
         ];
-        
+
         Ok(RateLimitInfo {
             identifier: ip.to_string(),
             identifier_type: "ip".to_string(),
@@ -270,60 +270,60 @@ impl RedisRateLimiter {
     /// Reset all limits for a phone number (admin function)
     pub async fn reset_phone_limits(&self, phone: &str) -> DomainResult<()> {
         let mut conn = self.redis_client.get_connection();
-        
+
         let phone_hash = hash_phone(phone);
         let keys = vec![
             format!("rate_limit:sms:{}", phone_hash),
             format!("failed_attempts:phone:{}", phone_hash),
             format!("account_lock:phone:{}", phone_hash),
         ];
-        
+
         for key in keys {
             let _: Result<(), _> = conn.del(&key).await;
         }
-        
+
         Ok(())
     }
 
     /// Reset all limits for an IP (admin function)
     pub async fn reset_ip_limits(&self, ip: &str) -> DomainResult<()> {
         let mut conn = self.redis_client.get_connection();
-        
+
         let keys = vec![
             format!("rate_limit:ip_verification:{}", ip),
             format!("failed_attempts:ip:{}", ip),
             format!("account_lock:ip:{}", ip),
         ];
-        
+
         for key in keys {
             let _: Result<(), _> = conn.del(&key).await;
         }
-        
+
         Ok(())
     }
 
     /// Helper to get current count in a sliding window
     async fn get_current_count(&self, key: &str) -> DomainResult<u32> {
         let mut conn = self.redis_client.get_connection();
-        
+
         let now = Utc::now().timestamp_millis();
         let window_start = now - (3600 * 1000); // Default 1 hour window for status
-        
+
         let count: u32 = conn.zcount(key, window_start, "+inf").await
             .unwrap_or(0);
-        
+
         Ok(count)
     }
 
     /// Helper to get TTL of a lock
     async fn get_lock_ttl(&self, key: &str) -> DomainResult<Option<u64>> {
         let mut conn = self.redis_client.get_connection();
-        
+
         let ttl: i64 = conn.ttl(key).await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to get TTL: {}", e),
             })?;
-        
+
         if ttl > 0 {
             Ok(Some(ttl as u64))
         } else {
@@ -335,11 +335,11 @@ impl RedisRateLimiter {
     pub async fn increment_failed_attempts(&self, phone: &str) -> DomainResult<bool> {
         let key = format!("failed_attempts:phone:{}", hash_phone(phone));
         let mut conn = self.redis_client.get_connection();
-        
+
         // Use sliding window for failed attempts too
         let now = Utc::now().timestamp_millis();
         let window_start = now - (3600 * 1000); // 1 hour window
-        
+
         // Remove old entries
         // Remove expired entries using raw Redis command
         let _: redis::RedisResult<i64> = redis::cmd("ZREMRANGEBYSCORE")
@@ -348,25 +348,25 @@ impl RedisRateLimiter {
             .arg(window_start)
             .query_async(&mut conn)
             .await;
-        
+
         // Add new failed attempt
         conn.zadd(&key, &now.to_string(), now).await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to update failed attempts: {}", e),
             })?;
-        
+
         // Count attempts in window
         let count: u32 = conn.zcount(&key, window_start, "+inf").await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to count failed attempts: {}", e),
             })?;
-        
+
         // Set expiry
         conn.expire(&key, 3600).await
             .map_err(|e| DomainError::Internal {
                 message: format!("Failed to set expiry: {}", e),
             })?;
-        
+
         // Check if should lock
         let threshold = self.config.auth.failed_attempts_threshold;
         if count >= threshold {
@@ -389,44 +389,44 @@ impl RateLimiterTrait for RedisRateLimiter {
     async fn increment_sms_counter(&self, phone: &str) -> Result<i64, String> {
         let key = format!("rate_limit:sms:{}", hash_phone(phone));
         let mut conn = self.redis_client.get_connection();
-        
+
         let now = Utc::now().timestamp_millis();
-        
+
         // Add to sorted set
         conn.zadd(&key, &now.to_string(), now).await
             .map_err(|e| format!("Failed to increment counter: {}", e))?;
-        
+
         // Set expiry
         let window = 3600i64; // 1 hour window
         conn.expire(&key, window).await
             .map_err(|e| format!("Failed to set expiry: {}", e))?;
-        
+
         // Count entries in window
         let window_start = now - (window as i64 * 1000);
         let count: i64 = conn.zcount(&key, window_start, "+inf").await
             .map_err(|e| format!("Failed to count: {}", e))?;
-        
+
         Ok(count)
     }
 
     async fn get_rate_limit_reset_time(&self, phone: &str) -> Result<Option<i64>, String> {
         let key = format!("rate_limit:sms:{}", hash_phone(phone));
         let mut conn = self.redis_client.get_connection();
-        
+
         let now = Utc::now().timestamp_millis();
         let window = 3600i64 * 1000; // 1 hour window in milliseconds
         let window_start = now - window;
-        
+
         // Get the oldest entry in the current window
         let oldest: Vec<(String, i64)> = conn.zrangebyscore_limit_withscores(
-            &key, 
-            window_start, 
-            "+inf", 
-            0, 
+            &key,
+            window_start,
+            "+inf",
+            0,
             1
         ).await
         .map_err(|e| format!("Failed to get oldest entry: {}", e))?;
-        
+
         if let Some((_, timestamp)) = oldest.first() {
             let reset_time = (timestamp + window - now) / 1000;
             Ok(Some(reset_time.max(0)))
@@ -434,55 +434,55 @@ impl RateLimiterTrait for RedisRateLimiter {
             Ok(None)
         }
     }
-    
+
     async fn check_ip_verification_limit(&self, ip: &str) -> Result<bool, String> {
         // Use the internal check_ip_verification_limit method (different name)
         let status = self.check_ip_verification_limit_internal(ip).await
             .map_err(|e| e.to_string())?;
         Ok(!matches!(status, RateLimitStatus::Ok { .. }))
     }
-    
+
     async fn increment_ip_verification_counter(&self, ip: &str) -> Result<i64, String> {
         let key = format!("rate_limit:ip_verification:{}", ip);
         let mut conn = self.redis_client.get_connection();
-        
+
         let now = Utc::now().timestamp_millis();
-        
+
         // Add to sorted set
         conn.zadd(&key, &now.to_string(), now).await
             .map_err(|e| format!("Failed to increment IP counter: {}", e))?;
-        
+
         // Set expiry (1 hour TTL)
         let window = 3600i64; // 1 hour window
         conn.expire(&key, window).await
             .map_err(|e| format!("Failed to set expiry: {}", e))?;
-        
+
         // Count entries in window
         let window_start = now - (window as i64 * 1000);
         let count: i64 = conn.zcount(&key, window_start, "+inf").await
             .map_err(|e| format!("Failed to count IP attempts: {}", e))?;
-        
+
         Ok(count)
     }
-    
+
     async fn get_ip_rate_limit_reset_time(&self, ip: &str) -> Result<Option<i64>, String> {
         let key = format!("rate_limit:ip_verification:{}", ip);
         let mut conn = self.redis_client.get_connection();
-        
+
         let now = Utc::now().timestamp_millis();
         let window = 3600i64 * 1000; // 1 hour window in milliseconds
         let window_start = now - window;
-        
+
         // Get the oldest entry in the current window
         let oldest: Vec<(String, i64)> = conn.zrangebyscore_limit_withscores(
-            &key, 
-            window_start, 
-            "+inf", 
-            0, 
+            &key,
+            window_start,
+            "+inf",
+            0,
             1
         ).await
         .map_err(|e| format!("Failed to get oldest IP entry: {}", e))?;
-        
+
         if let Some((_, timestamp)) = oldest.first() {
             let reset_time = (timestamp + window - now) / 1000;
             Ok(Some(reset_time.max(0)))
@@ -490,10 +490,10 @@ impl RateLimiterTrait for RedisRateLimiter {
             Ok(None)
         }
     }
-    
+
     async fn log_rate_limit_violation(
-        &self, 
-        identifier: &str, 
+        &self,
+        identifier: &str,
         identifier_type: &str,
         action: &str
     ) -> Result<(), String> {
@@ -504,7 +504,7 @@ impl RateLimiterTrait for RedisRateLimiter {
             if identifier_type == "phone" { hash_phone(identifier) } else { identifier.to_string() },
             action
         );
-        
+
         // Note: Actual audit logging to database would be integrated here
         // when AuditService is available in the context
         Ok(())
@@ -515,19 +515,19 @@ impl RateLimiterTrait for RedisRateLimiter {
 #[derive(Debug, Clone)]
 pub enum RateLimitStatus {
     /// Request is within limits
-    Ok { 
+    Ok {
         remaining: u32,
         limit: u32,
         window_seconds: u64,
     },
     /// Rate limit exceeded
-    Exceeded { 
+    Exceeded {
         retry_after_seconds: u64,
         limit: u32,
         window_seconds: u64,
     },
     /// Account/IP is locked
-    Locked { 
+    Locked {
         retry_after_seconds: u64,
         reason: String,
     },

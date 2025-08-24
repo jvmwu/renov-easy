@@ -152,11 +152,48 @@ impl AuditLogRepository for MockAuditLogRepository {
             .filter(|log| {
                 log.created_at >= since
                     && !log.success
-                    && (ip_address.is_none() || log.ip_address.as_deref() == ip_address)
+                    && (ip_address.is_none() || log.ip_address == ip_address.unwrap_or_default())
             })
             .cloned()
             .collect();
         
         Ok(result)
+    }
+    
+    async fn archive_old_logs(&self) -> Result<usize, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal {
+                message: "Mock repository error".to_string(),
+            });
+        }
+        
+        let mut logs = self.logs.lock().unwrap();
+        let cutoff = Utc::now() - chrono::Duration::days(90);
+        let mut archived_count = 0;
+        
+        for log in logs.iter_mut() {
+            if log.created_at < cutoff && !log.archived {
+                log.archived = true;
+                log.archived_at = Some(Utc::now());
+                archived_count += 1;
+            }
+        }
+        
+        Ok(archived_count)
+    }
+    
+    async fn delete_archived_logs(&self) -> Result<usize, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal {
+                message: "Mock repository error".to_string(),
+            });
+        }
+        
+        let mut logs = self.logs.lock().unwrap();
+        let initial_count = logs.len();
+        logs.retain(|log| !log.archived);
+        let deleted_count = initial_count - logs.len();
+        
+        Ok(deleted_count)
     }
 }

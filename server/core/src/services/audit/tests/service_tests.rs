@@ -100,7 +100,7 @@ impl AuditLogRepository for MockAuditLogRepository {
                     && !log.success
                     && log.created_at >= since
                     && (phone_hash.is_none() || log.phone_hash.as_deref() == phone_hash)
-                    && (ip_address.is_none() || log.ip_address.as_deref() == ip_address)
+                    && (ip_address.is_none() || log.ip_address.as_str() == ip_address.unwrap_or_default())
             })
             .count();
         Ok(count)
@@ -119,12 +119,28 @@ impl AuditLogRepository for MockAuditLogRepository {
             .iter()
             .filter(|log| {
                 log.created_at >= since
-                    && (ip_address.is_none() || log.ip_address.as_deref() == ip_address)
+                    && (ip_address.is_none() || log.ip_address.as_str() == ip_address.unwrap_or_default())
                     && !log.success
             })
             .cloned()
             .collect();
         Ok(suspicious_logs)
+    }
+    
+    async fn archive_old_logs(&self) -> Result<usize, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal { message: "Mock failure".to_string() });
+        }
+        // Mock implementation - just return 0
+        Ok(0)
+    }
+    
+    async fn delete_archived_logs(&self) -> Result<usize, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal { message: "Mock failure".to_string() });
+        }
+        // Mock implementation - just return 0
+        Ok(0)
     }
 }
 
@@ -156,7 +172,7 @@ async fn test_log_auth_attempt() {
     assert_eq!(logs[0].action, "test_action");
     assert!(logs[0].success);
     assert_eq!(logs[0].phone_hash, Some("phone_hash".to_string()));
-    assert_eq!(logs[0].ip_address, Some("192.168.1.1".to_string()));
+    assert_eq!(logs[0].ip_address, "192.168.1.1");
     assert_eq!(logs[0].user_agent, Some("Mozilla/5.0".to_string()));
 }
 
@@ -219,7 +235,7 @@ async fn test_log_verify_code_success() {
     assert!(log.success);
     assert_eq!(log.user_id, Some(user_id));
     assert_eq!(log.phone_hash, Some("phone_hash_123".to_string()));
-    assert_eq!(log.ip_address, Some("10.0.0.1".to_string()));
+    assert_eq!(log.ip_address, "10.0.0.1");
     assert_eq!(log.user_agent, Some("Chrome/100.0".to_string()));
     assert!(log.error_message.is_none());
 }

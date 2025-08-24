@@ -1,11 +1,11 @@
-//! Tests for the AuditLog entity
+//! Tests for the AuditLog entity (backward compatibility)
 
 use uuid::Uuid;
 use crate::domain::entities::audit::{AuditLog, actions};
 
 #[test]
 fn test_create_audit_log() {
-    let log = AuditLog::new(actions::LOGIN_ATTEMPT, true);
+    let log = AuditLog::new_legacy(actions::LOGIN_ATTEMPT, true);
     
     assert_eq!(log.action, actions::LOGIN_ATTEMPT);
     assert!(log.success);
@@ -17,7 +17,7 @@ fn test_create_audit_log() {
 #[test]
 fn test_builder_pattern() {
     let user_id = Uuid::new_v4();
-    let log = AuditLog::new(actions::LOGIN_ATTEMPT, false)
+    let log = AuditLog::new_legacy(actions::LOGIN_ATTEMPT, false)
         .with_user(user_id)
         .with_phone_hash("hashed_phone")
         .with_request_context(
@@ -28,7 +28,7 @@ fn test_builder_pattern() {
 
     assert_eq!(log.user_id, Some(user_id));
     assert_eq!(log.phone_hash, Some("hashed_phone".to_string()));
-    assert_eq!(log.ip_address, Some("192.168.1.1".to_string()));
+    assert_eq!(log.ip_address, "192.168.1.1");
     assert_eq!(log.user_agent, Some("Mozilla/5.0".to_string()));
     assert_eq!(log.error_message, Some("Invalid credentials".to_string()));
 }
@@ -36,7 +36,7 @@ fn test_builder_pattern() {
 #[test]
 fn test_audit_log_with_user() {
     let user_id = Uuid::new_v4();
-    let log = AuditLog::new(actions::REFRESH_TOKEN_ATTEMPT, true)
+    let log = AuditLog::new_legacy(actions::REFRESH_TOKEN_ATTEMPT, true)
         .with_user(user_id);
     
     assert_eq!(log.user_id, Some(user_id));
@@ -45,7 +45,7 @@ fn test_audit_log_with_user() {
 
 #[test]
 fn test_audit_log_with_phone_hash() {
-    let log = AuditLog::new(actions::SEND_CODE_ATTEMPT, true)
+    let log = AuditLog::new_legacy(actions::SEND_CODE_ATTEMPT, true)
         .with_phone_hash("hashed_12345");
     
     assert_eq!(log.phone_hash, Some("hashed_12345".to_string()));
@@ -53,7 +53,7 @@ fn test_audit_log_with_phone_hash() {
 
 #[test]
 fn test_audit_log_with_error() {
-    let log = AuditLog::new(actions::VERIFY_CODE_ATTEMPT, false)
+    let log = AuditLog::new_legacy(actions::VERIFY_CODE_ATTEMPT, false)
         .with_error("Invalid verification code");
     
     assert!(!log.success);

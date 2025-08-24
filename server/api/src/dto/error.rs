@@ -2,6 +2,7 @@ use actix_web::http::StatusCode;
 pub use re_shared::types::response::ErrorResponse;
 
 // Extension trait for ErrorResponse to add actix-web specific methods
+#[allow(dead_code)]
 pub trait ErrorResponseExt {
     fn to_response(&self, status: StatusCode) -> actix_web::HttpResponse;
 }
