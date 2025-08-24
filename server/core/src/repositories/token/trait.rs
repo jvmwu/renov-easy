@@ -34,7 +34,7 @@ pub trait TokenRepository: Send + Sync {
     /// # async fn example(repo: &impl TokenRepository) -> Result<(), Box<dyn std::error::Error>> {
     /// let user_id = Uuid::new_v4();
     /// let token = RefreshToken::new(user_id, "hashed_token_value".to_string());
-    /// 
+    ///
     /// let saved = repo.save_refresh_token(token).await?;
     /// println!("Token saved with ID: {}", saved.id);
     /// # Ok(())
@@ -57,7 +57,7 @@ pub trait TokenRepository: Send + Sync {
     /// # use renov_core::repositories::TokenRepository;
     /// # async fn example(repo: &impl TokenRepository) -> Result<(), Box<dyn std::error::Error>> {
     /// let token_hash = "sha256_hash_of_token";
-    /// 
+    ///
     /// match repo.find_refresh_token(token_hash).await? {
     ///     Some(token) => {
     ///         if token.is_valid() {
@@ -98,7 +98,7 @@ pub trait TokenRepository: Send + Sync {
     /// # async fn example(repo: &impl TokenRepository, user_id: Uuid) -> Result<(), Box<dyn std::error::Error>> {
     /// let user_tokens = repo.find_by_user_id(user_id).await?;
     /// println!("User has {} active tokens", user_tokens.len());
-    /// 
+    ///
     /// for token in user_tokens {
     ///     println!("Token expires at: {:?}", token.expires_at);
     /// }
@@ -106,7 +106,7 @@ pub trait TokenRepository: Send + Sync {
     /// # }
     /// ```
     async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<RefreshToken>, DomainError>;
-    
+
     /// Find refresh tokens by token family
     ///
     /// # Arguments
@@ -116,7 +116,7 @@ pub trait TokenRepository: Send + Sync {
     /// * `Ok(Vec<RefreshToken>)` - List of tokens in the family
     /// * `Err(DomainError)` - Database error occurred
     async fn find_by_token_family(&self, token_family: &str) -> Result<Vec<RefreshToken>, DomainError>;
-    
+
     /// Revoke all tokens in a token family
     ///
     /// # Arguments
@@ -126,7 +126,7 @@ pub trait TokenRepository: Send + Sync {
     /// * `Ok(usize)` - Number of tokens revoked
     /// * `Err(DomainError)` - Revocation failed
     async fn revoke_token_family(&self, token_family: &str) -> Result<usize, DomainError>;
-    
+
     /// Check if a token is blacklisted
     ///
     /// # Arguments
@@ -136,7 +136,7 @@ pub trait TokenRepository: Send + Sync {
     /// * `Ok(bool)` - True if blacklisted, false otherwise
     /// * `Err(DomainError)` - Database error occurred
     async fn is_token_blacklisted(&self, token_jti: &str) -> Result<bool, DomainError>;
-    
+
     /// Add a token to the blacklist
     ///
     /// # Arguments
@@ -163,7 +163,7 @@ pub trait TokenRepository: Send + Sync {
     /// # use renov_core::repositories::TokenRepository;
     /// # async fn example(repo: &impl TokenRepository) -> Result<(), Box<dyn std::error::Error>> {
     /// let token_hash = "sha256_hash_of_token";
-    /// 
+    ///
     /// if repo.revoke_token(token_hash).await? {
     ///     println!("Token revoked successfully");
     /// } else {
@@ -242,11 +242,12 @@ pub trait TokenRepository: Send + Sync {
         let tokens = self.find_by_user_id(user_id).await?;
         Ok(tokens.len())
     }
-    
+
     /// Clean up expired blacklist entries
     ///
     /// # Returns
     /// * `Ok(usize)` - Number of entries cleaned up
     /// * `Err(DomainError)` - Cleanup failed
     async fn cleanup_blacklist(&self) -> Result<usize, DomainError>;
+
 }

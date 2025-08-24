@@ -16,18 +16,21 @@ use crate::services::token::{TokenService, TokenServiceConfig};
 /// Mock implementation of TokenRepository for testing
 struct MockTokenRepository {
     tokens: Arc<Mutex<Vec<RefreshToken>>>,
+    blacklist: Arc<Mutex<Vec<(String, chrono::DateTime<chrono::Utc>)>>>,
 }
 
 impl MockTokenRepository {
     fn new() -> Self {
         Self {
             tokens: Arc::new(Mutex::new(Vec::new())),
+            blacklist: Arc::new(Mutex::new(Vec::new())),
         }
     }
 }
 
 #[async_trait]
 impl TokenRepository for MockTokenRepository {
+
     async fn save_refresh_token(&self, token: RefreshToken) -> Result<RefreshToken, DomainError> {
         let mut tokens = self.tokens.lock().unwrap();
         tokens.push(token.clone());
@@ -86,6 +89,61 @@ impl TokenRepository for MockTokenRepository {
         let tokens = self.find_by_user_id(user_id).await?;
         Ok(tokens.len())
     }
+
+    async fn find_by_token_family(&self, token_family: &str) -> Result<Vec<RefreshToken>, DomainError> {
+        let tokens = self.tokens.lock().unwrap();
+        Ok(tokens
+            .iter()
+            .filter(|t| {
+                t.token_family.as_ref().map_or(false, |f| f == token_family)
+            })
+            .cloned()
+            .collect())
+    }
+
+    async fn revoke_token_family(&self, token_family: &str) -> Result<usize, DomainError> {
+        let mut tokens = self.tokens.lock().unwrap();
+        let mut count = 0;
+        for token in tokens.iter_mut() {
+            if token.token_family.as_ref().map_or(false, |f| f == token_family) && !token.is_revoked {
+                token.revoke();
+                count += 1;
+            }
+        }
+        Ok(count)
+    }
+
+    async fn is_token_blacklisted(&self, token_jti: &str) -> Result<bool, DomainError> {
+        let blacklist = self.blacklist.lock().unwrap();
+        let now = chrono::Utc::now();
+
+        // Check if token is in blacklist and not expired
+        Ok(blacklist.iter().any(|(jti, expires_at)| {
+            jti == token_jti && *expires_at > now
+        }))
+    }
+
+    async fn blacklist_token(&self, token_jti: &str, expires_at: chrono::DateTime<chrono::Utc>) -> Result<(), DomainError> {
+        let mut blacklist = self.blacklist.lock().unwrap();
+
+        // Only add if not already blacklisted
+        if !blacklist.iter().any(|(jti, _)| jti == token_jti) {
+            blacklist.push((token_jti.to_string(), expires_at));
+        }
+
+        Ok(())
+    }
+
+    async fn cleanup_blacklist(&self) -> Result<usize, DomainError> {
+        let mut blacklist = self.blacklist.lock().unwrap();
+        let now = chrono::Utc::now();
+        let before_count = blacklist.len();
+
+        // Remove expired entries
+        blacklist.retain(|(_, expires_at)| *expires_at > now);
+
+        Ok(before_count - blacklist.len())
+    }
 }
 
 fn create_test_service() -> TokenService<MockTokenRepository> {
@@ -101,12 +159,12 @@ fn create_test_service() -> TokenService<MockTokenRepository> {
 async fn test_generate_tokens() {
     let service = create_test_service();
     let user_id = Uuid::new_v4();
-    
+
     let token_pair = service
-        .generate_tokens(user_id, Some(UserType::Customer), true)
+        .generate_tokens(user_id, Some(UserType::Customer), true, None, None)
         .await
         .unwrap();
-    
+
     assert!(!token_pair.access_token.is_empty());
     assert!(!token_pair.refresh_token.is_empty());
     assert_eq!(token_pair.access_expires_in, 15 * 60);
@@ -117,16 +175,17 @@ async fn test_generate_tokens() {
 async fn test_verify_access_token() {
     let service = create_test_service();
     let user_id = Uuid::new_v4();
-    
+
     let token_pair = service
-        .generate_tokens(user_id, Some(UserType::Worker), false)
+        .generate_tokens(user_id, Some(UserType::Worker), false, None, None)
         .await
         .unwrap();
-    
+
     let claims = service
         .verify_access_token(&token_pair.access_token)
+        .await
         .unwrap();
-    
+
     assert_eq!(claims.user_id().unwrap(), user_id);
     assert_eq!(claims.user_type, Some("worker".to_string()));
     assert!(!claims.is_verified);
@@ -135,8 +194,8 @@ async fn test_verify_access_token() {
 #[tokio::test]
 async fn test_verify_invalid_access_token() {
     let service = create_test_service();
-    let result = service.verify_access_token("invalid_token");
-    
+    let result = service.verify_access_token("invalid_token").await;
+
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
@@ -148,17 +207,17 @@ async fn test_verify_invalid_access_token() {
 async fn test_verify_refresh_token() {
     let service = create_test_service();
     let user_id = Uuid::new_v4();
-    
+
     let token_pair = service
-        .generate_tokens(user_id, None, false)
+        .generate_tokens(user_id, None, false, None, None)
         .await
         .unwrap();
-    
+
     let verified_user_id = service
         .verify_refresh_token(&token_pair.refresh_token)
         .await
         .unwrap();
-    
+
     assert_eq!(verified_user_id, user_id);
 }
 
@@ -166,12 +225,12 @@ async fn test_verify_refresh_token() {
 async fn test_refresh_access_token() {
     let service = create_test_service();
     let user_id = Uuid::new_v4();
-    
+
     let token_pair = service
-        .generate_tokens(user_id, Some(UserType::Customer), true)
+        .generate_tokens(user_id, Some(UserType::Customer), true, None, None)
         .await
         .unwrap();
-    
+
     let new_access_token = service
         .refresh_access_token(
             &token_pair.refresh_token,
@@ -180,11 +239,11 @@ async fn test_refresh_access_token() {
         )
         .await
         .unwrap();
-    
+
     assert!(!new_access_token.is_empty());
-    
+
     // Verify the new access token
-    let claims = service.verify_access_token(&new_access_token).unwrap();
+    let claims = service.verify_access_token(&new_access_token).await.unwrap();
     assert_eq!(claims.user_id().unwrap(), user_id);
 }
 
@@ -192,18 +251,18 @@ async fn test_refresh_access_token() {
 async fn test_revoke_tokens() {
     let service = create_test_service();
     let user_id = Uuid::new_v4();
-    
+
     // Generate multiple tokens for the user
     for _ in 0..3 {
         service
-            .generate_tokens(user_id, None, false)
+            .generate_tokens(user_id, None, false, None, None)
             .await
             .unwrap();
     }
-    
+
     // Revoke all tokens
     service.revoke_tokens(user_id).await.unwrap();
-    
+
     // Verify tokens are revoked
     let count = service.repository.count_user_tokens(user_id).await.unwrap();
     assert_eq!(count, 0);
@@ -213,25 +272,25 @@ async fn test_revoke_tokens() {
 async fn test_revoke_specific_refresh_token() {
     let service = create_test_service();
     let user_id = Uuid::new_v4();
-    
+
     let token_pair = service
-        .generate_tokens(user_id, None, false)
+        .generate_tokens(user_id, None, false, None, None)
         .await
         .unwrap();
-    
+
     // Revoke the specific refresh token
     let revoked = service
         .revoke_refresh_token(&token_pair.refresh_token)
         .await
         .unwrap();
-    
+
     assert!(revoked);
-    
+
     // Verify token is revoked
     let result = service
         .verify_refresh_token(&token_pair.refresh_token)
         .await;
-    
+
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
@@ -243,13 +302,13 @@ async fn test_revoke_specific_refresh_token() {
 async fn test_cleanup_expired_tokens() {
     let service = create_test_service();
     let user_id = Uuid::new_v4();
-    
+
     // Generate a token
     service
-        .generate_tokens(user_id, None, false)
+        .generate_tokens(user_id, None, false, None, None)
         .await
         .unwrap();
-    
+
     // Since we can't easily expire tokens in tests,
     // just verify the cleanup method doesn't error
     let cleaned = service.cleanup_expired_tokens().await.unwrap();
@@ -260,13 +319,13 @@ async fn test_cleanup_expired_tokens() {
 async fn test_token_hash() {
     let service = create_test_service();
     let token = "test_token";
-    
+
     let hash1 = service.hash_token(token);
     let hash2 = service.hash_token(token);
-    
+
     // Same token should produce same hash
     assert_eq!(hash1, hash2);
-    
+
     // Different token should produce different hash
     let hash3 = service.hash_token("different_token");
     assert_ne!(hash1, hash3);
@@ -275,15 +334,15 @@ async fn test_token_hash() {
 #[tokio::test]
 async fn test_expired_token_validation() {
     let service = create_test_service();
-    
+
     // Create expired claims manually
     let user_id = Uuid::new_v4();
-    let mut claims = Claims::new_access_token(user_id, None, false);
+    let mut claims = Claims::new_access_token(user_id, None, false, None, None);
     claims.exp = (Utc::now() - Duration::hours(1)).timestamp();
-    
+
     let token = service.encode_jwt(&claims).unwrap();
-    let result = service.verify_access_token(&token);
-    
+    let result = service.verify_access_token(&token).await;
+
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
@@ -294,18 +353,125 @@ async fn test_expired_token_validation() {
 #[tokio::test]
 async fn test_not_yet_valid_token() {
     let service = create_test_service();
-    
+
     // Create future nbf claims manually
     let user_id = Uuid::new_v4();
-    let mut claims = Claims::new_access_token(user_id, None, false);
+    let mut claims = Claims::new_access_token(user_id, None, false, None, None);
     claims.nbf = (Utc::now() + Duration::hours(1)).timestamp();
-    
+
     let token = service.encode_jwt(&claims).unwrap();
-    let result = service.verify_access_token(&token);
-    
+    let result = service.verify_access_token(&token).await;
+
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
         DomainError::Token(TokenError::TokenNotYetValid)
     ));
+}
+
+#[tokio::test]
+async fn test_token_family_operations() {
+    let service = create_test_service();
+    let user_id = Uuid::new_v4();
+    let token_family = "test_family_123";
+
+    // Generate tokens with family
+    let token_pair = service
+        .generate_tokens(user_id, None, false, None, Some(token_family.to_string()))
+        .await
+        .unwrap();
+
+    // Verify token has family
+    assert!(token_pair.token_family.is_some());
+
+    // Find tokens by family
+    let family_tokens = service.repository
+        .find_by_token_family(token_family)
+        .await
+        .unwrap();
+
+    assert_eq!(family_tokens.len(), 1);
+
+    // Revoke token family
+    let revoked_count = service.repository
+        .revoke_token_family(token_family)
+        .await
+        .unwrap();
+
+    assert_eq!(revoked_count, 1);
+
+    // Verify token is revoked
+    let family_tokens = service.repository
+        .find_by_token_family(token_family)
+        .await
+        .unwrap();
+
+    assert!(family_tokens.iter().all(|t| t.is_revoked));
+}
+
+#[tokio::test]
+async fn test_token_blacklist_operations() {
+    let service = create_test_service();
+    let token_jti = "test_jti_12345";
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
+
+    // Check token is not blacklisted initially
+    let is_blacklisted = service.repository
+        .is_token_blacklisted(token_jti)
+        .await
+        .unwrap();
+
+    assert!(!is_blacklisted);
+
+    // Add token to blacklist
+    service.repository
+        .blacklist_token(token_jti, expires_at)
+        .await
+        .unwrap();
+
+    // Check token is now blacklisted
+    let is_blacklisted = service.repository
+        .is_token_blacklisted(token_jti)
+        .await
+        .unwrap();
+
+    assert!(is_blacklisted);
+}
+
+#[tokio::test]
+async fn test_blacklist_cleanup() {
+    let repository = MockTokenRepository::new();
+
+    // Add expired and non-expired tokens to blacklist
+    let expired_jti = "expired_token";
+    let valid_jti = "valid_token";
+
+    repository
+        .blacklist_token(
+            expired_jti,
+            chrono::Utc::now() - chrono::Duration::hours(1), // Already expired
+        )
+        .await
+        .unwrap();
+
+    repository
+        .blacklist_token(
+            valid_jti,
+            chrono::Utc::now() + chrono::Duration::hours(1), // Still valid
+        )
+        .await
+        .unwrap();
+
+    // Cleanup blacklist
+    let cleaned = repository.cleanup_blacklist().await.unwrap();
+
+    assert_eq!(cleaned, 1); // Should clean 1 expired entry
+
+    // Verify expired token is no longer blacklisted
+    let is_blacklisted = repository.is_token_blacklisted(expired_jti).await.unwrap();
+    assert!(!is_blacklisted);
+
+    // Verify valid token is still blacklisted
+    let is_blacklisted = repository.is_token_blacklisted(valid_jti).await.unwrap();
+    assert!(is_blacklisted);
 }

@@ -81,6 +81,26 @@ impl TokenRepository for MockTokenRepository {
         tokens.retain(|t| !t.is_expired());
         Ok(before_count - tokens.len())
     }
+    
+    async fn find_by_token_family(&self, _token_family: &str) -> Result<Vec<RefreshToken>, DomainError> {
+        Ok(Vec::new())
+    }
+
+    async fn revoke_token_family(&self, _token_family: &str) -> Result<usize, DomainError> {
+        Ok(0)
+    }
+
+    async fn is_token_blacklisted(&self, _token_jti: &str) -> Result<bool, DomainError> {
+        Ok(false)
+    }
+
+    async fn blacklist_token(&self, _token_jti: &str, _expires_at: chrono::DateTime<chrono::Utc>) -> Result<(), DomainError> {
+        Ok(())
+    }
+
+    async fn cleanup_blacklist(&self) -> Result<usize, DomainError> {
+        Ok(0)
+    }
 }
 
 /// Test RS256 key pair for testing
@@ -144,7 +164,7 @@ async fn test_rs256_token_generation() {
     let user_id = Uuid::new_v4();
     let user_type = Some(UserType::Customer);
     let token_pair = service
-        .generate_tokens(user_id, user_type.clone(), true)
+        .generate_tokens(user_id, user_type.clone(), true, None, None)
         .await
         .expect("Failed to generate tokens");
 
@@ -177,13 +197,14 @@ async fn test_rs256_token_verification() {
     let user_id = Uuid::new_v4();
     let user_type = Some(UserType::Worker);
     let token_pair = service
-        .generate_tokens(user_id, user_type.clone(), true)
+        .generate_tokens(user_id, user_type.clone(), true, None, None)
         .await
         .expect("Failed to generate tokens");
 
     // Verify the access token
     let claims = service
         .verify_access_token(&token_pair.access_token)
+        .await
         .expect("Failed to verify access token");
 
     // Check claims
@@ -213,7 +234,7 @@ async fn test_rs256_invalid_token_rejection() {
 
     // Try to verify an invalid token
     let invalid_token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature";
-    let result = service.verify_access_token(invalid_token);
+    let result = service.verify_access_token(invalid_token).await;
 
     assert!(result.is_err());
 }
@@ -251,6 +272,8 @@ fn test_rs256_claims_structure() {
         user_id,
         Some("customer".to_string()),
         true,
+        None,
+        None,
     );
 
     // Verify claims structure

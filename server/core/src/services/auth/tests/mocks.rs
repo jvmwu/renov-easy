@@ -158,15 +158,21 @@ impl CacheServiceTrait for MockCacheService {
 }
 
 pub struct MockRateLimiter {
-    pub counters: Arc<Mutex<HashMap<String, i64>>>,
+    pub phone_counters: Arc<Mutex<HashMap<String, i64>>>,
+    pub ip_counters: Arc<Mutex<HashMap<String, i64>>>,
     pub max_requests: i64,
+    pub max_ip_attempts: i64,
+    pub rate_limit_logs: Arc<Mutex<Vec<(String, String, String)>>>,
 }
 
 impl MockRateLimiter {
     pub fn new(max_requests: i64) -> Self {
         Self {
-            counters: Arc::new(Mutex::new(HashMap::new())),
+            phone_counters: Arc::new(Mutex::new(HashMap::new())),
+            ip_counters: Arc::new(Mutex::new(HashMap::new())),
             max_requests,
+            max_ip_attempts: 10, // Default max IP attempts
+            rate_limit_logs: Arc::new(Mutex::new(Vec::new())),
         }
     }
 }
@@ -174,13 +180,13 @@ impl MockRateLimiter {
 #[async_trait]
 impl RateLimiterTrait for MockRateLimiter {
     async fn check_sms_rate_limit(&self, phone: &str) -> Result<bool, String> {
-        let counters = self.counters.lock().unwrap();
+        let counters = self.phone_counters.lock().unwrap();
         let count = counters.get(phone).copied().unwrap_or(0);
         Ok(count >= self.max_requests)
     }
 
     async fn increment_sms_counter(&self, phone: &str) -> Result<i64, String> {
-        let mut counters = self.counters.lock().unwrap();
+        let mut counters = self.phone_counters.lock().unwrap();
         let count = counters.entry(phone.to_string()).or_insert(0);
         *count += 1;
         Ok(*count)
@@ -188,5 +194,38 @@ impl RateLimiterTrait for MockRateLimiter {
 
     async fn get_rate_limit_reset_time(&self, _phone: &str) -> Result<Option<i64>, String> {
         Ok(Some(3600))
+    }
+    
+    async fn check_ip_verification_limit(&self, ip: &str) -> Result<bool, String> {
+        let counters = self.ip_counters.lock().unwrap();
+        let count = counters.get(ip).copied().unwrap_or(0);
+        Ok(count >= self.max_ip_attempts)
+    }
+    
+    async fn increment_ip_verification_counter(&self, ip: &str) -> Result<i64, String> {
+        let mut counters = self.ip_counters.lock().unwrap();
+        let count = counters.entry(ip.to_string()).or_insert(0);
+        *count += 1;
+        Ok(*count)
+    }
+    
+    async fn get_ip_rate_limit_reset_time(&self, _ip: &str) -> Result<Option<i64>, String> {
+        // Return reset time in seconds (1 hour)
+        Ok(Some(3600))
+    }
+    
+    async fn log_rate_limit_violation(
+        &self, 
+        identifier: &str, 
+        identifier_type: &str,
+        action: &str
+    ) -> Result<(), String> {
+        let mut logs = self.rate_limit_logs.lock().unwrap();
+        logs.push((
+            identifier.to_string(),
+            identifier_type.to_string(),
+            action.to_string()
+        ));
+        Ok(())
     }
 }

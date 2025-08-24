@@ -4,10 +4,10 @@
 //! and blacklist entries to maintain database performance and security.
 
 use std::sync::Arc;
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
-use crate::repositories::TokenRepository;
 use crate::errors::DomainError;
+use crate::repositories::TokenRepository;
 
 /// Configuration for token cleanup service
 #[derive(Debug, Clone)]
@@ -34,7 +34,7 @@ impl Default for TokenCleanupConfig {
 }
 
 /// Service for cleaning up expired tokens and blacklist entries
-pub struct TokenCleanupService<R: TokenRepository> {
+pub struct TokenCleanupService<R: TokenRepository + 'static> {
     repository: Arc<R>,
     config: TokenCleanupConfig,
 }
@@ -42,10 +42,7 @@ pub struct TokenCleanupService<R: TokenRepository> {
 impl<R: TokenRepository> TokenCleanupService<R> {
     /// Create a new token cleanup service
     pub fn new(repository: Arc<R>, config: TokenCleanupConfig) -> Self {
-        Self {
-            repository,
-            config,
-        }
+        Self { repository, config }
     }
 
     /// Run a single cleanup cycle
@@ -87,7 +84,9 @@ impl<R: TokenRepository> TokenCleanupService<R> {
             }
             Err(e) => {
                 error!("Failed to cleanup blacklist: {}", e);
-                result.errors.push(format!("Blacklist cleanup error: {}", e));
+                result
+                    .errors
+                    .push(format!("Blacklist cleanup error: {}", e));
             }
         }
 
@@ -99,7 +98,9 @@ impl<R: TokenRepository> TokenCleanupService<R> {
             }
             Err(e) => {
                 error!("Failed to cleanup orphaned tokens: {}", e);
-                result.errors.push(format!("Orphaned token cleanup error: {}", e));
+                result
+                    .errors
+                    .push(format!("Orphaned token cleanup error: {}", e));
             }
         }
 
@@ -192,8 +193,6 @@ impl CleanupResult {
 
     /// Get total number of items cleaned up
     pub fn total_cleaned(&self) -> usize {
-        self.expired_tokens_deleted +
-        self.blacklist_entries_deleted +
-        self.orphaned_tokens_revoked
+        self.expired_tokens_deleted + self.blacklist_entries_deleted + self.orphaned_tokens_revoked
     }
 }

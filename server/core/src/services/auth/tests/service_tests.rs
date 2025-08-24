@@ -9,6 +9,7 @@ use crate::domain::entities::user::{User, UserType};
 use crate::domain::entities::token::RefreshToken;
 use crate::errors::{AuthError, DomainError};
 use crate::repositories::{UserRepository, TokenRepository};
+use crate::repositories::audit::NoOpAuditLogRepository;
 use crate::services::auth::{AuthService, AuthServiceConfig};
 use crate::services::auth::phone_utils::hash_phone;
 use crate::services::token::{TokenService, TokenServiceConfig};
@@ -90,6 +91,42 @@ impl TokenRepository for MockTokenRepository {
         let tokens = self.find_by_user_id(user_id).await?;
         Ok(tokens.len())
     }
+
+    async fn find_by_token_family(&self, token_family: &str) -> Result<Vec<RefreshToken>, DomainError> {
+        let tokens = self.tokens.lock().unwrap();
+        Ok(tokens
+            .iter()
+            .filter(|t| t.token_family.as_ref().map_or(false, |f| f == token_family))
+            .cloned()
+            .collect())
+    }
+
+    async fn revoke_token_family(&self, token_family: &str) -> Result<usize, DomainError> {
+        let mut tokens = self.tokens.lock().unwrap();
+        let mut count = 0;
+        for token in tokens.iter_mut() {
+            if token.token_family.as_ref().map_or(false, |f| f == token_family) && !token.is_revoked {
+                token.revoke();
+                count += 1;
+            }
+        }
+        Ok(count)
+    }
+
+    async fn is_token_blacklisted(&self, _token_jti: &str) -> Result<bool, DomainError> {
+        // For testing, we don't maintain a blacklist
+        Ok(false)
+    }
+
+    async fn blacklist_token(&self, _token_jti: &str, _expires_at: chrono::DateTime<chrono::Utc>) -> Result<(), DomainError> {
+        // For testing, just return success
+        Ok(())
+    }
+
+    async fn cleanup_blacklist(&self) -> Result<usize, DomainError> {
+        // For testing, no blacklist to clean
+        Ok(0)
+    }
 }
 
 /// Helper function to create a test token service with HS256 for testing
@@ -116,7 +153,7 @@ async fn test_send_verification_code_success() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter,
@@ -124,7 +161,7 @@ async fn test_send_verification_code_success() {
         config,
     );
 
-    let result = auth_service.send_verification_code("+8613812345678").await;
+    let result = auth_service.send_verification_code("+8613812345678", None).await;
     assert!(result.is_ok());
 
     let send_result = result.unwrap();
@@ -147,7 +184,7 @@ async fn test_send_verification_code_invalid_phone() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter,
@@ -156,7 +193,7 @@ async fn test_send_verification_code_invalid_phone() {
     );
 
     // Test without + prefix
-    let result = auth_service.send_verification_code("1234567890").await;
+    let result = auth_service.send_verification_code("1234567890", None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::InvalidPhoneFormat { .. }) => {}
@@ -164,11 +201,11 @@ async fn test_send_verification_code_invalid_phone() {
     }
 
     // Test too short
-    let result = auth_service.send_verification_code("+123").await;
+    let result = auth_service.send_verification_code("+123", None).await;
     assert!(result.is_err());
 
     // Test with letters
-    let result = auth_service.send_verification_code("+123abc7890").await;
+    let result = auth_service.send_verification_code("+123abc7890", None).await;
     assert!(result.is_err());
 }
 
@@ -187,7 +224,7 @@ async fn test_send_verification_code_rate_limit() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter.clone(),
@@ -199,12 +236,12 @@ async fn test_send_verification_code_rate_limit() {
 
     // Send 3 codes successfully
     for _ in 0..3 {
-        let result = auth_service.send_verification_code(phone).await;
+        let result = auth_service.send_verification_code(phone, None).await;
         assert!(result.is_ok());
     }
 
     // 4th attempt should fail due to rate limit
-    let result = auth_service.send_verification_code(phone).await;
+    let result = auth_service.send_verification_code(phone, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::RateLimitExceeded { .. }) => {}
@@ -227,7 +264,7 @@ async fn test_verify_code_success() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter,
@@ -235,7 +272,7 @@ async fn test_verify_code_success() {
         config,
     );
 
-    let result = auth_service.verify_code("+8613812345678", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
     assert!(result.is_ok());
 
     let auth_response = result.unwrap();
@@ -261,7 +298,7 @@ async fn test_verify_code_invalid_phone() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter,
@@ -270,7 +307,7 @@ async fn test_verify_code_invalid_phone() {
     );
 
     // Test invalid phone format
-    let result = auth_service.verify_code("1234567890", "123456").await;
+    let result = auth_service.verify_code("1234567890", "123456", None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::InvalidPhoneFormat { .. }) => {}
@@ -293,7 +330,7 @@ async fn test_verify_code_invalid_code() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter,
@@ -301,7 +338,7 @@ async fn test_verify_code_invalid_code() {
         config,
     );
 
-    let result = auth_service.verify_code("+8613812345678", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::InvalidVerificationCode) => {}
@@ -324,7 +361,7 @@ async fn test_verify_code_max_attempts_exceeded() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter,
@@ -332,7 +369,7 @@ async fn test_verify_code_max_attempts_exceeded() {
         config,
     );
 
-    let result = auth_service.verify_code("+8613812345678", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::MaxAttemptsExceeded) => {}
@@ -355,7 +392,7 @@ async fn test_verify_code_creates_new_user() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo.clone(),
         verification_service,
         rate_limiter,
@@ -364,7 +401,7 @@ async fn test_verify_code_creates_new_user() {
     );
 
     // Verify code for a new user
-    let result = auth_service.verify_code("+8613812345678", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
     assert!(result.is_ok());
 
     let auth_response = result.unwrap();
@@ -404,7 +441,7 @@ async fn test_verify_code_existing_user_login() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo.clone(),
         verification_service,
         rate_limiter,
@@ -416,7 +453,7 @@ async fn test_verify_code_existing_user_login() {
     tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
 
     // Verify code for existing user
-    let result = auth_service.verify_code("+8613812345678", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
     assert!(result.is_ok());
 
     let auth_response = result.unwrap();
@@ -451,7 +488,7 @@ async fn test_verify_code_blocked_user() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter,
@@ -460,7 +497,7 @@ async fn test_verify_code_blocked_user() {
     );
 
     // Try to verify code for blocked user
-    let result = auth_service.verify_code("+8613812345678", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::UserBlocked) => {}
@@ -484,7 +521,7 @@ async fn test_verify_code_registration_disabled() {
     let mut config = AuthServiceConfig::default();
     config.allow_registration = false; // Disable registration
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo.clone(),
         verification_service,
         rate_limiter,
@@ -493,7 +530,7 @@ async fn test_verify_code_registration_disabled() {
     );
 
     // Try to verify code for new user when registration is disabled
-    let result = auth_service.verify_code("+8613812345678", "123456").await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::RegistrationDisabled) => {}
@@ -525,7 +562,7 @@ async fn test_select_user_type_success() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo.clone(),
         verification_service,
         rate_limiter,
@@ -566,7 +603,7 @@ async fn test_select_user_type_already_selected() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo.clone(),
         verification_service,
         rate_limiter,
@@ -602,7 +639,7 @@ async fn test_select_user_type_user_not_found() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter,
@@ -644,7 +681,7 @@ async fn test_logout_success() {
     let token_service = create_test_token_service(token_repo);
     let config = AuthServiceConfig::default();
 
-    let auth_service = AuthService::new(
+    let auth_service = AuthService::<MockUserRepository, MockSmsService, MockCacheService, MockRateLimiter, MockTokenRepository, NoOpAuditLogRepository>::new(
         user_repo,
         verification_service,
         rate_limiter,
@@ -654,12 +691,12 @@ async fn test_logout_success() {
 
     // Generate tokens for the user (this also stores them via the mock repository)
     let _token_pair = token_service
-        .generate_tokens(user_id, Some(UserType::Customer), true)
+        .generate_tokens(user_id, Some(UserType::Customer), true, None, None)
         .await
         .unwrap();
 
     // Logout the user
-    let result = auth_service.logout(user_id).await;
+    let result = auth_service.logout(user_id, None, None).await;
     assert!(result.is_ok());
 
     // Verify that tokens are revoked

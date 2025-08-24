@@ -15,6 +15,8 @@ fn test_access_token_claims() {
         user_id,
         Some("customer".to_string()),
         true,
+        Some("phone_hash_123".to_string()),
+        Some("device_fingerprint_456".to_string()),
     );
     
     assert_eq!(claims.sub, user_id.to_string());
@@ -22,6 +24,8 @@ fn test_access_token_claims() {
     assert_eq!(claims.aud, JWT_AUDIENCE);
     assert_eq!(claims.user_type, Some("customer".to_string()));
     assert!(claims.is_verified);
+    assert_eq!(claims.phone_hash, Some("phone_hash_123".to_string()));
+    assert_eq!(claims.device_fingerprint, Some("device_fingerprint_456".to_string()));
     assert!(claims.is_valid());
     assert!(!claims.is_expired());
 }
@@ -29,13 +33,17 @@ fn test_access_token_claims() {
 #[test]
 fn test_refresh_token_claims() {
     let user_id = Uuid::new_v4();
-    let claims = Claims::new_refresh_token(user_id);
+    let token_family = Some("family_123".to_string());
+    let device_fingerprint = Some("device_789".to_string());
+    let claims = Claims::new_refresh_token(user_id, token_family.clone(), device_fingerprint.clone());
     
     assert_eq!(claims.sub, user_id.to_string());
     assert_eq!(claims.iss, JWT_ISSUER);
     assert_eq!(claims.aud, JWT_AUDIENCE);
     assert_eq!(claims.user_type, None);
     assert!(!claims.is_verified);
+    assert_eq!(claims.token_family, token_family);
+    assert_eq!(claims.device_fingerprint, device_fingerprint);
     assert!(claims.is_valid());
     assert!(!claims.is_expired());
 }
@@ -43,7 +51,7 @@ fn test_refresh_token_claims() {
 #[test]
 fn test_claims_user_id_parsing() {
     let user_id = Uuid::new_v4();
-    let claims = Claims::new_access_token(user_id, None, false);
+    let claims = Claims::new_access_token(user_id, None, false, None, None);
     
     let parsed_id = claims.user_id().unwrap();
     assert_eq!(parsed_id, user_id);
@@ -52,7 +60,7 @@ fn test_claims_user_id_parsing() {
 #[test]
 fn test_claims_expiration() {
     let user_id = Uuid::new_v4();
-    let mut claims = Claims::new_access_token(user_id, None, false);
+    let mut claims = Claims::new_access_token(user_id, None, false, None, None);
     
     // Set expiration to past
     claims.exp = Utc::now().timestamp() - 1;
@@ -64,7 +72,7 @@ fn test_claims_expiration() {
 #[test]
 fn test_claims_not_before() {
     let user_id = Uuid::new_v4();
-    let mut claims = Claims::new_access_token(user_id, None, false);
+    let mut claims = Claims::new_access_token(user_id, None, false, None, None);
     
     // Set nbf to future
     claims.nbf = Utc::now().timestamp() + 3600;
@@ -158,6 +166,8 @@ fn test_claims_serialization() {
         user_id,
         Some("worker".to_string()),
         true,
+        Some("phone_hash_test".to_string()),
+        Some("device_test".to_string()),
     );
     
     // Serialize to JSON
@@ -181,4 +191,69 @@ fn test_refresh_token_serialization() {
     let deserialized: RefreshToken = serde_json::from_str(&json).unwrap();
     
     assert_eq!(token, deserialized);
+}
+
+#[test]
+fn test_refresh_token_with_metadata() {
+    let user_id = Uuid::new_v4();
+    let token_hash = "hashed_token".to_string();
+    let token_family = Some("family_abc".to_string());
+    let device_fingerprint = Some("device_xyz".to_string());
+    let previous_token_id = Some(Uuid::new_v4());
+    
+    let token = RefreshToken::new_with_metadata(
+        user_id,
+        token_hash.clone(),
+        token_family.clone(),
+        device_fingerprint.clone(),
+        previous_token_id,
+    );
+    
+    assert_eq!(token.user_id, user_id);
+    assert_eq!(token.token_hash, token_hash);
+    assert_eq!(token.token_family, token_family);
+    assert_eq!(token.device_fingerprint, device_fingerprint);
+    assert_eq!(token.previous_token_id, previous_token_id);
+    assert!(!token.is_revoked);
+    assert!(token.is_valid());
+}
+
+#[test]
+fn test_token_pair_with_metadata() {
+    let access = "access_token".to_string();
+    let refresh = "refresh_token".to_string();
+    let token_family = Some("family_123".to_string());
+    let device_fingerprint = Some("device_456".to_string());
+    
+    let pair = TokenPair::new_with_metadata(
+        access.clone(),
+        refresh.clone(),
+        token_family.clone(),
+        device_fingerprint.clone(),
+    );
+    
+    assert_eq!(pair.access_token, access);
+    assert_eq!(pair.refresh_token, refresh);
+    assert_eq!(pair.token_family, token_family);
+    assert_eq!(pair.device_fingerprint, device_fingerprint);
+    assert_eq!(pair.token_type, "Bearer");
+    assert!(pair.issued_at > 0);
+}
+
+#[test]
+fn test_claims_with_phone_hash() {
+    let user_id = Uuid::new_v4();
+    let phone_hash = Some("phone_hash_sha256".to_string());
+    
+    let claims = Claims::new_access_token(
+        user_id,
+        Some("customer".to_string()),
+        true,
+        phone_hash.clone(),
+        None,
+    );
+    
+    assert_eq!(claims.phone_hash, phone_hash);
+    assert_eq!(claims.device_fingerprint, None);
+    assert_eq!(claims.token_family, None);
 }
