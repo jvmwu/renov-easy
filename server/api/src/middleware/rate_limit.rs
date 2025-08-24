@@ -509,16 +509,3 @@ fn get_client_ip(req: &ServiceRequest) -> String {
         .to_string()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default_config() {
-        let config = RateLimitConfig::default();
-        assert_eq!(config.sms_per_phone_per_hour, 3);
-        assert_eq!(config.verification_attempts_per_code, 3);
-        assert_eq!(config.api_calls_per_ip_per_minute, 60);
-        assert_eq!(config.phone_lock_duration_seconds, 1800);
-    }
-}

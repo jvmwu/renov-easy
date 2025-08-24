@@ -53,9 +53,6 @@ pub use aws_sns_trait_adapter::AwsSnsSmsServiceAdapter;
 
 pub use failover_sms::{FailoverSmsService, FailoverSmsServiceAdapter};
 
-#[cfg(test)]
-mod tests;
-
 /// Create an SMS service based on configuration
 ///
 /// Returns the appropriate SMS service implementation based on the

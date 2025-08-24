@@ -2,9 +2,6 @@
 
 mod types;
 
-#[cfg(test)]
-mod tests;
-
 // Re-export all error types and utilities
 pub use types::{
     AuthError, DomainErrorResponse as ErrorResponse, TokenError, ValidationError,

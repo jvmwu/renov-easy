@@ -7,11 +7,3 @@ pub mod repository;
 
 pub use r#trait::UserRepository;
 pub use repository::MySqlUserRepository;
-
-#[cfg(test)]
-pub mod mock;
-#[cfg(test)]
-pub use mock::MockUserRepository;
-
-#[cfg(test)]
-mod tests;

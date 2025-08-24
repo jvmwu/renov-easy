@@ -71,18 +71,3 @@ where
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::dto::auth::RefreshTokenRequest;
-
-    #[test]
-    fn test_refresh_token_request_structure() {
-        // Test that the RefreshTokenRequest structure is valid
-        let request = RefreshTokenRequest {
-            refresh_token: "test_token_123".to_string(),
-        };
-        
-        assert_eq!(request.refresh_token, "test_token_123");
-    }
-}

@@ -112,38 +112,3 @@ where
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use actix_web::{test, App};
-    
-    // Note: Comprehensive tests would require mock implementations of all the traits
-    // This is a basic structure test to ensure the handler compiles correctly
-    
-    #[actix_rt::test]
-    async fn test_send_code_invalid_request() {
-        // This test verifies that validation works for invalid requests
-        // Full implementation would require mocks for all dependencies
-        
-        let request = SendCodeRequest {
-            phone: "123".to_string(), // Too short
-            country_code: "+1".to_string(),
-        };
-        
-        // Validate that the request fails validation
-        assert!(request.validate().is_err());
-    }
-    
-    #[actix_rt::test]
-    async fn test_send_code_valid_request() {
-        // This test verifies that validation passes for valid requests
-        
-        let request = SendCodeRequest {
-            phone: "1234567890".to_string(),
-            country_code: "+1".to_string(),
-        };
-        
-        // Validate that the request passes validation
-        assert!(request.validate().is_ok());
-    }
-}

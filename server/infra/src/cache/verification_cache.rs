@@ -334,23 +334,11 @@ impl VerificationCache {
     }
 
     /// Format Redis key for verification code storage
-    #[cfg(test)]
-    pub(crate) fn format_code_key(phone: &str) -> String {
-        format!("verification:code:{}", phone)
-    }
-    
-    #[cfg(not(test))]
     fn format_code_key(phone: &str) -> String {
         format!("verification:code:{}", phone)
     }
 
     /// Format Redis key for attempt tracking
-    #[cfg(test)]
-    pub(crate) fn format_attempts_key(phone: &str) -> String {
-        format!("verification:attempts:{}", phone)
-    }
-    
-    #[cfg(not(test))]
     fn format_attempts_key(phone: &str) -> String {
         format!("verification:attempts:{}", phone)
     }
@@ -358,15 +346,6 @@ impl VerificationCache {
     /// Hash a verification code using SHA-256
     /// 
     /// Provides secure storage by hashing codes before storing in Redis.
-    #[cfg(test)]
-    pub(crate) fn hash_code(code: &str) -> String {
-        let mut hasher = Sha256::new();
-        hasher.update(code.as_bytes());
-        let result = hasher.finalize();
-        format!("{:x}", result)
-    }
-    
-    #[cfg(not(test))]
     fn hash_code(code: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(code.as_bytes());
@@ -377,16 +356,6 @@ impl VerificationCache {
     /// Mask phone number for logging (show only last 4 digits)
     /// 
     /// Implements security requirement to desensitize phone numbers in logs.
-    #[cfg(test)]
-    pub(crate) fn mask_phone(phone: &str) -> String {
-        if phone.len() <= 4 {
-            "****".to_string()
-        } else {
-            format!("***{}", &phone[phone.len() - 4..])
-        }
-    }
-    
-    #[cfg(not(test))]
     fn mask_phone(phone: &str) -> String {
         if phone.len() <= 4 {
             "****".to_string()

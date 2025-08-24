@@ -1,11 +1,132 @@
 //! Comprehensive tests for the AuditService.
 
 use std::sync::Arc;
+use std::sync::Mutex;
 use uuid::Uuid;
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 
-use crate::domain::entities::audit::actions;
-use crate::repositories::audit::MockAuditLogRepository;
+use crate::domain::entities::audit::{AuditLog, actions};
+use crate::errors::DomainError;
+use crate::repositories::AuditLogRepository;
 use crate::services::audit::{AuditService, AuditServiceConfig};
+
+/// Mock implementation of AuditLogRepository for testing
+struct MockAuditLogRepository {
+    logs: Arc<Mutex<Vec<AuditLog>>>,
+    should_fail: Arc<Mutex<bool>>,
+}
+
+impl MockAuditLogRepository {
+    fn new() -> Self {
+        Self {
+            logs: Arc::new(Mutex::new(Vec::new())),
+            should_fail: Arc::new(Mutex::new(false)),
+        }
+    }
+
+    fn set_should_fail(&self, should_fail: bool) {
+        *self.should_fail.lock().unwrap() = should_fail;
+    }
+
+    fn get_all_logs(&self) -> Vec<AuditLog> {
+        self.logs.lock().unwrap().clone()
+    }
+}
+
+#[async_trait]
+impl AuditLogRepository for MockAuditLogRepository {
+    async fn create(&self, audit_log: &AuditLog) -> Result<(), DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal { message: "Mock failure".to_string() });
+        }
+        self.logs.lock().unwrap().push(audit_log.clone());
+        Ok(())
+    }
+
+    async fn find_by_user(
+        &self,
+        user_id: Uuid,
+        limit: usize,
+    ) -> Result<Vec<AuditLog>, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal { message: "Mock failure".to_string() });
+        }
+        let logs = self.logs.lock().unwrap();
+        let mut user_logs: Vec<AuditLog> = logs
+            .iter()
+            .filter(|log| log.user_id == Some(user_id))
+            .cloned()
+            .collect();
+        user_logs.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        user_logs.truncate(limit);
+        Ok(user_logs)
+    }
+
+    async fn find_by_phone_hash(
+        &self,
+        phone_hash: &str,
+        limit: usize,
+    ) -> Result<Vec<AuditLog>, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal { message: "Mock failure".to_string() });
+        }
+        let logs = self.logs.lock().unwrap();
+        let mut phone_logs: Vec<AuditLog> = logs
+            .iter()
+            .filter(|log| log.phone_hash.as_deref() == Some(phone_hash))
+            .cloned()
+            .collect();
+        phone_logs.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        phone_logs.truncate(limit);
+        Ok(phone_logs)
+    }
+
+    async fn count_failed_attempts(
+        &self,
+        action: &str,
+        phone_hash: Option<&str>,
+        ip_address: Option<&str>,
+        since: DateTime<Utc>,
+    ) -> Result<usize, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal { message: "Mock failure".to_string() });
+        }
+        let logs = self.logs.lock().unwrap();
+        let count = logs
+            .iter()
+            .filter(|log| {
+                log.action == action
+                    && !log.success
+                    && log.created_at >= since
+                    && (phone_hash.is_none() || log.phone_hash.as_deref() == phone_hash)
+                    && (ip_address.is_none() || log.ip_address.as_deref() == ip_address)
+            })
+            .count();
+        Ok(count)
+    }
+
+    async fn find_suspicious_activity(
+        &self,
+        ip_address: Option<&str>,
+        since: DateTime<Utc>,
+    ) -> Result<Vec<AuditLog>, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal { message: "Mock failure".to_string() });
+        }
+        let logs = self.logs.lock().unwrap();
+        let suspicious_logs: Vec<AuditLog> = logs
+            .iter()
+            .filter(|log| {
+                log.created_at >= since
+                    && (ip_address.is_none() || log.ip_address.as_deref() == ip_address)
+                    && !log.success
+            })
+            .cloned()
+            .collect();
+        Ok(suspicious_logs)
+    }
+}
 
 #[tokio::test]
 async fn test_log_auth_attempt() {

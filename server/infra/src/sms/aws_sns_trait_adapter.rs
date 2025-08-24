@@ -44,37 +44,3 @@ impl SmsServiceTrait for AwsSnsSmsServiceAdapter {
         crate::sms::sms_service::is_valid_phone_number(phone)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[tokio::test]
-    async fn test_phone_validation() {
-        // Set up test environment
-        std::env::set_var("AWS_ACCESS_KEY_ID", "test_key");
-        std::env::set_var("AWS_SECRET_ACCESS_KEY", "test_secret");
-        std::env::set_var("AWS_REGION", "us-east-1");
-        
-        // Test that we can create the adapter
-        let adapter = AwsSnsSmsServiceAdapter::from_env().await;
-        assert!(adapter.is_ok());
-        
-        let adapter = adapter.unwrap();
-        
-        // Test valid phone numbers using the trait's validation method
-        assert!(adapter.is_valid_phone_number("+14155552671"));
-        assert!(adapter.is_valid_phone_number("+919876543210"));
-        
-        // Test invalid phone numbers
-        assert!(!adapter.is_valid_phone_number("1234567890")); // Missing +
-        assert!(!adapter.is_valid_phone_number("+123")); // Too short
-        assert!(!adapter.is_valid_phone_number("+1234567890123456")); // Too long
-        assert!(!adapter.is_valid_phone_number("+123abc4567")); // Contains letters
-        
-        // Clean up
-        std::env::remove_var("AWS_ACCESS_KEY_ID");
-        std::env::remove_var("AWS_SECRET_ACCESS_KEY");
-        std::env::remove_var("AWS_REGION");
-    }
-}

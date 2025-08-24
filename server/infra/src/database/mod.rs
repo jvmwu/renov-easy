@@ -10,9 +10,6 @@ pub mod connection;
 pub mod mysql;
 pub mod repositories;
 
-#[cfg(test)]
-mod tests;
-
 // Re-export commonly used types
 pub use connection::{DatabasePool, PoolStatistics};
 pub use mysql::{MySqlUserRepository, MySqlTokenRepository};

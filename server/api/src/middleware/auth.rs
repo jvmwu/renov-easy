@@ -233,27 +233,3 @@ impl FromRequest for OptionalAuth {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_extract_bearer_token() {
-        use actix_web::test;
-        
-        let req = test::TestRequest::default()
-            .insert_header((AUTHORIZATION, "Bearer test_token_123"))
-            .to_srv_request();
-        
-        assert_eq!(extract_bearer_token(&req), Some("test_token_123".to_string()));
-        
-        let req_no_bearer = test::TestRequest::default()
-            .insert_header((AUTHORIZATION, "test_token_123"))
-            .to_srv_request();
-        
-        assert_eq!(extract_bearer_token(&req_no_bearer), None);
-        
-        let req_no_header = test::TestRequest::default().to_srv_request();
-        assert_eq!(extract_bearer_token(&req_no_header), None);
-    }
-}

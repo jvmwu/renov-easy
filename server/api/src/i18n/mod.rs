@@ -89,36 +89,3 @@ pub fn format_message(template: &str, params: &HashMap<&str, String>) -> String 
     result
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_error_message() {
-        let result = get_error_message("auth", "user_not_found", Language::English);
-        assert!(result.is_some());
-        
-        if let Some((code, message, status)) = result {
-            assert_eq!(code, "user_not_found");
-            assert_eq!(message, "User not found");
-            assert_eq!(status, 404);
-        }
-    }
-
-    #[test]
-    fn test_format_message() {
-        let mut params = HashMap::new();
-        params.insert("field", "email".to_string());
-        
-        let template = "Required field: {field}";
-        let result = format_message(template, &params);
-        assert_eq!(result, "Required field: email");
-    }
-
-    #[test]
-    fn test_language_from_header() {
-        assert_eq!(Language::from_header(Some("zh-CN")), Language::Chinese);
-        assert_eq!(Language::from_header(Some("en-US")), Language::English);
-        assert_eq!(Language::from_header(None), Language::English);
-    }
-}

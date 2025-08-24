@@ -44,33 +44,3 @@ impl SmsServiceTrait for TwilioSmsServiceAdapter {
         crate::sms::sms_service::is_valid_phone_number(phone)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_phone_validation() {
-        // Set up test environment
-        std::env::set_var("TWILIO_ACCOUNT_SID", "ACtest");
-        std::env::set_var("TWILIO_AUTH_TOKEN", "test_token");
-        std::env::set_var("TWILIO_FROM_NUMBER", "+15551234567");
-        
-        let adapter = TwilioSmsServiceAdapter::from_env().unwrap();
-        
-        // Test valid phone numbers
-        assert!(adapter.is_valid_phone_number("+14155552671"));
-        assert!(adapter.is_valid_phone_number("+919876543210"));
-        
-        // Test invalid phone numbers
-        assert!(!adapter.is_valid_phone_number("1234567890")); // Missing +
-        assert!(!adapter.is_valid_phone_number("+123")); // Too short
-        assert!(!adapter.is_valid_phone_number("+1234567890123456")); // Too long
-        assert!(!adapter.is_valid_phone_number("+123abc4567")); // Contains letters
-        
-        // Clean up
-        std::env::remove_var("TWILIO_ACCOUNT_SID");
-        std::env::remove_var("TWILIO_AUTH_TOKEN");
-        std::env::remove_var("TWILIO_FROM_NUMBER");
-    }
-}

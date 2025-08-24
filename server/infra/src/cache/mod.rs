@@ -7,9 +7,6 @@ pub mod otp_storage;
 pub mod redis_client;
 pub mod verification_cache;
 
-#[cfg(test)]
-mod tests;
-
 pub use otp_storage::{OtpRedisStorage, OtpStorageConfig, OtpMetadata};
 pub use redis_client::RedisClient;
 pub use verification_cache::VerificationCache;

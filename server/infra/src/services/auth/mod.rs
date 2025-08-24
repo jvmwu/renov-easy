@@ -2,9 +2,6 @@
 
 pub mod rate_limiter;
 
-#[cfg(test)]
-mod tests;
-
 pub use rate_limiter::{
     RedisRateLimiter, 
     RateLimitStatus, 

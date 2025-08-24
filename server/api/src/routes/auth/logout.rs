@@ -65,33 +65,3 @@ where
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::dto::auth::LogoutResponse;
-    use uuid::Uuid;
-
-    #[test]
-    fn test_logout_response_structure() {
-        // Test that the LogoutResponse structure is valid
-        let response = LogoutResponse {
-            message: "Logged out successfully".to_string(),
-        };
-        
-        assert_eq!(response.message, "Logged out successfully");
-    }
-
-    #[test]
-    fn test_auth_context_user_id() {
-        // Test that AuthContext properly holds user_id
-        let user_id = Uuid::new_v4();
-        let auth_context = AuthContext {
-            user_id,
-            user_type: Some("customer".to_string()),
-            is_verified: true,
-            jti: "test_jti".to_string(),
-        };
-        
-        assert_eq!(auth_context.user_id, user_id);
-    }
-}

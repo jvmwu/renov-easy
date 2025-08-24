@@ -504,18 +504,6 @@ impl RedisClient {
 /// Check if a Redis error is retriable
 /// 
 /// Determines if an error is transient and the operation should be retried.
-#[cfg(test)]
-pub(crate) fn is_retriable_error(error: &RedisError) -> bool {
-    matches!(
-        error.kind(),
-        redis::ErrorKind::IoError
-            | redis::ErrorKind::ClientError
-            | redis::ErrorKind::BusyLoadingError
-            | redis::ErrorKind::TryAgain
-    )
-}
-
-#[cfg(not(test))]
 fn is_retriable_error(error: &RedisError) -> bool {
     matches!(
         error.kind(),
@@ -527,19 +515,6 @@ fn is_retriable_error(error: &RedisError) -> bool {
 }
 
 /// Mask sensitive parts of Redis URL for logging
-#[cfg(test)]
-pub(crate) fn mask_url(url: &str) -> String {
-    if let Some(at_pos) = url.find('@') {
-        if let Some(proto_end) = url.find("://") {
-            let proto = &url[..proto_end + 3];
-            let host_part = &url[at_pos..];
-            return format!("{}****{}", proto, host_part);
-        }
-    }
-    url.to_string()
-}
-
-#[cfg(not(test))]
 fn mask_url(url: &str) -> String {
     if let Some(at_pos) = url.find('@') {
         if let Some(proto_end) = url.find("://") {

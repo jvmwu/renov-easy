@@ -1,18 +1,95 @@
 //! Unit tests for authentication service
 
 use std::sync::Arc;
+use std::sync::Mutex;
 use uuid::Uuid;
+use async_trait::async_trait;
 
 use crate::domain::entities::user::{User, UserType};
+use crate::domain::entities::token::RefreshToken;
 use crate::errors::{AuthError, DomainError};
-use crate::repositories::UserRepository;
-use crate::repositories::token::MockTokenRepository;
+use crate::repositories::{UserRepository, TokenRepository};
 use crate::services::auth::{AuthService, AuthServiceConfig};
 use crate::services::auth::phone_utils::hash_phone;
 use crate::services::token::{TokenService, TokenServiceConfig};
 use crate::services::verification::{VerificationService, VerificationServiceConfig};
 
 use super::mocks::*;
+
+/// Mock implementation of TokenRepository for testing
+struct MockTokenRepository {
+    tokens: Arc<Mutex<Vec<RefreshToken>>>,
+}
+
+impl MockTokenRepository {
+    fn new() -> Self {
+        Self {
+            tokens: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
+#[async_trait]
+impl TokenRepository for MockTokenRepository {
+    async fn save_refresh_token(&self, token: RefreshToken) -> Result<RefreshToken, DomainError> {
+        let mut tokens = self.tokens.lock().unwrap();
+        tokens.push(token.clone());
+        Ok(token)
+    }
+
+    async fn find_refresh_token(&self, token_hash: &str) -> Result<Option<RefreshToken>, DomainError> {
+        let tokens = self.tokens.lock().unwrap();
+        Ok(tokens.iter().find(|t| t.token_hash == token_hash).cloned())
+    }
+
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<RefreshToken>, DomainError> {
+        let tokens = self.tokens.lock().unwrap();
+        Ok(tokens.iter().find(|t| t.id == id).cloned())
+    }
+
+    async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<RefreshToken>, DomainError> {
+        let tokens = self.tokens.lock().unwrap();
+        Ok(tokens
+            .iter()
+            .filter(|t| t.user_id == user_id && t.is_valid())
+            .cloned()
+            .collect())
+    }
+
+    async fn revoke_token(&self, token_hash: &str) -> Result<bool, DomainError> {
+        let mut tokens = self.tokens.lock().unwrap();
+        if let Some(token) = tokens.iter_mut().find(|t| t.token_hash == token_hash) {
+            token.revoke();
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
+    async fn revoke_all_user_tokens(&self, user_id: Uuid) -> Result<usize, DomainError> {
+        let mut tokens = self.tokens.lock().unwrap();
+        let mut count = 0;
+        for token in tokens.iter_mut() {
+            if token.user_id == user_id && !token.is_revoked {
+                token.revoke();
+                count += 1;
+            }
+        }
+        Ok(count)
+    }
+
+    async fn delete_expired_tokens(&self) -> Result<usize, DomainError> {
+        let mut tokens = self.tokens.lock().unwrap();
+        let before_count = tokens.len();
+        tokens.retain(|t| t.is_valid());
+        Ok(before_count - tokens.len())
+    }
+
+    async fn count_user_tokens(&self, user_id: Uuid) -> Result<usize, DomainError> {
+        let tokens = self.find_by_user_id(user_id).await?;
+        Ok(tokens.len())
+    }
+}
 
 #[tokio::test]
 async fn test_send_verification_code_success() {
