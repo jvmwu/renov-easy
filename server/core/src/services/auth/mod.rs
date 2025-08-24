@@ -25,5 +25,6 @@ pub use phone_utils::{
     validate_australian_phone,
     validate_phone_with_country,
     normalize_to_e164,
+    mask_phone,
     CountryCode,
 };

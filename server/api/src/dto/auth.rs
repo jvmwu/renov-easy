@@ -3,18 +3,28 @@ use validator::Validate;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct SendCodeRequest {
-    #[validate(length(min = 10, max = 15))]
+    /// Phone number without country code, or full E.164 format with country code
+    /// Examples: "13812345678" (China), "412345678" (Australia), or "+8613812345678"
+    #[validate(length(min = 7, max = 15))]
     pub phone: String,
-    #[validate(length(min = 1, max = 10))]
+    
+    /// Country code with or without '+' prefix
+    /// Examples: "+86", "86" (China), "+61", "61" (Australia)
+    #[validate(length(min = 1, max = 5))]
     pub country_code: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct VerifyCodeRequest {
-    #[validate(length(min = 10, max = 15))]
+    /// Phone number without country code, or full E.164 format with country code
+    #[validate(length(min = 7, max = 15))]
     pub phone: String,
-    #[validate(length(min = 1, max = 10))]
+    
+    /// Country code with or without '+' prefix
+    #[validate(length(min = 1, max = 5))]
     pub country_code: String,
+    
+    /// 6-digit verification code
     #[validate(length(equal = 6))]
     pub code: String,
 }

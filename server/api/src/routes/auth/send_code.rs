@@ -1,15 +1,16 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 use validator::Validate;
 use std::sync::Arc;
+use std::collections::HashMap;
 
 use crate::dto::auth::{SendCodeRequest, SendCodeResponse};
-use crate::dto::error::ErrorResponse;
 use crate::handlers::error::{handle_domain_error_with_lang, extract_language, Language};
 
 use re_core::services::auth::AuthService;
 use re_core::repositories::{UserRepository, TokenRepository};
 use re_core::services::verification::{SmsServiceTrait, CacheServiceTrait};
-use re_core::services::auth::RateLimiterTrait;
+use re_core::services::auth::{RateLimiterTrait, mask_phone};
+use re_shared::types::response::ErrorResponse;
 
 /// Application state that holds shared services
 pub struct AppState<U, S, C, R, T> 
@@ -65,22 +66,23 @@ where
     // Detect language preference from request headers
     let lang = extract_language(&req);
     
-    // Validate request data
-    if let Err(errors) = request.validate() {
-        let mut details = std::collections::HashMap::new();
+    // Extract client IP for rate limiting
+    let client_ip = extract_client_ip(&req);
+    
+    // Validate request data using the validator
+    if let Err(errors) = request.0.validate() {
+        let mut details = HashMap::new();
         details.insert("validation_errors".to_string(), serde_json::json!(errors));
         
         let message = match lang {
-            Language::English => "Invalid request data",
-            Language::Chinese => "请求数据无效",
+            Language::English => "Invalid request data. Please check phone number format.",
+            Language::Chinese => "请求数据无效。请检查电话号码格式。",
         };
         
-        return HttpResponse::BadRequest().json(ErrorResponse {
-            error: "validation_error".to_string(),
-            message: message.to_string(),
-            details: Some(details),
-            timestamp: chrono::Utc::now(),
-        });
+        return HttpResponse::BadRequest().json(ErrorResponse::new(
+            "validation_error".to_string(),
+            message.to_string(),
+        ).with_details(details));
     }
 
     // Format phone number with country code if not already included
@@ -90,8 +92,30 @@ where
         format!("{}{}", request.country_code, request.phone)
     };
 
-    // Call the auth service to send verification code
-    match state.auth_service.send_verification_code(&phone).await {
+    // Additional validation for E.164 format and supported countries
+    // The AuthService will perform detailed validation, but we can do a quick check here
+    if !phone.starts_with('+') {
+        let message = match lang {
+            Language::English => "Phone number must include country code (e.g., +86 for China, +61 for Australia)",
+            Language::Chinese => "电话号码必须包含国家代码（例如：中国 +86，澳大利亚 +61）",
+        };
+        
+        return HttpResponse::BadRequest().json(ErrorResponse::new(
+            "invalid_phone_format".to_string(),
+            message.to_string(),
+        ));
+    }
+
+    // Log the attempt for audit purposes
+    log::info!(
+        "Sending verification code to phone: {}, country_code: {}, ip: {}",
+        mask_phone(&phone),
+        request.country_code,
+        &client_ip
+    );
+
+    // Call the auth service to send verification code with IP for rate limiting
+    match state.auth_service.send_verification_code(&phone, Some(client_ip.clone())).await {
         Ok(result) => {
             // Calculate seconds until next resend is allowed
             let now = chrono::Utc::now();
@@ -99,16 +123,59 @@ where
             let resend_after = duration.num_seconds().max(0);
             
             let message = match lang {
-                Language::English => "Verification code sent successfully",
-                Language::Chinese => "验证码发送成功",
+                Language::English => "Verification code sent successfully. Please check your SMS.",
+                Language::Chinese => "验证码发送成功。请查看您的短信。",
             };
+            
+            // Log successful send for monitoring
+            log::info!(
+                "Verification code sent successfully to: {}, message_id: {}",
+                mask_phone(&phone),
+                result.message_id
+            );
             
             HttpResponse::Ok().json(SendCodeResponse {
                 message: message.to_string(),
                 resend_after,
             })
         }
-        Err(error) => handle_domain_error_with_lang(&error, lang),
+        Err(error) => {
+            // Log error for monitoring and debugging
+            log::error!(
+                "Failed to send verification code to: {}, ip: {}, error: {:?}",
+                mask_phone(&phone),
+                client_ip,
+                error
+            );
+            
+            handle_domain_error_with_lang(&error, lang)
+        }
     }
+}
+
+/// Extract client IP address from request
+fn extract_client_ip(req: &HttpRequest) -> String {
+    // Try to get IP from X-Forwarded-For header (for reverse proxy scenarios)
+    if let Some(forwarded_for) = req.headers().get("X-Forwarded-For") {
+        if let Ok(forwarded_str) = forwarded_for.to_str() {
+            // Take the first IP from the comma-separated list
+            if let Some(ip) = forwarded_str.split(',').next() {
+                return ip.trim().to_string();
+            }
+        }
+    }
+
+    // Try to get IP from X-Real-IP header
+    if let Some(real_ip) = req.headers().get("X-Real-IP") {
+        if let Ok(ip_str) = real_ip.to_str() {
+            return ip_str.to_string();
+        }
+    }
+
+    // Fall back to connection info
+    req.connection_info()
+        .peer_addr()
+        .unwrap_or("unknown")
+        .to_string()
 }
 

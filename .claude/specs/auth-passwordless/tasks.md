@@ -132,7 +132,7 @@
 
 ### Phase 5: 认证服务核心逻辑
 
-- [ ] 13. 实现发送验证码 API 处理器
+- [x] 13. 实现发送验证码 API 处理器
   - File: server/api/src/routes/auth/send_code.rs (修改现有)
   - 完善 send_verification_code 处理函数
   - 添加请求验证和错误处理
@@ -140,7 +140,7 @@
   - _Leverage: 现有路由结构, DTOValidation_
   - _Requirements: 1.3_
 
-- [ ] 14. 实现验证码校验 API 处理器
+- [x] 14. 实现验证码校验 API 处理器
   - File: server/api/src/routes/auth/verify_code.rs (修改现有)
   - 完善 verify_code 处理函数
   - 添加令牌生成逻辑
@@ -148,7 +148,7 @@
   - _Leverage: 现有路由结构, TokenService_
   - _Requirements: 2.1, 5.1, 5.2_
 
-- [ ] 15. 增强 AuthService 的速率限制集成
+- [x] 15. 增强 AuthService 的速率限制集成
   - File: server/core/src/services/auth/service.rs (修改现有)
   - 在 send_verification_code() 中集成速率限制检查
   - 添加速率限制错误处理

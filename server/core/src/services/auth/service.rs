@@ -5,11 +5,12 @@ use uuid::Uuid;
 use crate::domain::entities::user::User;
 use crate::domain::value_objects::AuthResponse;
 use crate::errors::{AuthError, DomainError, DomainResult, ValidationError};
-use crate::repositories::{UserRepository, TokenRepository};
+use crate::repositories::{UserRepository, TokenRepository, AuditLogRepository};
 use crate::services::verification::{
     VerificationService, SmsServiceTrait, CacheServiceTrait, SendCodeResult,
 };
 use crate::services::token::TokenService;
+use crate::services::audit::AuditService;
 
 use super::config::AuthServiceConfig;
 use super::phone_utils::{
@@ -18,13 +19,14 @@ use super::phone_utils::{
 use super::rate_limiter::RateLimiterTrait;
 
 /// Authentication service for managing the complete authentication flow
-pub struct AuthService<U, S, C, R, T> 
+pub struct AuthService<U, S, C, R, T, A = crate::repositories::audit::NoOpAuditLogRepository> 
 where
     U: UserRepository,
     S: SmsServiceTrait,
     C: CacheServiceTrait,
     R: RateLimiterTrait,
     T: TokenRepository,
+    A: AuditLogRepository + 'static,
 {
     /// User repository for database operations
     user_repository: Arc<U>,
@@ -34,17 +36,20 @@ where
     rate_limiter: Arc<R>,
     /// Token service for JWT management
     token_service: Arc<TokenService<T>>,
+    /// Optional audit service for logging security events
+    audit_service: Option<Arc<AuditService<A>>>,
     /// Service configuration
     config: AuthServiceConfig,
 }
 
-impl<U, S, C, R, T> AuthService<U, S, C, R, T>
+impl<U, S, C, R, T, A> AuthService<U, S, C, R, T, A>
 where
     U: UserRepository,
     S: SmsServiceTrait,
     C: CacheServiceTrait,
     R: RateLimiterTrait,
     T: TokenRepository,
+    A: AuditLogRepository + 'static,
 {
     /// Create a new authentication service
     ///
@@ -67,6 +72,35 @@ where
             verification_service,
             rate_limiter,
             token_service,
+            audit_service: None,
+            config,
+        }
+    }
+    
+    /// Create a new authentication service with audit logging
+    ///
+    /// # Arguments
+    ///
+    /// * `user_repository` - Repository for user data persistence
+    /// * `verification_service` - Service for SMS verification
+    /// * `rate_limiter` - Service for rate limiting
+    /// * `token_service` - Service for JWT token management
+    /// * `audit_service` - Service for audit logging
+    /// * `config` - Service configuration
+    pub fn with_audit(
+        user_repository: Arc<U>,
+        verification_service: Arc<VerificationService<S, C>>,
+        rate_limiter: Arc<R>,
+        token_service: Arc<TokenService<T>>,
+        audit_service: Arc<AuditService<A>>,
+        config: AuthServiceConfig,
+    ) -> Self {
+        Self {
+            user_repository,
+            verification_service,
+            rate_limiter,
+            token_service,
+            audit_service: Some(audit_service),
             config,
         }
     }
@@ -75,13 +109,15 @@ where
     ///
     /// This method:
     /// 1. Validates the phone number format
-    /// 2. Checks rate limiting (3 requests per hour)
+    /// 2. Checks rate limiting (3 requests per hour per phone, 10 per hour per IP)
     /// 3. Delegates to verification service for code generation and sending
     /// 4. Increments rate limit counter
+    /// 5. Logs rate limit violations to audit log
     ///
     /// # Arguments
     ///
     /// * `phone` - The phone number to send the code to (E.164 format)
+    /// * `client_ip` - Optional client IP address for IP-based rate limiting
     ///
     /// # Returns
     ///
@@ -94,7 +130,7 @@ where
     /// use renov_core::services::auth_service::AuthService;
     /// 
     /// async fn send_code(auth_service: &AuthService) {
-    ///     match auth_service.send_verification_code("+1234567890").await {
+    ///     match auth_service.send_verification_code("+1234567890", Some("192.168.1.1".to_string())).await {
     ///         Ok(result) => {
     ///             println!("Code sent! Message ID: {}", result.message_id);
     ///             println!("Can resend at: {}", result.next_resend_at);
@@ -103,7 +139,11 @@ where
     ///     }
     /// }
     /// ```
-    pub async fn send_verification_code(&self, phone: &str) -> DomainResult<SendCodeResult> {
+    pub async fn send_verification_code(
+        &self, 
+        phone: &str,
+        client_ip: Option<String>,
+    ) -> DomainResult<SendCodeResult> {
         // Step 1: Validate phone number format with country-specific rules
         if !validate_phone_with_country(phone) {
             return Err(DomainError::Auth(AuthError::InvalidPhoneFormat {
@@ -111,17 +151,32 @@ where
             }));
         }
 
-        // Step 2: Check rate limiting (3 times per hour per phone number)
-        let rate_limit_exceeded = self.rate_limiter
+        // Step 2: Check phone-based rate limiting (3 times per hour per phone number)
+        let phone_rate_limit_exceeded = self.rate_limiter
             .check_sms_rate_limit(phone)
             .await
             .map_err(|e| {
                 DomainError::Internal {
-                    message: format!("Failed to check rate limit: {}", e),
+                    message: format!("Failed to check phone rate limit: {}", e),
                 }
             })?;
 
-        if rate_limit_exceeded {
+        if phone_rate_limit_exceeded {
+            // Log rate limit violation
+            let _ = self.rate_limiter
+                .log_rate_limit_violation(phone, "phone", "send_verification_code")
+                .await;
+            
+            // Log to audit service if available
+            if let Some(ref audit_service) = self.audit_service {
+                let phone_hash = hash_phone(phone);
+                let _ = audit_service.log_rate_limit_exceeded(
+                    Some(phone_hash),
+                    client_ip.clone(),
+                    None,
+                ).await;
+            }
+            
             // Get time until rate limit resets
             let reset_time = self.rate_limiter
                 .get_rate_limit_reset_time(phone)
@@ -133,8 +188,48 @@ where
             
             return Err(DomainError::Auth(AuthError::RateLimitExceeded { minutes }));
         }
+        
+        // Step 3: Check IP-based rate limiting if IP is provided (10 attempts per hour per IP)
+        if let Some(ref ip) = client_ip {
+            let ip_rate_limit_exceeded = self.rate_limiter
+                .check_ip_verification_limit(ip)
+                .await
+                .map_err(|e| {
+                    DomainError::Internal {
+                        message: format!("Failed to check IP rate limit: {}", e),
+                    }
+                })?;
 
-        // Step 3: Delegate to verification service to send the code
+            if ip_rate_limit_exceeded {
+                // Log rate limit violation
+                let _ = self.rate_limiter
+                    .log_rate_limit_violation(ip, "ip", "send_verification_code")
+                    .await;
+                
+                // Log to audit service if available
+                if let Some(ref audit_service) = self.audit_service {
+                    let phone_hash = hash_phone(phone);
+                    let _ = audit_service.log_rate_limit_exceeded(
+                        Some(phone_hash),
+                        Some(ip.clone()),
+                        None,
+                    ).await;
+                }
+                
+                // Get time until IP rate limit resets
+                let reset_time = self.rate_limiter
+                    .get_ip_rate_limit_reset_time(ip)
+                    .await
+                    .unwrap_or(Some(3600))
+                    .unwrap_or(3600);
+                
+                let minutes = (reset_time / 60).max(1) as u32;
+                
+                return Err(DomainError::Auth(AuthError::RateLimitExceeded { minutes }));
+            }
+        }
+
+        // Step 4: Delegate to verification service to send the code
         let send_result = self.verification_service
             .send_verification_code(phone)
             .await
@@ -152,11 +247,19 @@ where
                 }
             })?;
 
-        // Step 4: Increment rate limit counter after successful send
-        let _count = self.rate_limiter
+        // Step 5: Increment rate limit counters after successful send
+        let _phone_count = self.rate_limiter
             .increment_sms_counter(phone)
             .await
             .unwrap_or(1);
+        
+        // Increment IP counter if IP is provided
+        if let Some(ref ip) = client_ip {
+            let _ip_count = self.rate_limiter
+                .increment_ip_verification_counter(ip)
+                .await
+                .unwrap_or(1);
+        }
 
         Ok(send_result)
     }
@@ -165,16 +268,18 @@ where
     ///
     /// This method:
     /// 1. Validates the phone number format
-    /// 2. Delegates to verification service to verify the code
-    /// 3. Looks up or creates the user upon successful verification
-    /// 4. Updates user login timestamp
-    /// 5. Generates JWT tokens for authentication
-    /// 6. Returns authentication response with tokens and user type information
+    /// 2. Checks IP-based rate limiting (10 attempts per hour per IP)
+    /// 3. Delegates to verification service to verify the code
+    /// 4. Looks up or creates the user upon successful verification
+    /// 5. Updates user login timestamp
+    /// 6. Generates JWT tokens for authentication
+    /// 7. Returns authentication response with tokens and user type information
     ///
     /// # Arguments
     ///
     /// * `phone` - The phone number associated with the code (E.164 format)
     /// * `code` - The verification code to verify
+    /// * `client_ip` - Optional client IP address for IP-based rate limiting
     ///
     /// # Returns
     ///
@@ -187,7 +292,7 @@ where
     /// use renov_core::services::auth_service::AuthService;
     /// 
     /// async fn verify_code(auth_service: &AuthService) {
-    ///     match auth_service.verify_code("+1234567890", "123456").await {
+    ///     match auth_service.verify_code("+1234567890", "123456", Some("192.168.1.1".to_string())).await {
     ///         Ok(response) => {
     ///             println!("Authentication successful!");
     ///             println!("Access token: {}", response.access_token);
@@ -199,7 +304,12 @@ where
     ///     }
     /// }
     /// ```
-    pub async fn verify_code(&self, phone: &str, code: &str) -> DomainResult<AuthResponse> {
+    pub async fn verify_code(
+        &self, 
+        phone: &str, 
+        code: &str,
+        client_ip: Option<String>,
+    ) -> DomainResult<AuthResponse> {
         // Step 1: Validate phone number format with country-specific rules
         if !validate_phone_with_country(phone) {
             return Err(DomainError::Auth(AuthError::InvalidPhoneFormat {
@@ -207,13 +317,60 @@ where
             }));
         }
 
-        // Step 2: Delegate to verification service to verify the code
+        // Step 2: Check IP-based rate limiting if IP is provided (10 attempts per hour per IP)
+        if let Some(ref ip) = client_ip {
+            let ip_rate_limit_exceeded = self.rate_limiter
+                .check_ip_verification_limit(ip)
+                .await
+                .map_err(|e| {
+                    DomainError::Internal {
+                        message: format!("Failed to check IP rate limit: {}", e),
+                    }
+                })?;
+
+            if ip_rate_limit_exceeded {
+                // Log rate limit violation
+                let _ = self.rate_limiter
+                    .log_rate_limit_violation(ip, "ip", "verify_code")
+                    .await;
+                
+                // Log to audit service if available
+                if let Some(ref audit_service) = self.audit_service {
+                    let phone_hash = hash_phone(phone);
+                    let _ = audit_service.log_rate_limit_exceeded(
+                        Some(phone_hash),
+                        Some(ip.clone()),
+                        None,
+                    ).await;
+                }
+                
+                // Get time until IP rate limit resets
+                let reset_time = self.rate_limiter
+                    .get_ip_rate_limit_reset_time(ip)
+                    .await
+                    .unwrap_or(Some(3600))
+                    .unwrap_or(3600);
+                
+                let minutes = (reset_time / 60).max(1) as u32;
+                
+                return Err(DomainError::Auth(AuthError::RateLimitExceeded { minutes }));
+            }
+        }
+        
+        // Step 3: Delegate to verification service to verify the code
         let verify_result = self.verification_service
             .verify_code(phone, code)
             .await?;
 
-        // Step 3: Process verification result
+        // Step 4: Process verification result
         if verify_result.success {
+            // Increment IP counter for successful verification if IP is provided
+            if let Some(ref ip) = client_ip {
+                let _ip_count = self.rate_limiter
+                    .increment_ip_verification_counter(ip)
+                    .await
+                    .unwrap_or(1);
+            }
             // Verification successful - proceed with user operations
             
             // Extract country code and phone number parts
@@ -222,7 +379,7 @@ where
             // Hash the phone number for storage
             let phone_hash = hash_phone(&phone_without_code);
             
-            // Step 4: Look up existing user or create new one
+            // Step 5: Look up existing user or create new one
             let mut user = match self.user_repository
                 .find_by_phone(&phone_hash, &country_code)
                 .await
@@ -261,7 +418,7 @@ where
                 }
             };
             
-            // Step 5: Update user state
+            // Step 6: Update user state
             // Mark as verified if not already (for existing users who may not have been verified)
             if !user.is_verified {
                 user.verify();
@@ -285,7 +442,7 @@ where
                 .clear_verification(phone)
                 .await;
             
-            // Step 6: Generate JWT tokens
+            // Step 7: Generate JWT tokens
             let token_pair = self.token_service
                 .generate_tokens(
                     _updated_user.id,
@@ -294,7 +451,7 @@ where
                 )
                 .await?;
             
-            // Step 7: Create and return authentication response
+            // Step 8: Create and return authentication response
             let auth_response = AuthResponse::from_token_pair(
                 token_pair,
                 _updated_user.user_type,
@@ -302,7 +459,15 @@ where
             
             Ok(auth_response)
         } else {
-            // Verification failed - map to appropriate auth error
+            // Verification failed - increment IP counter if IP is provided
+            if let Some(ref ip) = client_ip {
+                let _ip_count = self.rate_limiter
+                    .increment_ip_verification_counter(ip)
+                    .await
+                    .unwrap_or(1);
+            }
+            
+            // Map to appropriate auth error
             match verify_result.remaining_attempts {
                 Some(0) => {
                     // No more attempts remaining
