@@ -71,6 +71,10 @@ impl MySqlTokenRepository {
                 .map_err(|e| DomainError::Internal { message: format!("Failed to get expires_at: {}", e) })?,
             is_revoked: row.try_get("is_revoked")
                 .map_err(|e| DomainError::Internal { message: format!("Failed to get is_revoked: {}", e) })?,
+            token_family: row.try_get::<Option<String>, _>("token_family").ok().flatten(),
+            device_fingerprint: row.try_get::<Option<String>, _>("device_fingerprint").ok().flatten(),
+            previous_token_id: row.try_get::<Option<String>, _>("previous_token_id").ok().flatten()
+                .and_then(|s| Uuid::parse_str(&s).ok()),
         })
     }
 }
@@ -155,7 +159,8 @@ impl TokenRepository for MySqlTokenRepository {
 
     async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<RefreshToken>, DomainError> {
         let query = r#"
-            SELECT id, user_id, token_hash, created_at, expires_at, is_revoked
+            SELECT id, user_id, token_hash, created_at, expires_at, is_revoked,
+                   token_family, device_fingerprint, previous_token_id
             FROM refresh_tokens
             WHERE user_id = ? 
                 AND is_revoked = FALSE 
@@ -223,6 +228,91 @@ impl TokenRepository for MySqlTokenRepository {
             .execute(&self.pool)
             .await
             .map_err(|e| DomainError::Internal { message: format!("Failed to delete expired tokens: {}", e) })?;
+
+        Ok(result.rows_affected() as usize)
+    }
+    
+    async fn find_by_token_family(&self, token_family: &str) -> Result<Vec<RefreshToken>, DomainError> {
+        let query = r#"
+            SELECT id, user_id, token_hash, created_at, expires_at, is_revoked,
+                   token_family, device_fingerprint, previous_token_id
+            FROM refresh_tokens 
+            WHERE token_family = ?
+            ORDER BY created_at DESC
+        "#;
+
+        let rows = sqlx::query(query)
+            .bind(token_family)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| DomainError::Internal { message: format!("Failed to find tokens by family: {}", e) })?;
+
+        rows.iter()
+            .map(Self::row_to_token)
+            .collect()
+    }
+    
+    async fn revoke_token_family(&self, token_family: &str) -> Result<usize, DomainError> {
+        let query = r#"
+            UPDATE refresh_tokens 
+            SET is_revoked = TRUE 
+            WHERE token_family = ? AND is_revoked = FALSE
+        "#;
+
+        let result = sqlx::query(query)
+            .bind(token_family)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| DomainError::Internal { message: format!("Failed to revoke token family: {}", e) })?;
+
+        Ok(result.rows_affected() as usize)
+    }
+    
+    async fn is_token_blacklisted(&self, token_jti: &str) -> Result<bool, DomainError> {
+        let query = "SELECT EXISTS(SELECT 1 FROM token_blacklist WHERE jti = ? AND expires_at > ?) as exists";
+        
+        let now = Utc::now();
+        let row = sqlx::query(query)
+            .bind(token_jti)
+            .bind(now)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| DomainError::Internal { message: format!("Failed to check blacklist: {}", e) })?;
+        
+        let exists: i8 = row.try_get("exists")
+            .map_err(|e| DomainError::Internal { message: format!("Failed to get blacklist result: {}", e) })?;
+        
+        Ok(exists == 1)
+    }
+    
+    async fn blacklist_token(&self, token_jti: &str, expires_at: DateTime<Utc>) -> Result<(), DomainError> {
+        let query = r#"
+            INSERT INTO token_blacklist (jti, expires_at, created_at)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE expires_at = VALUES(expires_at)
+        "#;
+
+        let now = Utc::now();
+        sqlx::query(query)
+            .bind(token_jti)
+            .bind(expires_at)
+            .bind(now)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| DomainError::Internal { message: format!("Failed to blacklist token: {}", e) })?;
+
+        Ok(())
+    }
+    
+    async fn cleanup_blacklist(&self) -> Result<usize, DomainError> {
+        let query = "DELETE FROM token_blacklist WHERE expires_at < ?";
+        
+        let now = Utc::now();
+        let result = sqlx::query(query)
+            .bind(now)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| DomainError::Internal { message: format!("Failed to cleanup blacklist: {}", e) })?;
 
         Ok(result.rows_affected() as usize)
     }

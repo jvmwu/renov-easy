@@ -166,7 +166,7 @@
   - _Leverage: jsonwebtoken crate_
   - _Requirements: 5.3_
 
-- [ ] 17. 增强 TokenService 令牌生成
+- [x] 17. 增强 TokenService 令牌生成
   - File: server/core/src/services/token/service.rs (修改现有)
   - 更新 generate_tokens() 使用 RS256 算法
   - 添加必要的 claims（用户ID、手机号哈希）
@@ -174,7 +174,7 @@
   - _Leverage: 现有 TokenService 结构_
   - _Requirements: 5.3, 5.4_
 
-- [ ] 18. 实现刷新令牌存储逻辑
+- [x] 18. 实现刷新令牌存储逻辑
   - File: server/infra/src/database/mysql/token_repository_impl.rs (修改现有)
   - 实现 store_refresh_token() 方法
   - 添加令牌哈希存储逻辑

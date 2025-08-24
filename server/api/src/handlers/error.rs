@@ -210,6 +210,11 @@ fn handle_token_error(token_error: &TokenError, lang: Language) -> HttpResponse 
             params.insert("claim", claim.clone());
             ("missing_claim", params)
         }
+        TokenError::KeyLoadError { message } => {
+            let mut params = HashMap::new();
+            params.insert("message", message.clone());
+            ("key_load_error", params)
+        }
     };
 
     create_error_response("token", error_key, params, lang)

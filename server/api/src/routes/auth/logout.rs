@@ -49,7 +49,7 @@ where
     let lang = extract_language(&req);
     
     // Call the auth service to logout the user
-    match state.auth_service.logout(auth.user_id).await {
+    match state.auth_service.logout(auth.user_id, None, None).await {
         Ok(()) => {
             let message = match lang {
                 Language::English => "Logged out successfully",

@@ -280,6 +280,7 @@ where
     /// * `phone` - The phone number associated with the code (E.164 format)
     /// * `code` - The verification code to verify
     /// * `client_ip` - Optional client IP address for IP-based rate limiting
+    /// * `device_fingerprint` - Optional device fingerprint for token tracking
     ///
     /// # Returns
     ///
@@ -309,6 +310,7 @@ where
         phone: &str, 
         code: &str,
         client_ip: Option<String>,
+        device_fingerprint: Option<String>,
     ) -> DomainResult<AuthResponse> {
         // Step 1: Validate phone number format with country-specific rules
         if !validate_phone_with_country(phone) {
@@ -442,12 +444,14 @@ where
                 .clear_verification(phone)
                 .await;
             
-            // Step 7: Generate JWT tokens
+            // Step 7: Generate JWT tokens with phone hash and device fingerprint
             let token_pair = self.token_service
                 .generate_tokens(
                     _updated_user.id,
                     _updated_user.user_type.clone(),
                     _updated_user.is_verified,
+                    Some(phone_hash.clone()),
+                    device_fingerprint.clone(),
                 )
                 .await?;
             
@@ -567,12 +571,13 @@ where
     /// This method:
     /// 1. Verifies the refresh token
     /// 2. Gets the user to check their current state
-    /// 3. Generates new token pair
-    /// 4. Revokes the old refresh token
+    /// 3. Generates new token pair with rotation
+    /// 4. Automatically revokes the old refresh token
     ///
     /// # Arguments
     ///
     /// * `refresh_token` - The refresh token to use
+    /// * `device_fingerprint` - Optional device fingerprint for validation
     ///
     /// # Returns
     ///
@@ -591,7 +596,11 @@ where
     ///     }
     /// }
     /// ```
-    pub async fn refresh_token(&self, refresh_token: &str) -> DomainResult<AuthResponse> {
+    pub async fn refresh_token(
+        &self,
+        refresh_token: &str,
+        device_fingerprint: Option<String>,
+    ) -> DomainResult<AuthResponse> {
         // Step 1: Verify the refresh token and get user ID
         let user_id = self.token_service
             .verify_refresh_token(refresh_token)
@@ -612,21 +621,20 @@ where
         if user.is_blocked {
             return Err(DomainError::Auth(AuthError::UserBlocked));
         }
+        
+        // Step 4: Get phone hash for the user
+        let phone_hash = Some(user.phone_hash.clone());
 
-        // Step 4: Generate new token pair
+        // Step 5: Refresh tokens with rotation (automatically revokes old token)
         let token_pair = self.token_service
-            .generate_tokens(
-                user.id,
+            .refresh_tokens(
+                refresh_token,
                 user.user_type.clone(),
                 user.is_verified,
+                phone_hash,
+                device_fingerprint,
             )
             .await?;
-
-        // Step 5: Revoke old refresh token (optional but recommended)
-        // Ignore errors as it's not critical if revocation fails
-        let _ = self.token_service
-            .revoke_refresh_token(refresh_token)
-            .await;
 
         // Step 6: Create and return authentication response
         let auth_response = AuthResponse::from_token_pair(
@@ -664,9 +672,30 @@ where
     ///     }
     /// }
     /// ```
-    pub async fn logout(&self, user_id: Uuid) -> DomainResult<()> {
-        // Revoke all tokens for the user
-        self.token_service.revoke_tokens(user_id).await?;
+    pub async fn logout(
+        &self,
+        user_id: Uuid,
+        access_token: Option<String>,
+        device_fingerprint: Option<String>,
+    ) -> DomainResult<()> {
+        // Blacklist the access token if provided
+        if let Some(token) = access_token {
+            let _ = self.token_service
+                .blacklist_access_token(&token)
+                .await;
+        }
+        
+        // Revoke device-specific tokens if fingerprint provided
+        if let Some(fingerprint) = device_fingerprint {
+            let _ = self.token_service
+                .revoke_device_tokens(user_id, &fingerprint)
+                .await;
+        } else {
+            // Revoke all tokens for the user
+            self.token_service
+                .revoke_tokens(user_id)
+                .await?;
+        }
         
         Ok(())
     }

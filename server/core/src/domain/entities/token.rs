@@ -45,6 +45,15 @@ pub struct Claims {
     
     /// Whether the user is verified
     pub is_verified: bool,
+    
+    /// Hashed phone number for additional verification
+    pub phone_hash: Option<String>,
+    
+    /// Device fingerprint for tracking token usage
+    pub device_fingerprint: Option<String>,
+    
+    /// Token family ID for rotation tracking
+    pub token_family: Option<String>,
 }
 
 impl Claims {
@@ -55,6 +64,8 @@ impl Claims {
     /// * `user_id` - The user's UUID
     /// * `user_type` - The user's type (Customer or Worker)
     /// * `is_verified` - Whether the user is verified
+    /// * `phone_hash` - Hashed phone number
+    /// * `device_fingerprint` - Device fingerprint for tracking
     ///
     /// # Returns
     ///
@@ -63,6 +74,8 @@ impl Claims {
         user_id: Uuid,
         user_type: Option<String>,
         is_verified: bool,
+        phone_hash: Option<String>,
+        device_fingerprint: Option<String>,
     ) -> Self {
         let now = Utc::now();
         let expiry = now + Duration::minutes(ACCESS_TOKEN_EXPIRY_MINUTES);
@@ -77,6 +90,9 @@ impl Claims {
             jti: Uuid::new_v4().to_string(),
             user_type,
             is_verified,
+            phone_hash,
+            device_fingerprint,
+            token_family: None,
         }
     }
     
@@ -85,11 +101,17 @@ impl Claims {
     /// # Arguments
     ///
     /// * `user_id` - The user's UUID
+    /// * `token_family` - Token family ID for rotation tracking
+    /// * `device_fingerprint` - Device fingerprint for tracking
     ///
     /// # Returns
     ///
     /// A new `Claims` instance for a refresh token
-    pub fn new_refresh_token(user_id: Uuid) -> Self {
+    pub fn new_refresh_token(
+        user_id: Uuid,
+        token_family: Option<String>,
+        device_fingerprint: Option<String>,
+    ) -> Self {
         let now = Utc::now();
         let expiry = now + Duration::days(REFRESH_TOKEN_EXPIRY_DAYS);
         
@@ -103,6 +125,9 @@ impl Claims {
             jti: Uuid::new_v4().to_string(),
             user_type: None,
             is_verified: false,
+            phone_hash: None,
+            device_fingerprint,
+            token_family,
         }
     }
     
@@ -156,6 +181,15 @@ pub struct RefreshToken {
     
     /// Whether the token has been revoked
     pub is_revoked: bool,
+    
+    /// Token family ID for rotation tracking
+    pub token_family: Option<String>,
+    
+    /// Device fingerprint for security tracking
+    pub device_fingerprint: Option<String>,
+    
+    /// Previous token ID in the rotation chain
+    pub previous_token_id: Option<Uuid>,
 }
 
 impl RefreshToken {
@@ -170,6 +204,29 @@ impl RefreshToken {
     ///
     /// A new `RefreshToken` instance
     pub fn new(user_id: Uuid, token_hash: String) -> Self {
+        Self::new_with_metadata(user_id, token_hash, None, None, None)
+    }
+    
+    /// Creates a new refresh token with metadata
+    ///
+    /// # Arguments
+    ///
+    /// * `user_id` - The user's UUID
+    /// * `token_hash` - The hashed token value
+    /// * `token_family` - Token family ID for rotation
+    /// * `device_fingerprint` - Device fingerprint
+    /// * `previous_token_id` - Previous token in rotation chain
+    ///
+    /// # Returns
+    ///
+    /// A new `RefreshToken` instance with metadata
+    pub fn new_with_metadata(
+        user_id: Uuid,
+        token_hash: String,
+        token_family: Option<String>,
+        device_fingerprint: Option<String>,
+        previous_token_id: Option<Uuid>,
+    ) -> Self {
         let now = Utc::now();
         let expires_at = now + Duration::days(REFRESH_TOKEN_EXPIRY_DAYS);
         
@@ -180,6 +237,9 @@ impl RefreshToken {
             created_at: now,
             expires_at,
             is_revoked: false,
+            token_family,
+            device_fingerprint,
+            previous_token_id,
         }
     }
     
@@ -237,6 +297,18 @@ pub struct TokenPair {
     
     /// Refresh token expiry time in seconds
     pub refresh_expires_in: i64,
+    
+    /// Token type (always "Bearer")
+    pub token_type: String,
+    
+    /// Token issue timestamp
+    pub issued_at: i64,
+    
+    /// Token family ID for rotation tracking
+    pub token_family: Option<String>,
+    
+    /// Device fingerprint if provided
+    pub device_fingerprint: Option<String>,
 }
 
 impl TokenPair {
@@ -256,6 +328,40 @@ impl TokenPair {
             refresh_token,
             access_expires_in: ACCESS_TOKEN_EXPIRY_MINUTES * 60,
             refresh_expires_in: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60,
+            token_type: "Bearer".to_string(),
+            issued_at: Utc::now().timestamp(),
+            token_family: None,
+            device_fingerprint: None,
+        }
+    }
+    
+    /// Creates a new token pair with metadata
+    ///
+    /// # Arguments
+    ///
+    /// * `access_token` - The JWT access token
+    /// * `refresh_token` - The JWT refresh token
+    /// * `token_family` - Token family ID
+    /// * `device_fingerprint` - Device fingerprint
+    ///
+    /// # Returns
+    ///
+    /// A new `TokenPair` instance with metadata
+    pub fn new_with_metadata(
+        access_token: String,
+        refresh_token: String,
+        token_family: Option<String>,
+        device_fingerprint: Option<String>,
+    ) -> Self {
+        Self {
+            access_token,
+            refresh_token,
+            access_expires_in: ACCESS_TOKEN_EXPIRY_MINUTES * 60,
+            refresh_expires_in: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60,
+            token_type: "Bearer".to_string(),
+            issued_at: Utc::now().timestamp(),
+            token_family,
+            device_fingerprint,
         }
     }
 }

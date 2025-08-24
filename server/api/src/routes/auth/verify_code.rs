@@ -97,7 +97,7 @@ where
     );
 
     // Call the auth service to verify the code with IP for rate limiting
-    match state.auth_service.verify_code(&phone, &request.code, Some(client_ip.clone())).await {
+    match state.auth_service.verify_code(&phone, &request.code, Some(client_ip.clone()), None).await {
         Ok(auth_response) => {
             // Log successful verification
             log::info!(

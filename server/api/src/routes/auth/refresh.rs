@@ -54,7 +54,7 @@ where
     let lang = extract_language(&req);
     
     // Call the auth service to refresh the token
-    match state.auth_service.refresh_token(&request.refresh_token).await {
+    match state.auth_service.refresh_token(&request.refresh_token, None).await {
         Ok(auth_response) => {
             // Convert the domain AuthResponse to DTO AuthResponse
             let response = DtoAuthResponse {

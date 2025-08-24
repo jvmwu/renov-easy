@@ -200,7 +200,7 @@ pub trait TokenServiceWrapper: Send + Sync {
 /// Implementation of TokenServiceWrapper for any TokenService
 impl<R: TokenRepository> TokenServiceWrapper for TokenService<R> {
     fn verify_access_token(&self, token: &str) -> Result<Claims, DomainError> {
-        self.verify_access_token(token)
+        self.verify_access_token_sync(token)
     }
 }
 

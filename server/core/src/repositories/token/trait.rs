@@ -106,6 +106,47 @@ pub trait TokenRepository: Send + Sync {
     /// # }
     /// ```
     async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<RefreshToken>, DomainError>;
+    
+    /// Find refresh tokens by token family
+    ///
+    /// # Arguments
+    /// * `token_family` - The token family ID
+    ///
+    /// # Returns
+    /// * `Ok(Vec<RefreshToken>)` - List of tokens in the family
+    /// * `Err(DomainError)` - Database error occurred
+    async fn find_by_token_family(&self, token_family: &str) -> Result<Vec<RefreshToken>, DomainError>;
+    
+    /// Revoke all tokens in a token family
+    ///
+    /// # Arguments
+    /// * `token_family` - The token family ID to revoke
+    ///
+    /// # Returns
+    /// * `Ok(usize)` - Number of tokens revoked
+    /// * `Err(DomainError)` - Revocation failed
+    async fn revoke_token_family(&self, token_family: &str) -> Result<usize, DomainError>;
+    
+    /// Check if a token is blacklisted
+    ///
+    /// # Arguments
+    /// * `token_jti` - The JWT ID to check
+    ///
+    /// # Returns
+    /// * `Ok(bool)` - True if blacklisted, false otherwise
+    /// * `Err(DomainError)` - Database error occurred
+    async fn is_token_blacklisted(&self, token_jti: &str) -> Result<bool, DomainError>;
+    
+    /// Add a token to the blacklist
+    ///
+    /// # Arguments
+    /// * `token_jti` - The JWT ID to blacklist
+    /// * `expires_at` - When the blacklist entry expires
+    ///
+    /// # Returns
+    /// * `Ok(())` - Token blacklisted successfully
+    /// * `Err(DomainError)` - Blacklisting failed
+    async fn blacklist_token(&self, token_jti: &str, expires_at: chrono::DateTime<chrono::Utc>) -> Result<(), DomainError>;
 
     /// Revoke a specific refresh token
     ///
@@ -201,4 +242,11 @@ pub trait TokenRepository: Send + Sync {
         let tokens = self.find_by_user_id(user_id).await?;
         Ok(tokens.len())
     }
+    
+    /// Clean up expired blacklist entries
+    ///
+    /// # Returns
+    /// * `Ok(usize)` - Number of entries cleaned up
+    /// * `Err(DomainError)` - Cleanup failed
+    async fn cleanup_blacklist(&self) -> Result<usize, DomainError>;
 }
