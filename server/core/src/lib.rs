@@ -1,5 +1,5 @@
 //! # RenovEasy Core
-//! 
+//!
 //! Core business logic and domain layer for the RenovEasy backend.
 //! This crate contains domain entities, business services, repository interfaces,
 //! and error types that form the foundation of the application architecture.
@@ -14,7 +14,7 @@ pub mod errors;
 pub use domain::entities;
 pub use domain::value_objects;
 
-// Service exports  
+// Service exports
 pub use services::auth::{AuthService, AuthServiceConfig, RateLimiterTrait};
 
 // Repository exports
@@ -22,6 +22,5 @@ pub use repositories::user::UserRepository;
 pub use repositories::token::TokenRepository;
 
 // Error exports
-pub use errors::{AuthError, TokenError, ValidationError, ErrorResponse};
 pub use errors::{DomainError, DomainResult};
-pub use errors::{extract_english_message, extract_chinese_message};
+pub use errors::{AuthError, TokenError, ValidationError, ErrorResponse};

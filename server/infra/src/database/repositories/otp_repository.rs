@@ -2,11 +2,8 @@
 //!
 //! This module provides database storage for OTPs when Redis is unavailable.
 //! It implements the fallback mechanism required by requirement 8.2.
-
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use sqlx::{MySql, Pool, Row};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 use re_core::errors::{DomainError, DomainResult};
 use re_core::services::encryption::otp_encryption::EncryptedOtp;

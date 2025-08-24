@@ -16,7 +16,7 @@ use tracing::{debug, error, info, warn};
 use re_core::errors::{DomainError, DomainResult};
 use re_core::services::encryption::{
     encrypted_cache_trait::{EncryptedCacheServiceTrait, StorageBackend},
-    otp_encryption::{AesGcmOtpEncryption, EncryptedOtp, OtpEncryption, OtpEncryptionConfig},
+    otp_encryption::{AesGcmOtpEncryption, EncryptedOtp, OtpEncryptionConfig},
 };
 
 use crate::cache::RedisClient;
