@@ -1,7 +1,7 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 
 use crate::dto::auth::{RefreshTokenRequest, AuthResponse as DtoAuthResponse};
-use crate::handlers::error::{handle_domain_error_with_lang, Language, extract_language};
+use crate::handlers::error::{handle_domain_error_with_lang, extract_language};
 
 use re_core::repositories::{UserRepository, TokenRepository};
 use re_core::services::verification::{SmsServiceTrait, CacheServiceTrait};

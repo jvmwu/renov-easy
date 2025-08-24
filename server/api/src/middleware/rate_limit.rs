@@ -7,8 +7,7 @@
 use actix_web::{
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     error::{ErrorInternalServerError, ErrorTooManyRequests},
-    http::StatusCode,
-    Error, HttpResponse,
+    Error,
 };
 use futures_util::future::LocalBoxFuture;
 use redis::{AsyncCommands, Client};
@@ -20,7 +19,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::dto::error::{ErrorResponse, ErrorResponseExt};
+use crate::dto::error::ErrorResponse;
 
 /// Rate limit configuration for different actions
 #[derive(Debug, Clone)]
@@ -102,7 +101,7 @@ impl RateLimiter {
             }
             None => {
                 // First request, set counter with expiry
-                conn.set_ex(&key, 1u32, window_seconds).await?;
+                conn.set_ex::<_, _, ()>(&key, 1u32, window_seconds).await?;
                 Ok(RateLimitStatus::Ok {
                     remaining: limit - 1,
                 })
@@ -122,7 +121,7 @@ impl RateLimiter {
     async fn lock_phone(&self, phone: &str) -> Result<(), redis::RedisError> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
         let key = format!("phone_lock:{}", phone);
-        conn.set_ex(&key, "locked", self.config.phone_lock_duration_seconds).await?;
+        conn.set_ex::<_, _, ()>(&key, "locked", self.config.phone_lock_duration_seconds).await?;
         Ok(())
     }
 }
@@ -297,7 +296,7 @@ async fn check_sms_rate_limit(
 
             // Set expiry on first request
             if count.is_none() {
-                conn.expire(&key, 3600).await.map_err(|e| {
+                conn.expire::<_, ()>(&key, 3600).await.map_err(|e| {
                     log::error!("Redis error setting expiry: {:?}", e);
                     ErrorResponse::new(
                         "rate_limit_error".to_string(),
@@ -363,7 +362,7 @@ async fn check_verification_rate_limit(
     match count {
         Some(current) if current >= config.verification_attempts_per_code => {
             // Lock the phone number
-            conn.set_ex(&lock_key, "locked", config.phone_lock_duration_seconds)
+            conn.set_ex::<_, _, ()>(&lock_key, "locked", config.phone_lock_duration_seconds)
                 .await
                 .map_err(|e| {
                     log::error!("Redis error locking phone: {:?}", e);
@@ -395,7 +394,7 @@ async fn check_verification_rate_limit(
 
             // Set expiry on first request (5 minutes for verification attempts)
             if count.is_none() {
-                conn.expire(&key, 300).await.map_err(|e| {
+                conn.expire::<_, ()>(&key, 300).await.map_err(|e| {
                     log::error!("Redis error setting expiry: {:?}", e);
                     ErrorResponse::new(
                         "rate_limit_error".to_string(),
@@ -460,7 +459,7 @@ async fn check_api_rate_limit(
 
             // Set expiry on first request (1 minute for API calls)
             if count.is_none() {
-                conn.expire(&key, 60).await.map_err(|e| {
+                conn.expire::<_, ()>(&key, 60).await.map_err(|e| {
                     log::error!("Redis error setting expiry: {:?}", e);
                     ErrorResponse::new(
                         "rate_limit_error".to_string(),

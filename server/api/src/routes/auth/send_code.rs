@@ -3,7 +3,7 @@ use validator::Validate;
 use std::sync::Arc;
 
 use crate::dto::auth::{SendCodeRequest, SendCodeResponse};
-use crate::dto::error::{ErrorResponse, ErrorResponseExt};
+use crate::dto::error::ErrorResponse;
 use crate::handlers::error::{handle_domain_error_with_lang, extract_language, Language};
 
 use re_core::services::auth::AuthService;

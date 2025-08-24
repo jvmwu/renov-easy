@@ -1,12 +1,10 @@
 use actix_web::{web, HttpRequest, HttpResponse};
-use validator::Validate;
 
 use crate::dto::auth::SelectTypeRequest;
-use crate::dto::error::{ErrorResponse, ErrorResponseExt};
+use crate::dto::error::ErrorResponse;
 use crate::handlers::error::{handle_domain_error_with_lang, Language, extract_language};
 use crate::middleware::auth::AuthContext;
 
-use re_core::services::auth::AuthService;
 use re_core::repositories::{UserRepository, TokenRepository};
 use re_core::services::verification::{SmsServiceTrait, CacheServiceTrait};
 use re_core::services::auth::RateLimiterTrait;
