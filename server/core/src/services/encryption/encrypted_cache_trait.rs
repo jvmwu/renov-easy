@@ -1,11 +1,12 @@
 //! Trait for encrypted OTP cache service with fallback support
 
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use super::otp_encryption::EncryptedOtp;
 use crate::errors::DomainResult;
 
 /// Storage backend type for encrypted OTP
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum StorageBackend {
     /// Redis primary storage
     Redis,

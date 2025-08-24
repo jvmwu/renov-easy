@@ -96,7 +96,7 @@
   - _Leverage: server/core/src/services/verification/traits.rs_
   - _Requirements: 2.10_
 
-- [ ] 9. 实现 SMS 服务故障转移管理器
+- [x] 9. 实现 SMS 服务故障转移管理器
   - File: server/infra/src/sms/failover_manager.rs
   - 创建 SmsFailoverManager 结构体
   - 实现自动故障检测和切换逻辑
@@ -106,7 +106,7 @@
 
 ### Phase 4: 验证码管理服务
 
-- [ ] 10. 增强 VerificationService 的 OTP 生成逻辑
+- [x] 10. 增强 VerificationService 的 OTP 生成逻辑
   - File: server/core/src/services/verification/service.rs (修改现有)
   - 更新 generate_code() 使用 CSPRNG
   - 添加验证码格式验证 is_valid_otp_format()
@@ -114,7 +114,7 @@
   - _Leverage: 现有 VerificationService 结构_
   - _Requirements: 2.1_
 
-- [ ] 11. 实现验证码 Redis 存储逻辑
+- [x] 11. 实现验证码 Redis 存储逻辑
   - File: server/infra/src/cache/verification_cache.rs (修改现有)
   - 更新 store_code() 使用加密存储
   - 添加 TTL 设置（5分钟过期）
@@ -122,7 +122,7 @@
   - _Leverage: 现有 verification_cache.rs, otp_encryption.rs_
   - _Requirements: 2.11, 4.7, 8.2_
 
-- [ ] 12. 实现验证码验证和尝试管理
+- [x] 11. 实现验证码验证和尝试管理
   - File: server/core/src/services/verification/validator.rs
   - 创建 OtpValidator 结构体
   - 实现 verify_with_attempts() 方法，处理尝试计数

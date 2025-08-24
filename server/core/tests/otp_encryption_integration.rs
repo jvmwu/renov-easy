@@ -1,6 +1,6 @@
 //! Integration tests for the OTP encryption service module
 
-use core::services::encryption::{
+use re_core::services::encryption::{
     AesGcmOtpEncryption, OtpEncryption, OtpEncryptionConfig,
     KeyManager, KeyRotationConfig,
 };

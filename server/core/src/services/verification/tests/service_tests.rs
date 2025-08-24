@@ -6,6 +6,8 @@ use crate::domain::entities::verification_code::CODE_LENGTH;
 use crate::errors::{DomainError, ValidationError};
 use crate::services::verification::{VerificationService, VerificationServiceConfig};
 use crate::services::verification::CacheServiceTrait;
+use crate::services::verification::service::OtpMetadata;
+use chrono::{Utc, Duration};
 
 use super::mocks::{MockSmsService, MockCacheService};
 
@@ -114,16 +116,67 @@ async fn test_verify_code_invalid_format() {
 }
 
 #[tokio::test]
-async fn test_generate_code() {
-    // Test code generation multiple times
+async fn test_generate_secure_code() {
+    // Test secure code generation multiple times
     for _ in 0..100 {
-        let code = VerificationService::<MockSmsService, MockCacheService>::generate_code();
+        let code = VerificationService::<MockSmsService, MockCacheService>::generate_secure_code();
         assert_eq!(code.len(), CODE_LENGTH);
         assert!(code.chars().all(|c| c.is_ascii_digit()));
         
         let num: u32 = code.parse().unwrap();
         assert!(num < 1_000_000);
     }
+}
+
+#[tokio::test]
+async fn test_generate_secure_code_uniqueness() {
+    // Test that codes are reasonably unique (not deterministic)
+    let mut codes = std::collections::HashSet::new();
+    for _ in 0..100 {
+        let code = VerificationService::<MockSmsService, MockCacheService>::generate_secure_code();
+        codes.insert(code);
+    }
+    // We should have at least 90 unique codes out of 100 (allowing for some collisions)
+    assert!(codes.len() >= 90, "Generated codes lack sufficient randomness");
+}
+
+#[tokio::test]
+async fn test_constant_time_comparison() {
+    // Test equal strings
+    assert!(VerificationService::<MockSmsService, MockCacheService>::verify_code_constant_time(
+        "123456", 
+        "123456"
+    ));
+    
+    // Test different strings of same length
+    assert!(!VerificationService::<MockSmsService, MockCacheService>::verify_code_constant_time(
+        "123456", 
+        "123457"
+    ));
+    
+    // Test different lengths (should return false immediately)
+    assert!(!VerificationService::<MockSmsService, MockCacheService>::verify_code_constant_time(
+        "12345", 
+        "123456"
+    ));
+    
+    // Test empty strings
+    assert!(VerificationService::<MockSmsService, MockCacheService>::verify_code_constant_time(
+        "", 
+        ""
+    ));
+    
+    // Test strings that differ at the beginning
+    assert!(!VerificationService::<MockSmsService, MockCacheService>::verify_code_constant_time(
+        "923456", 
+        "123456"
+    ));
+    
+    // Test strings that differ at the end
+    assert!(!VerificationService::<MockSmsService, MockCacheService>::verify_code_constant_time(
+        "123459", 
+        "123456"
+    ));
 }
 
 #[tokio::test]
@@ -147,4 +200,134 @@ async fn test_cooldown_period() {
         DomainError::ValidationErr(ValidationError::RateLimitExceeded { .. }) => {}
         _ => panic!("Expected rate limit error"),
     }
+}
+
+#[tokio::test]
+async fn test_invalidate_previous_codes() {
+    let sms_service = Arc::new(MockSmsService::new(false));
+    let cache_service = Arc::new(MockCacheService::new(false));
+    // Create custom config with 5 minute expiration and 0 cooldown for this test
+    let config = VerificationServiceConfig {
+        code_expiration_minutes: 5,
+        resend_cooldown_seconds: 0, // No cooldown for testing invalidation
+        max_attempts: 3,
+        use_mock_sms: false,
+    };
+    
+    let service = VerificationService::new(sms_service, cache_service.clone(), config);
+    
+    // Send first code
+    let result1 = service.send_verification_code("+1234567890").await;
+    assert!(result1.is_ok());
+    let code1 = result1.unwrap().verification_code.code;
+    
+    // Send second code immediately (should invalidate first due to no cooldown)
+    let result2 = service.send_verification_code("+1234567890").await;
+    assert!(result2.is_ok());
+    let code2 = result2.unwrap().verification_code.code;
+    
+    // Codes should be different (using CSPRNG)
+    assert_ne!(code1, code2);
+    
+    // Only the second code should work
+    let verify_result = service.verify_code("+1234567890", &code2).await;
+    assert!(verify_result.is_ok());
+    assert!(verify_result.unwrap().success);
+}
+
+#[tokio::test]
+async fn test_mark_code_as_used() {
+    let sms_service = Arc::new(MockSmsService::new(false));
+    let cache_service = Arc::new(MockCacheService::new(false));
+    let config = VerificationServiceConfig::default();
+    
+    let service = VerificationService::new(sms_service, cache_service.clone(), config);
+    
+    // Send code
+    let send_result = service.send_verification_code("+1234567890").await.unwrap();
+    let code = send_result.verification_code.code;
+    
+    // Verify code (should mark as used)
+    let verify_result = service.verify_code("+1234567890", &code).await.unwrap();
+    assert!(verify_result.success);
+    
+    // Code should be cleared after successful verification
+    assert!(!cache_service.code_exists("+1234567890").await.unwrap());
+}
+
+#[tokio::test]
+async fn test_max_attempts_exceeded() {
+    let sms_service = Arc::new(MockSmsService::new(false));
+    let cache_service = Arc::new(MockCacheService::new(false));
+    let config = VerificationServiceConfig::default();
+    
+    let service = VerificationService::new(sms_service, cache_service.clone(), config);
+    
+    // Send code
+    service.send_verification_code("+1234567890").await.unwrap();
+    
+    // Try wrong code 3 times
+    for i in 1..=3 {
+        let verify_result = service.verify_code("+1234567890", "000000").await.unwrap();
+        assert!(!verify_result.success);
+        
+        if i < 3 {
+            assert_eq!(verify_result.remaining_attempts, Some(3 - i));
+        } else {
+            assert_eq!(verify_result.remaining_attempts, Some(0));
+            assert!(verify_result.error_message.unwrap().contains("Maximum verification attempts exceeded"));
+        }
+    }
+    
+    // 4th attempt should still fail
+    let verify_result = service.verify_code("+1234567890", "000000").await.unwrap();
+    assert!(!verify_result.success);
+    assert_eq!(verify_result.remaining_attempts, Some(0));
+}
+
+#[tokio::test]
+async fn test_concurrent_code_generation() {
+    use std::sync::Arc;
+    
+    // Test that concurrent code generation is thread-safe
+    let sms_service = Arc::new(MockSmsService::new(false));
+    let cache_service = Arc::new(MockCacheService::new(false));
+    let config = VerificationServiceConfig::default();
+    let service = Arc::new(VerificationService::new(sms_service, cache_service, config));
+    
+    let mut handles = vec![];
+    
+    for i in 0..10 {
+        let service_clone = Arc::clone(&service);
+        let handle = tokio::spawn(async move {
+            let phone = format!("+123456789{}", i);
+            service_clone.send_verification_code(&phone).await
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        let result = handle.await.unwrap();
+        assert!(result.is_ok());
+    }
+}
+
+#[test]
+fn test_otp_metadata_structure() {
+    let metadata = OtpMetadata {
+        code: "123456".to_string(),
+        created_at: Utc::now(),
+        expires_at: Utc::now() + Duration::minutes(5),
+        attempts: 0,
+        max_attempts: 3,
+        is_used: false,
+        phone: "+1234567890".to_string(),
+        session_id: "test-session-id".to_string(),
+    };
+    
+    assert_eq!(metadata.code, "123456");
+    assert_eq!(metadata.max_attempts, 3);
+    assert!(!metadata.is_used);
+    assert_eq!(metadata.phone, "+1234567890");
+    assert_eq!(metadata.session_id, "test-session-id");
 }
