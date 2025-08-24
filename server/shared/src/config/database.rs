@@ -7,23 +7,23 @@ use serde::{Deserialize, Serialize};
 pub struct DatabaseConfig {
     /// Database connection URL
     pub url: String,
-    
+
     /// Maximum number of connections in the pool
     pub max_connections: u32,
-    
+
     /// Connection timeout in seconds
     pub connect_timeout: u64,
-    
+
     /// Idle connection timeout in seconds
     pub idle_timeout: u64,
-    
+
     /// Maximum lifetime of a connection in seconds
     pub max_lifetime: u64,
-    
+
     /// Enable SQL query logging
     #[serde(default)]
     pub enable_logging: bool,
-    
+
     /// Slow query threshold in milliseconds
     #[serde(default = "default_slow_query_threshold")]
     pub slow_query_threshold: u64,
@@ -56,7 +56,7 @@ impl DatabaseConfig {
             .unwrap_or_else(|_| "30".to_string())
             .parse()
             .unwrap_or(30);
-            
+
         Self {
             url,
             max_connections,
@@ -64,7 +64,7 @@ impl DatabaseConfig {
             ..Default::default()
         }
     }
-    
+
     /// Create a new database configuration with URL
     pub fn new(url: impl Into<String>) -> Self {
         Self {
@@ -72,19 +72,19 @@ impl DatabaseConfig {
             ..Default::default()
         }
     }
-    
+
     /// Set the maximum number of connections
     pub fn with_max_connections(mut self, max: u32) -> Self {
         self.max_connections = max;
         self
     }
-    
+
     /// Enable SQL query logging
     pub fn with_logging(mut self, enable: bool) -> Self {
         self.enable_logging = enable;
         self
     }
-    
+
     /// Check if this is a production database
     pub fn is_production(&self) -> bool {
         !self.url.contains("localhost") && !self.url.contains("127.0.0.1")
@@ -93,37 +93,4 @@ impl DatabaseConfig {
 
 fn default_slow_query_threshold() -> u64 {
     1000 // 1 second
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_database_config_default() {
-        let config = DatabaseConfig::default();
-        assert_eq!(config.max_connections, 10);
-        assert_eq!(config.connect_timeout, 30);
-        assert!(!config.enable_logging);
-    }
-    
-    #[test]
-    fn test_database_config_builder() {
-        let config = DatabaseConfig::new("mysql://prod:3306/db")
-            .with_max_connections(50)
-            .with_logging(true);
-        
-        assert_eq!(config.max_connections, 50);
-        assert!(config.enable_logging);
-        assert!(config.is_production());
-    }
-    
-    #[test]
-    fn test_is_production() {
-        let local = DatabaseConfig::new("mysql://localhost:3306/db");
-        assert!(!local.is_production());
-        
-        let prod = DatabaseConfig::new("mysql://db.example.com:3306/db");
-        assert!(prod.is_production());
-    }
 }

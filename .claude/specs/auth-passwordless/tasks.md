@@ -122,7 +122,7 @@
   - _Leverage: 现有 verification_cache.rs, otp_encryption.rs_
   - _Requirements: 2.11, 4.7, 8.2_
 
-- [x] 11. 实现验证码验证和尝试管理
+- [x] 12. 实现验证码验证和尝试管理
   - File: server/core/src/services/verification/validator.rs
   - 创建 OtpValidator 结构体
   - 实现 verify_with_attempts() 方法，处理尝试计数

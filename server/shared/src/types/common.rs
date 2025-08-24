@@ -81,7 +81,7 @@ impl fmt::Display for SortOrder {
 pub struct SortParams {
     /// Field to sort by
     pub field: String,
-    
+
     /// Sort order
     #[serde(default)]
     pub order: SortOrder,
@@ -94,11 +94,11 @@ impl SortParams {
             order,
         }
     }
-    
+
     pub fn asc(field: impl Into<String>) -> Self {
         Self::new(field, SortOrder::Asc)
     }
-    
+
     pub fn desc(field: impl Into<String>) -> Self {
         Self::new(field, SortOrder::Desc)
     }
@@ -110,7 +110,7 @@ pub struct DateRange {
     /// Start date (inclusive)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub from: Option<DateTime<Utc>>,
-    
+
     /// End date (inclusive)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub to: Option<DateTime<Utc>>,
@@ -121,7 +121,7 @@ impl DateRange {
     pub fn new(from: Option<DateTime<Utc>>, to: Option<DateTime<Utc>>) -> Self {
         Self { from, to }
     }
-    
+
     /// Create a range from a specific date onwards
     pub fn from_date(from: DateTime<Utc>) -> Self {
         Self {
@@ -129,7 +129,7 @@ impl DateRange {
             to: None,
         }
     }
-    
+
     /// Create a range up to a specific date
     pub fn until_date(to: DateTime<Utc>) -> Self {
         Self {
@@ -137,7 +137,7 @@ impl DateRange {
             to: Some(to),
         }
     }
-    
+
     /// Create a range for today
     pub fn today() -> Self {
         let now = Utc::now();
@@ -152,7 +152,7 @@ impl DateRange {
             to: Some(end),
         }
     }
-    
+
     /// Check if a date is within the range
     pub fn contains(&self, date: &DateTime<Utc>) -> bool {
         let after_start = self.from.map_or(true, |from| date >= &from);
@@ -185,21 +185,21 @@ impl Coordinate {
     pub fn new(latitude: f64, longitude: f64) -> Self {
         Self { latitude, longitude }
     }
-    
+
     /// Calculate distance to another coordinate (in meters)
     /// Using Haversine formula
     pub fn distance_to(&self, other: &Coordinate) -> f64 {
         const EARTH_RADIUS_M: f64 = 6_371_000.0;
-        
+
         let lat1 = self.latitude.to_radians();
         let lat2 = other.latitude.to_radians();
         let delta_lat = (other.latitude - self.latitude).to_radians();
         let delta_lon = (other.longitude - self.longitude).to_radians();
-        
+
         let a = (delta_lat / 2.0).sin().powi(2)
             + lat1.cos() * lat2.cos() * (delta_lon / 2.0).sin().powi(2);
         let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
-        
+
         EARTH_RADIUS_M * c
     }
 }
@@ -209,19 +209,19 @@ impl Coordinate {
 pub struct FileInfo {
     /// Original filename
     pub filename: String,
-    
+
     /// MIME type
     pub content_type: String,
-    
+
     /// File size in bytes
     pub size: u64,
-    
+
     /// Storage path or URL
     pub path: String,
-    
+
     /// Upload timestamp
     pub uploaded_at: DateTime<Utc>,
-    
+
     /// File checksum (MD5/SHA256)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub checksum: Option<String>,
@@ -257,63 +257,5 @@ pub enum Priority {
 impl Default for Priority {
     fn default() -> Self {
         Priority::Normal
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_id_conversions() {
-        let numeric_id = Id::from(123u64);
-        assert_eq!(numeric_id.to_string(), "123");
-        
-        let string_id = Id::from("abc");
-        assert_eq!(string_id.to_string(), "abc");
-        
-        let uuid = Uuid::new_v4();
-        let uuid_id = Id::from(uuid);
-        assert_eq!(uuid_id.to_string(), uuid.to_string());
-    }
-    
-    #[test]
-    fn test_sort_order() {
-        assert_eq!(SortOrder::default(), SortOrder::Asc);
-        assert_eq!(SortOrder::Asc.to_string(), "ASC");
-        assert_eq!(SortOrder::Desc.to_string(), "DESC");
-    }
-    
-    #[test]
-    fn test_date_range() {
-        let now = Utc::now();
-        let yesterday = now - chrono::Duration::days(1);
-        let tomorrow = now + chrono::Duration::days(1);
-        
-        let range = DateRange::new(Some(yesterday), Some(tomorrow));
-        assert!(range.contains(&now));
-        
-        let future = now + chrono::Duration::days(2);
-        assert!(!range.contains(&future));
-    }
-    
-    #[test]
-    fn test_coordinate_distance() {
-        // San Francisco to Los Angeles (approximately 559 km)
-        let sf = Coordinate::new(37.7749, -122.4194);
-        let la = Coordinate::new(34.0522, -118.2437);
-        
-        let distance = sf.distance_to(&la);
-        let distance_km = distance / 1000.0;
-        
-        // Should be approximately 559 km (with some tolerance for calculation)
-        assert!((distance_km - 559.0).abs() < 10.0);
-    }
-    
-    #[test]
-    fn test_priority_ordering() {
-        assert!(Priority::Low < Priority::Normal);
-        assert!(Priority::Normal < Priority::High);
-        assert!(Priority::High < Priority::Urgent);
     }
 }

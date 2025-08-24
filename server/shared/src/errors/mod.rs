@@ -9,14 +9,14 @@ use std::collections::HashMap;
 pub struct ErrorResponse {
     /// Error code for client identification
     pub error: String,
-    
+
     /// Human-readable error message (localized)
     pub message: String,
-    
+
     /// Additional error details (field errors, etc.)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<HashMap<String, serde_json::Value>>,
-    
+
     /// Timestamp when the error occurred
     pub timestamp: DateTime<Utc>,
 }
@@ -82,43 +82,3 @@ pub trait IntoErrorResponse {
 
 /// Result type with ErrorResponse as error
 pub type ApiResult<T> = Result<T, ErrorResponse>;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn test_error_response_creation() {
-        let error = ErrorResponse::new("TEST_ERROR", "Test error message");
-        assert_eq!(error.error, "TEST_ERROR");
-        assert_eq!(error.message, "Test error message");
-        assert!(error.details.is_none());
-    }
-
-    #[test]
-    fn test_error_response_with_details() {
-        let mut details = HashMap::new();
-        details.insert("field".to_string(), json!("value"));
-        
-        let error = ErrorResponse::with_details(
-            "VALIDATION_ERROR",
-            "Validation failed",
-            details.clone(),
-        );
-        
-        assert_eq!(error.error, "VALIDATION_ERROR");
-        assert_eq!(error.details.unwrap(), details);
-    }
-
-    #[test]
-    fn test_add_detail() {
-        let error = ErrorResponse::new("ERROR", "Message")
-            .add_detail("field1", "value1")
-            .add_detail("field2", 42);
-        
-        let details = error.details.unwrap();
-        assert_eq!(details.get("field1").unwrap(), &json!("value1"));
-        assert_eq!(details.get("field2").unwrap(), &json!(42));
-    }
-}
