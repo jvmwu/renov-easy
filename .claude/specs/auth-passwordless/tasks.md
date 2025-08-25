@@ -192,7 +192,7 @@
   - _Leverage: 现有 AuditLog 结构_
   - _Requirements: 7.7_
 
-- [ ] 20. 实现审计日志仓储
+- [x] 20. 实现审计日志仓储
   - File: server/infra/src/database/mysql/audit_repository_impl.rs
   - 实现 AuditLogRepository trait
   - 添加 create_auth_event() 方法

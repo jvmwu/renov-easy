@@ -69,6 +69,9 @@ where
     // Extract client IP for rate limiting
     let client_ip = extract_client_ip(&req);
     
+    // Extract user agent for audit logging
+    let user_agent = extract_user_agent(&req);
+    
     // Validate request data using the validator
     if let Err(errors) = request.0.validate() {
         let mut details = HashMap::new();
@@ -114,8 +117,8 @@ where
         &client_ip
     );
 
-    // Call the auth service to send verification code with IP for rate limiting
-    match state.auth_service.send_verification_code(&phone, Some(client_ip.clone())).await {
+    // Call the auth service to send verification code with IP for rate limiting and user agent for audit
+    match state.auth_service.send_verification_code(&phone, Some(client_ip.clone()), user_agent.clone()).await {
         Ok(result) => {
             // Calculate seconds until next resend is allowed
             let now = chrono::Utc::now();
@@ -177,5 +180,13 @@ fn extract_client_ip(req: &HttpRequest) -> String {
         .peer_addr()
         .unwrap_or("unknown")
         .to_string()
+}
+
+/// Extract user agent from request headers
+fn extract_user_agent(req: &HttpRequest) -> Option<String> {
+    req.headers()
+        .get("User-Agent")
+        .and_then(|ua| ua.to_str().ok())
+        .map(|s| s.to_string())
 }
 

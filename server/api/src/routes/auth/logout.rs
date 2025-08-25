@@ -48,8 +48,24 @@ where
     // Detect language preference from request headers
     let lang = extract_language(&req);
     
+    // Extract client IP and user agent for audit logging
+    let client_ip = extract_client_ip(&req);
+    let user_agent = extract_user_agent(&req);
+    
+    // Extract access token from Authorization header for blacklisting
+    let access_token = req.headers()
+        .get("Authorization")
+        .and_then(|auth_header| auth_header.to_str().ok())
+        .and_then(|auth_str| {
+            if auth_str.starts_with("Bearer ") {
+                Some(auth_str[7..].to_string())
+            } else {
+                None
+            }
+        });
+    
     // Call the auth service to logout the user
-    match state.auth_service.logout(auth.user_id, None, None).await {
+    match state.auth_service.logout(auth.user_id, access_token, Some(client_ip), Some(user_agent), None).await {
         Ok(()) => {
             let message = match lang {
                 Language::English => "Logged out successfully",
@@ -63,5 +79,39 @@ where
         }
         Err(error) => handle_domain_error_with_lang(&error, lang),
     }
+}
+
+/// Extract client IP address from request
+fn extract_client_ip(req: &HttpRequest) -> String {
+    // Try to get IP from X-Forwarded-For header (for reverse proxy scenarios)
+    if let Some(forwarded_for) = req.headers().get("X-Forwarded-For") {
+        if let Ok(forwarded_str) = forwarded_for.to_str() {
+            // Take the first IP from the comma-separated list
+            if let Some(ip) = forwarded_str.split(',').next() {
+                return ip.trim().to_string();
+            }
+        }
+    }
+
+    // Try to get IP from X-Real-IP header
+    if let Some(real_ip) = req.headers().get("X-Real-IP") {
+        if let Ok(ip_str) = real_ip.to_str() {
+            return ip_str.to_string();
+        }
+    }
+
+    // Fall back to connection info
+    req.connection_info()
+        .peer_addr()
+        .unwrap_or("unknown")
+        .to_string()
+}
+
+/// Extract user agent from request headers
+fn extract_user_agent(req: &HttpRequest) -> Option<String> {
+    req.headers()
+        .get("User-Agent")
+        .and_then(|ua| ua.to_str().ok())
+        .map(|s| s.to_string())
 }
 

@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 use uuid::Uuid;
+use serde_json;
 use crate::domain::entities::user::User;
 use crate::domain::value_objects::AuthResponse;
 use crate::errors::{AuthError, DomainError, DomainResult, ValidationError};
@@ -112,7 +113,7 @@ where
     /// 2. Checks rate limiting (3 requests per hour per phone, 10 per hour per IP)
     /// 3. Delegates to verification service for code generation and sending
     /// 4. Increments rate limit counter
-    /// 5. Logs rate limit violations to audit log
+    /// 5. Logs all authentication events to audit log
     ///
     /// # Arguments
     ///
@@ -143,6 +144,7 @@ where
         &self, 
         phone: &str,
         client_ip: Option<String>,
+        user_agent: Option<String>,
     ) -> DomainResult<SendCodeResult> {
         // Step 1: Validate phone number format with country-specific rules
         if !validate_phone_with_country(phone) {
@@ -167,13 +169,16 @@ where
                 .log_rate_limit_violation(phone, "phone", "send_verification_code")
                 .await;
             
-            // Log to audit service if available
+            // Log to audit service if available (Requirement 7.4)
             if let Some(ref audit_service) = self.audit_service {
+                let phone_masked = mask_phone(phone);
                 let phone_hash = hash_phone(phone);
-                let _ = audit_service.log_rate_limit_exceeded(
-                    Some(phone_hash),
-                    client_ip.clone(),
-                    None,
+                let _ = audit_service.log_rate_limit_violation(
+                    "phone",
+                    Some(&phone_masked),
+                    Some(&phone_hash),
+                    client_ip.clone().unwrap_or_else(|| "unknown".to_string()),
+                    user_agent.clone(),
                 ).await;
             }
             
@@ -206,13 +211,16 @@ where
                     .log_rate_limit_violation(ip, "ip", "send_verification_code")
                     .await;
                 
-                // Log to audit service if available
+                // Log to audit service if available (Requirement 7.4)
                 if let Some(ref audit_service) = self.audit_service {
+                    let phone_masked = mask_phone(phone);
                     let phone_hash = hash_phone(phone);
-                    let _ = audit_service.log_rate_limit_exceeded(
-                        Some(phone_hash),
-                        Some(ip.clone()),
-                        None,
+                    let _ = audit_service.log_rate_limit_violation(
+                        "ip",
+                        Some(&phone_masked),
+                        Some(&phone_hash),
+                        ip.clone(),
+                        user_agent.clone(),
                     ).await;
                 }
                 
@@ -230,11 +238,40 @@ where
         }
 
         // Step 4: Delegate to verification service to send the code
-        let send_result = self.verification_service
+        let send_result = match self.verification_service
             .send_verification_code(phone)
             .await
-            .map_err(|e| {
-                match e {
+        {
+            Ok(result) => result,
+            Err(e) => {
+                // Log SMS send failure to audit service
+                if let Some(ref audit_service) = self.audit_service {
+                    let phone_masked = mask_phone(phone);
+                    let phone_hash = hash_phone(phone);
+                    let failure_reason = e.to_string();
+                    
+                    let event_type = if failure_reason.contains("Rate limit") {
+                        crate::domain::entities::audit::AuditEventType::RateLimitExceeded
+                    } else {
+                        crate::domain::entities::audit::AuditEventType::SendCodeFailure
+                    };
+                    
+                    let _ = audit_service.log_auth_event(
+                        event_type,
+                        client_ip.clone().unwrap_or_else(|| "unknown".to_string()),
+                        None,
+                        Some(&phone_masked),
+                        Some(phone_hash),
+                        user_agent.clone(),
+                        Some(failure_reason.clone()),
+                        Some(serde_json::json!({
+                            "error_type": "sms_send_failed",
+                            "phone_masked": phone_masked,
+                        })),
+                    ).await;
+                }
+                
+                return Err(match e {
                     DomainError::ValidationErr(ValidationError::RateLimitExceeded { .. }) => {
                         // This is the cooldown period check from verification service
                         // Convert to auth error for consistency
@@ -244,8 +281,9 @@ where
                         DomainError::Auth(AuthError::SmsServiceFailure)
                     }
                     _ => e,
-                }
-            })?;
+                });
+            }
+        };
 
         // Step 5: Increment rate limit counters after successful send
         let _phone_count = self.rate_limiter
@@ -259,6 +297,25 @@ where
                 .increment_ip_verification_counter(ip)
                 .await
                 .unwrap_or(1);
+        }
+        
+        // Log successful code send to audit service
+        if let Some(ref audit_service) = self.audit_service {
+            let phone_masked = mask_phone(phone);
+            let phone_hash = hash_phone(phone);
+            let _ = audit_service.log_auth_event(
+                crate::domain::entities::audit::AuditEventType::SendCodeSuccess,
+                client_ip.unwrap_or_else(|| "unknown".to_string()),
+                None,
+                Some(&phone_masked),
+                Some(phone_hash),
+                user_agent,
+                None,
+                Some(serde_json::json!({
+                    "message_id": send_result.message_id,
+                    "phone_masked": phone_masked,
+                })),
+            ).await;
         }
 
         Ok(send_result)
@@ -310,6 +367,7 @@ where
         phone: &str, 
         code: &str,
         client_ip: Option<String>,
+        user_agent: Option<String>,
         device_fingerprint: Option<String>,
     ) -> DomainResult<AuthResponse> {
         // Step 1: Validate phone number format with country-specific rules
@@ -336,13 +394,16 @@ where
                     .log_rate_limit_violation(ip, "ip", "verify_code")
                     .await;
                 
-                // Log to audit service if available
+                // Log to audit service if available (Requirement 7.4)
                 if let Some(ref audit_service) = self.audit_service {
+                    let phone_masked = mask_phone(phone);
                     let phone_hash = hash_phone(phone);
-                    let _ = audit_service.log_rate_limit_exceeded(
-                        Some(phone_hash),
-                        Some(ip.clone()),
-                        None,
+                    let _ = audit_service.log_rate_limit_violation(
+                        "ip",
+                        Some(&phone_masked),
+                        Some(&phone_hash),
+                        ip.clone(),
+                        user_agent.clone(),
                     ).await;
                 }
                 
@@ -360,9 +421,41 @@ where
         }
         
         // Step 3: Delegate to verification service to verify the code
-        let verify_result = self.verification_service
+        let verify_result = match self.verification_service
             .verify_code(phone, code)
-            .await?;
+            .await
+        {
+            Ok(result) => result,
+            Err(e) => {
+                // Log verification failure to audit service
+                if let Some(ref audit_service) = self.audit_service {
+                    let phone_masked = mask_phone(phone);
+                    let phone_hash = hash_phone(phone);
+                    let failure_reason = e.to_string();
+                    
+                    let event_type = if failure_reason.contains("expired") {
+                        crate::domain::entities::audit::AuditEventType::VerifyCodeFailure
+                    } else {
+                        crate::domain::entities::audit::AuditEventType::VerifyCodeFailure
+                    };
+                    
+                    let _ = audit_service.log_auth_event(
+                        event_type,
+                        client_ip.clone().unwrap_or_else(|| "unknown".to_string()),
+                        None,
+                        Some(&phone_masked),
+                        Some(phone_hash),
+                        user_agent.clone(),
+                        Some(failure_reason.clone()),
+                        Some(serde_json::json!({
+                            "error_type": "code_verification_failed",
+                            "phone_masked": phone_masked,
+                        })),
+                    ).await;
+                }
+                return Err(e);
+            }
+        };
 
         // Step 4: Process verification result
         if verify_result.success {
@@ -455,6 +548,20 @@ where
                 )
                 .await?;
             
+            // Log successful login to audit service (Requirement 7.3)
+            if let Some(ref audit_service) = self.audit_service {
+                // Generate a token ID from the access token for tracking
+                let token_id = Uuid::new_v4();
+                let _ = audit_service.log_login_success(
+                    _updated_user.id,
+                    phone,
+                    &phone_hash,
+                    client_ip.unwrap_or_else(|| "unknown".to_string()),
+                    user_agent,
+                    token_id,
+                ).await;
+            }
+            
             // Step 8: Create and return authentication response
             let auth_response = AuthResponse::from_token_pair(
                 token_pair,
@@ -471,28 +578,64 @@ where
                     .unwrap_or(1);
             }
             
-            // Map to appropriate auth error
-            match verify_result.remaining_attempts {
+            // Determine failure reason
+            let (error, failure_reason, event_type) = match verify_result.remaining_attempts {
                 Some(0) => {
-                    // No more attempts remaining
-                    Err(DomainError::Auth(AuthError::MaxAttemptsExceeded))
+                    // Log account locked event if no more attempts
+                    (
+                        DomainError::Auth(AuthError::MaxAttemptsExceeded),
+                        "Maximum verification attempts exceeded",
+                        crate::domain::entities::audit::AuditEventType::AccountLocked
+                    )
                 }
                 Some(_remaining) => {
-                    // Still have attempts remaining
-                    Err(DomainError::Auth(AuthError::InvalidVerificationCode))
+                    (
+                        DomainError::Auth(AuthError::InvalidVerificationCode),
+                        "Invalid verification code",
+                        crate::domain::entities::audit::AuditEventType::LoginFailure
+                    )
                 }
                 None => {
                     // Code might have expired or doesn't exist
                     if verify_result.error_message.as_ref()
                         .map(|msg| msg.contains("format"))
                         .unwrap_or(false) {
-                        Err(DomainError::Auth(AuthError::InvalidVerificationCode))
+                        (
+                            DomainError::Auth(AuthError::InvalidVerificationCode),
+                            "Invalid verification code format",
+                            crate::domain::entities::audit::AuditEventType::LoginFailure
+                        )
                     } else {
                         // Assume expired if no specific error
-                        Err(DomainError::Auth(AuthError::VerificationCodeExpired))
+                        (
+                            DomainError::Auth(AuthError::VerificationCodeExpired),
+                            "Verification code expired",
+                            crate::domain::entities::audit::AuditEventType::VerifyCodeFailure
+                        )
                     }
                 }
+            };
+            
+            // Log login failure to audit service (Requirement 7.2)
+            if let Some(ref audit_service) = self.audit_service {
+                let phone_masked = mask_phone(phone);
+                let phone_hash = hash_phone(phone);
+                let _ = audit_service.log_auth_event(
+                    event_type,
+                    client_ip.unwrap_or_else(|| "unknown".to_string()),
+                    None,
+                    Some(&phone_masked),
+                    Some(phone_hash),
+                    user_agent,
+                    Some(failure_reason.to_string()),
+                    Some(serde_json::json!({
+                        "remaining_attempts": verify_result.remaining_attempts,
+                        "phone_masked": phone_masked,
+                    })),
+                ).await;
             }
+            
+            Err(error)
         }
     }
     
@@ -599,12 +742,36 @@ where
     pub async fn refresh_token(
         &self,
         refresh_token: &str,
+        client_ip: Option<String>,
+        user_agent: Option<String>,
         device_fingerprint: Option<String>,
     ) -> DomainResult<AuthResponse> {
         // Step 1: Verify the refresh token and get user ID
-        let user_id = self.token_service
+        let user_id = match self.token_service
             .verify_refresh_token(refresh_token)
-            .await?;
+            .await
+        {
+            Ok(id) => id,
+            Err(e) => {
+                // Log refresh token failure to audit service
+                if let Some(ref audit_service) = self.audit_service {
+                    let failure_reason = e.to_string();
+                    let _ = audit_service.log_auth_event(
+                        crate::domain::entities::audit::AuditEventType::RefreshTokenFailure,
+                        client_ip.clone().unwrap_or_else(|| "unknown".to_string()),
+                        None,
+                        None,
+                        None,
+                        user_agent.clone(),
+                        Some(failure_reason.clone()),
+                        Some(serde_json::json!({
+                            "error_type": "refresh_token_verification_failed",
+                        })),
+                    ).await;
+                }
+                return Err(e);
+            }
+        };
 
         // Step 2: Get the user from repository
         let user = self.user_repository
@@ -631,11 +798,30 @@ where
                 refresh_token,
                 user.user_type.clone(),
                 user.is_verified,
-                phone_hash,
+                phone_hash.clone(),
                 device_fingerprint,
             )
             .await?;
 
+        // Log successful token refresh to audit service
+        if let Some(ref audit_service) = self.audit_service {
+            // Generate a token ID for tracking
+            let token_id = Uuid::new_v4();
+            let _ = audit_service.log_auth_event(
+                crate::domain::entities::audit::AuditEventType::RefreshTokenSuccess,
+                client_ip.unwrap_or_else(|| "unknown".to_string()),
+                Some(user_id),
+                None,
+                phone_hash,
+                user_agent,
+                None,
+                Some(serde_json::json!({
+                    "token_id": token_id.to_string(),
+                    "refresh_type": "rotation",
+                })),
+            ).await;
+        }
+        
         // Step 6: Create and return authentication response
         let auth_response = AuthResponse::from_token_pair(
             token_pair,
@@ -676,6 +862,8 @@ where
         &self,
         user_id: Uuid,
         access_token: Option<String>,
+        client_ip: Option<String>,
+        user_agent: Option<String>,
         device_fingerprint: Option<String>,
     ) -> DomainResult<()> {
         // Blacklist the access token if provided
@@ -686,7 +874,7 @@ where
         }
         
         // Revoke device-specific tokens if fingerprint provided
-        if let Some(fingerprint) = device_fingerprint {
+        if let Some(ref fingerprint) = device_fingerprint {
             let _ = self.token_service
                 .revoke_device_tokens(user_id, &fingerprint)
                 .await;
@@ -695,6 +883,22 @@ where
             self.token_service
                 .revoke_tokens(user_id)
                 .await?;
+        }
+        
+        // Log logout event to audit service
+        if let Some(ref audit_service) = self.audit_service {
+            let _ = audit_service.log_auth_event(
+                crate::domain::entities::audit::AuditEventType::Logout,
+                client_ip.unwrap_or_else(|| "unknown".to_string()),
+                Some(user_id),
+                None,
+                None,
+                user_agent,
+                None,
+                Some(serde_json::json!({
+                    "logout_type": if device_fingerprint.is_some() { "device" } else { "all_sessions" },
+                })),
+            ).await;
         }
         
         Ok(())

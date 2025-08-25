@@ -6,3 +6,5 @@ mod mocks;
 mod service_tests;
 #[cfg(test)]
 mod rate_limiter_tests;
+#[cfg(test)]
+mod audit_integration_tests;

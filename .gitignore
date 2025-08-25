@@ -119,4 +119,3 @@ node_modules/
 
 # JWT RS256 keys (never commit these!)
 server/core/keys/
-core/keys/

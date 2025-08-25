@@ -12,5 +12,5 @@ pub mod repositories;
 
 // Re-export commonly used types
 pub use connection::{DatabasePool, PoolStatistics};
-pub use mysql::{MySqlUserRepository, MySqlTokenRepository};
+pub use mysql::{MySqlUserRepository, MySqlTokenRepository, MySqlAuditLogRepository};
 pub use repositories::OtpRepository;
