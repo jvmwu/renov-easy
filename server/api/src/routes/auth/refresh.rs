@@ -58,7 +58,7 @@ where
     let user_agent = extract_user_agent(&req);
     
     // Call the auth service to refresh the token
-    match state.auth_service.refresh_token(&request.refresh_token, Some(client_ip), Some(user_agent), None).await {
+    match state.auth_service.refresh_token(&request.refresh_token, Some(client_ip), user_agent, None).await {
         Ok(auth_response) => {
             // Convert the domain AuthResponse to DTO AuthResponse
             let response = DtoAuthResponse {

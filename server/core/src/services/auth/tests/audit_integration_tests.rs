@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
 use crate::domain::entities::audit::{AuditLog, AuditEventType};
-use crate::domain::entities::user::{User, UserType};
+use crate::domain::entities::user::User;
 use crate::errors::{DomainError};
 use crate::repositories::AuditLogRepository;
 use crate::services::auth::{AuthService, AuthServiceConfig};
@@ -16,7 +16,6 @@ use crate::services::token::{TokenService, TokenServiceConfig};
 use crate::services::verification::{VerificationService, VerificationServiceConfig};
 use jsonwebtoken::Algorithm;
 
-use super::mocks::*;
 
 /// Mock implementation of AuditLogRepository for testing
 pub struct MockAuditLogRepository {
@@ -150,6 +149,7 @@ mod tests {
             MockAuditLogRepository,
         >,
         Arc<MockAuditLogRepository>,
+        Arc<MockRateLimiter>,
     ) {
         let user_repo = Arc::new(super::super::mocks::MockUserRepository::new());
         let sms_service = Arc::new(super::super::mocks::MockSmsService);
@@ -160,18 +160,13 @@ mod tests {
             VerificationServiceConfig::default(),
         ));
         let rate_limiter = Arc::new(MockRateLimiter::new());
-        let token_repo = Arc::new(MockTokenRepository);
+        let token_repo = MockTokenRepository;
         
-        let token_config = TokenServiceConfig {
-            algorithm: Algorithm::RS256,
-            access_token_ttl_seconds: 900,
-            refresh_token_ttl_seconds: 2592000,
-            issuer: "test".to_string(),
-            public_key_pem: include_str!("../../../../../../test_keys/public_key.pem").to_string(),
-            private_key_pem: include_str!("../../../../../../test_keys/private_key.pem").to_string(),
-            max_refresh_tokens_per_user: 5,
-        };
-        let token_service = Arc::new(TokenService::new(token_repo, token_config));
+        let mut token_config = TokenServiceConfig::default();
+        // Use HS256 for tests to avoid needing key files
+        token_config.algorithm = Algorithm::HS256;
+        token_config.rs256_config = None;
+        let token_service = Arc::new(TokenService::new(token_repo, token_config).expect("Failed to create token service"));
         
         let audit_repo = Arc::new(MockAuditLogRepository::new());
         let audit_service = Arc::new(AuditService::new(
@@ -184,18 +179,18 @@ mod tests {
         let auth_service = AuthService::with_audit(
             user_repo,
             verification_service,
-            rate_limiter,
+            rate_limiter.clone(),
             token_service,
             audit_service,
             auth_config,
         );
         
-        (auth_service, audit_repo)
+        (auth_service, audit_repo, rate_limiter)
     }
     
     #[tokio::test]
     async fn test_audit_log_successful_code_send() {
-        let (auth_service, audit_repo) = create_test_service_with_audit().await;
+        let (auth_service, audit_repo, _rate_limiter) = create_test_service_with_audit().await;
         
         let phone = "+1234567890";
         let client_ip = Some("192.168.1.1".to_string());
@@ -223,16 +218,14 @@ mod tests {
     
     #[tokio::test]
     async fn test_audit_log_rate_limit_exceeded() {
-        let (auth_service, audit_repo) = create_test_service_with_audit().await;
+        let (auth_service, audit_repo, rate_limiter) = create_test_service_with_audit().await;
         
         let phone = "+1234567890";
         let client_ip = Some("192.168.1.1".to_string());
         let user_agent = Some("Mozilla/5.0 Chrome".to_string());
         
         // Set rate limiter to trigger limit
-        if let Some(service) = auth_service.rate_limiter.as_any().downcast_ref::<MockRateLimiter>() {
-            service.set_phone_rate_limited(true);
-        }
+        rate_limiter.set_phone_rate_limited(true);
         
         // Try to send verification code
         let result = auth_service
@@ -261,7 +254,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_audit_log_successful_login() {
-        let (auth_service, audit_repo) = create_test_service_with_audit().await;
+        let (auth_service, audit_repo, _rate_limiter) = create_test_service_with_audit().await;
         
         let phone = "+1234567890";
         let code = "123456";
@@ -294,7 +287,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_audit_log_failed_login() {
-        let (auth_service, audit_repo) = create_test_service_with_audit().await;
+        let (auth_service, audit_repo, _rate_limiter) = create_test_service_with_audit().await;
         
         // Create auth service with failing cache
         let user_repo = Arc::new(super::super::mocks::MockUserRepository::new());
@@ -306,18 +299,13 @@ mod tests {
             VerificationServiceConfig::default(),
         ));
         let rate_limiter = Arc::new(MockRateLimiter::new());
-        let token_repo = Arc::new(MockTokenRepository);
+        let token_repo = MockTokenRepository;
         
-        let token_config = TokenServiceConfig {
-            algorithm: Algorithm::RS256,
-            access_token_ttl_seconds: 900,
-            refresh_token_ttl_seconds: 2592000,
-            issuer: "test".to_string(),
-            public_key_pem: include_str!("../../../../../../test_keys/public_key.pem").to_string(),
-            private_key_pem: include_str!("../../../../../../test_keys/private_key.pem").to_string(),
-            max_refresh_tokens_per_user: 5,
-        };
-        let token_service = Arc::new(TokenService::new(token_repo, token_config));
+        let mut token_config = TokenServiceConfig::default();
+        // Use HS256 for tests to avoid needing key files
+        token_config.algorithm = Algorithm::HS256;
+        token_config.rs256_config = None;
+        let token_service = Arc::new(TokenService::new(token_repo, token_config).expect("Failed to create token service"));
         
         let audit_service = Arc::new(AuditService::new(
             audit_repo.clone(),
@@ -374,7 +362,7 @@ mod tests {
     async fn test_audit_log_token_refresh() {
         // This test would require a more complete setup with actual JWT tokens
         // For now, we verify the structure is in place
-        let (auth_service, audit_repo) = create_test_service_with_audit().await;
+        let (auth_service, audit_repo, _rate_limiter) = create_test_service_with_audit().await;
         
         // The actual refresh token test would require setting up a valid user
         // and token first, then attempting refresh
@@ -385,7 +373,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_audit_log_logout() {
-        let (auth_service, audit_repo) = create_test_service_with_audit().await;
+        let (auth_service, audit_repo, _rate_limiter) = create_test_service_with_audit().await;
         
         let user_id = Uuid::new_v4();
         let client_ip = Some("192.168.1.1".to_string());
@@ -439,27 +427,27 @@ impl MockRateLimiter {
 
 #[async_trait]
 impl crate::services::auth::rate_limiter::RateLimiterTrait for MockRateLimiter {
-    async fn check_sms_rate_limit(&self, _phone: &str) -> Result<bool, DomainError> {
+    async fn check_sms_rate_limit(&self, _phone: &str) -> Result<bool, String> {
         Ok(*self.phone_rate_limited.lock().unwrap())
     }
     
-    async fn increment_sms_counter(&self, _phone: &str) -> Result<u64, DomainError> {
+    async fn increment_sms_counter(&self, _phone: &str) -> Result<i64, String> {
         Ok(1)
     }
     
-    async fn check_ip_verification_limit(&self, _ip: &str) -> Result<bool, DomainError> {
+    async fn check_ip_verification_limit(&self, _ip: &str) -> Result<bool, String> {
         Ok(*self.ip_rate_limited.lock().unwrap())
     }
     
-    async fn increment_ip_verification_counter(&self, _ip: &str) -> Result<u64, DomainError> {
+    async fn increment_ip_verification_counter(&self, _ip: &str) -> Result<i64, String> {
         Ok(1)
     }
     
-    async fn get_rate_limit_reset_time(&self, _phone: &str) -> Result<Option<i64>, DomainError> {
+    async fn get_rate_limit_reset_time(&self, _phone: &str) -> Result<Option<i64>, String> {
         Ok(Some(3600))
     }
     
-    async fn get_ip_rate_limit_reset_time(&self, _ip: &str) -> Result<Option<i64>, DomainError> {
+    async fn get_ip_rate_limit_reset_time(&self, _ip: &str) -> Result<Option<i64>, String> {
         Ok(Some(3600))
     }
     
@@ -468,7 +456,7 @@ impl crate::services::auth::rate_limiter::RateLimiterTrait for MockRateLimiter {
         _identifier: &str,
         _limit_type: &str,
         _action: &str,
-    ) -> Result<(), DomainError> {
+    ) -> Result<(), String> {
         Ok(())
     }
 }
@@ -518,13 +506,6 @@ impl crate::repositories::TokenRepository for MockTokenRepository {
         Ok(0)
     }
 
-    async fn find_by_device_fingerprint(&self, _user_id: Uuid, _fingerprint: &str) -> Result<Vec<crate::domain::entities::token::RefreshToken>, DomainError> {
-        Ok(Vec::new())
-    }
-
-    async fn revoke_device_tokens(&self, _user_id: Uuid, _fingerprint: &str) -> Result<usize, DomainError> {
-        Ok(0)
-    }
     
     async fn is_token_blacklisted(&self, _token_jti: &str) -> Result<bool, DomainError> {
         Ok(false)

@@ -65,7 +65,7 @@ where
         });
     
     // Call the auth service to logout the user
-    match state.auth_service.logout(auth.user_id, access_token, Some(client_ip), Some(user_agent), None).await {
+    match state.auth_service.logout(auth.user_id, access_token, Some(client_ip), user_agent, None).await {
         Ok(()) => {
             let message = match lang {
                 Language::English => "Logged out successfully",

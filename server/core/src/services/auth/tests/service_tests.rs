@@ -161,7 +161,7 @@ async fn test_send_verification_code_success() {
         config,
     );
 
-    let result = auth_service.send_verification_code("+8613812345678", None).await;
+    let result = auth_service.send_verification_code("+8613812345678", None, None).await;
     assert!(result.is_ok());
 
     let send_result = result.unwrap();
@@ -193,7 +193,7 @@ async fn test_send_verification_code_invalid_phone() {
     );
 
     // Test without + prefix
-    let result = auth_service.send_verification_code("1234567890", None).await;
+    let result = auth_service.send_verification_code("1234567890", None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::InvalidPhoneFormat { .. }) => {}
@@ -201,11 +201,11 @@ async fn test_send_verification_code_invalid_phone() {
     }
 
     // Test too short
-    let result = auth_service.send_verification_code("+123", None).await;
+    let result = auth_service.send_verification_code("+123", None, None).await;
     assert!(result.is_err());
 
     // Test with letters
-    let result = auth_service.send_verification_code("+123abc7890", None).await;
+    let result = auth_service.send_verification_code("+123abc7890", None, None).await;
     assert!(result.is_err());
 }
 
@@ -236,12 +236,12 @@ async fn test_send_verification_code_rate_limit() {
 
     // Send 3 codes successfully
     for _ in 0..3 {
-        let result = auth_service.send_verification_code(phone, None).await;
+        let result = auth_service.send_verification_code(phone, None, None).await;
         assert!(result.is_ok());
     }
 
     // 4th attempt should fail due to rate limit
-    let result = auth_service.send_verification_code(phone, None).await;
+    let result = auth_service.send_verification_code(phone, None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::RateLimitExceeded { .. }) => {}
@@ -272,7 +272,7 @@ async fn test_verify_code_success() {
         config,
     );
 
-    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None, None).await;
     assert!(result.is_ok());
 
     let auth_response = result.unwrap();
@@ -307,7 +307,7 @@ async fn test_verify_code_invalid_phone() {
     );
 
     // Test invalid phone format
-    let result = auth_service.verify_code("1234567890", "123456", None, None).await;
+    let result = auth_service.verify_code("1234567890", "123456", None, None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::InvalidPhoneFormat { .. }) => {}
@@ -338,7 +338,7 @@ async fn test_verify_code_invalid_code() {
         config,
     );
 
-    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::InvalidVerificationCode) => {}
@@ -369,7 +369,7 @@ async fn test_verify_code_max_attempts_exceeded() {
         config,
     );
 
-    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::MaxAttemptsExceeded) => {}
@@ -401,7 +401,7 @@ async fn test_verify_code_creates_new_user() {
     );
 
     // Verify code for a new user
-    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None, None).await;
     assert!(result.is_ok());
 
     let auth_response = result.unwrap();
@@ -453,7 +453,7 @@ async fn test_verify_code_existing_user_login() {
     tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
 
     // Verify code for existing user
-    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None, None).await;
     assert!(result.is_ok());
 
     let auth_response = result.unwrap();
@@ -497,7 +497,7 @@ async fn test_verify_code_blocked_user() {
     );
 
     // Try to verify code for blocked user
-    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::UserBlocked) => {}
@@ -530,7 +530,7 @@ async fn test_verify_code_registration_disabled() {
     );
 
     // Try to verify code for new user when registration is disabled
-    let result = auth_service.verify_code("+8613812345678", "123456", None, None).await;
+    let result = auth_service.verify_code("+8613812345678", "123456", None, None, None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
         DomainError::Auth(AuthError::RegistrationDisabled) => {}
@@ -696,7 +696,7 @@ async fn test_logout_success() {
         .unwrap();
 
     // Logout the user
-    let result = auth_service.logout(user_id, None, None).await;
+    let result = auth_service.logout(user_id, None, None, None, None).await;
     assert!(result.is_ok());
 
     // Verify that tokens are revoked
