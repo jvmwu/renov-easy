@@ -8,3 +8,5 @@ mod service_tests;
 mod rate_limiter_tests;
 #[cfg(test)]
 mod audit_integration_tests;
+#[cfg(test)]
+mod delay_response_tests;

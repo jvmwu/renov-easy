@@ -6,8 +6,12 @@
 //! - Token generation and refresh
 //! - User type selection
 //! - Rate limiting
+//! - Account locking for brute force protection
 
+mod account_lock;
+mod attack_detector;
 mod config;
+mod delay_response;
 mod phone_utils;
 mod rate_limiter;
 mod service;
@@ -15,7 +19,13 @@ mod service;
 #[cfg(test)]
 mod tests;
 
+pub use account_lock::{AccountLockService, AccountLockConfig, AccountLockInfo};
+pub use attack_detector::{
+    AttackDetector, AttackDetectorConfig, AttackDetectionResult, 
+    AttackPattern, RecommendedAction, AttackTrendAnalysis
+};
 pub use config::AuthServiceConfig;
+pub use delay_response::{DelayResponseService, DelayResponseConfig, DelayInfo};
 pub use rate_limiter::RateLimiterTrait;
 pub use service::AuthService;
 

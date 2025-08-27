@@ -8,3 +8,6 @@ pub use repository::MySqlAuditLogRepository;
 
 mod noop;
 pub use noop::NoOpAuditLogRepository;
+
+mod mock;
+pub use mock::MockAuditLogRepository;

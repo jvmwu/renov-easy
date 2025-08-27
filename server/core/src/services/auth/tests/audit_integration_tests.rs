@@ -132,6 +132,33 @@ impl AuditLogRepository for MockAuditLogRepository {
         logs.retain(|log| !log.archived);
         Ok(before_count - logs.len())
     }
+    
+    async fn find_by_event_types(
+        &self,
+        event_types: Vec<AuditEventType>,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        limit: Option<usize>,
+    ) -> Result<Vec<AuditLog>, DomainError> {
+        let logs = self.logs.lock().unwrap();
+        let mut result: Vec<AuditLog> = logs
+            .iter()
+            .filter(|log| {
+                log.created_at >= from
+                    && log.created_at <= to
+                    && event_types.contains(&log.event_type)
+            })
+            .cloned()
+            .collect();
+        
+        result.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        
+        if let Some(limit) = limit {
+            result.truncate(limit);
+        }
+        
+        Ok(result)
+    }
 }
 
 #[cfg(test)]

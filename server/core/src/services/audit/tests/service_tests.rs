@@ -6,7 +6,7 @@ use uuid::Uuid;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
-use crate::domain::entities::audit::{AuditLog, actions};
+use crate::domain::entities::audit::{AuditLog, AuditEventType, actions};
 use crate::errors::DomainError;
 use crate::repositories::AuditLogRepository;
 use crate::services::audit::{AuditService, AuditServiceConfig};
@@ -141,6 +141,20 @@ impl AuditLogRepository for MockAuditLogRepository {
         }
         // Mock implementation - just return 0
         Ok(0)
+    }
+    
+    async fn find_by_event_types(
+        &self,
+        _event_types: Vec<AuditEventType>,
+        _from: DateTime<Utc>,
+        _to: DateTime<Utc>,
+        _limit: Option<usize>,
+    ) -> Result<Vec<AuditLog>, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal { message: "Mock failure".to_string() });
+        }
+        // Mock implementation - return empty list
+        Ok(Vec::new())
     }
 }
 

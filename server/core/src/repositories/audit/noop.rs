@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
-use crate::domain::entities::audit::AuditLog;
+use crate::domain::entities::audit::{AuditLog, AuditEventType};
 use crate::errors::DomainError;
 use super::AuditLogRepository;
 
@@ -73,6 +73,17 @@ impl AuditLogRepository for NoOpAuditLogRepository {
         // No-op - return 0 deleted
         Ok(0)
     }
+    
+    async fn find_by_event_types(
+        &self,
+        _event_types: Vec<AuditEventType>,
+        _from: DateTime<Utc>,
+        _to: DateTime<Utc>,
+        _limit: Option<usize>,
+    ) -> Result<Vec<AuditLog>, DomainError> {
+        // No-op - return empty list
+        Ok(Vec::new())
+    }
 }
 
 // Also implement for () to allow simple type defaults
@@ -122,5 +133,15 @@ impl AuditLogRepository for () {
     
     async fn delete_archived_logs(&self) -> Result<usize, DomainError> {
         Ok(0)
+    }
+    
+    async fn find_by_event_types(
+        &self,
+        _event_types: Vec<AuditEventType>,
+        _from: DateTime<Utc>,
+        _to: DateTime<Utc>,
+        _limit: Option<usize>,
+    ) -> Result<Vec<AuditLog>, DomainError> {
+        Ok(Vec::new())
     }
 }

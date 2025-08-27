@@ -52,6 +52,9 @@ tokio = { version = "1.35", features = ["rt", "macros", "time"] }
 # Logging and tracing
 tracing.workspace = true
 
+# IP network utilities for attack detection
+ipnetwork = "0.20"
+
 [dev-dependencies]
 # Testing utilities
 tokio = { version = "1.35", features = ["test-util", "macros", "rt-multi-thread"] }

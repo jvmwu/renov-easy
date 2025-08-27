@@ -200,7 +200,7 @@
   - _Leverage: server/core/src/repositories/audit/trait.rs_
   - _Requirements: 7.1, 7.8_
 
-- [ ] 21. 集成审计日志到认证流程
+- [x] 21. 集成审计日志到认证流程
   - File: server/core/src/services/auth/service.rs (修改现有)
   - 在关键操作点添加审计日志调用
   - 记录成功/失败的认证尝试
@@ -210,7 +210,7 @@
 
 ### Phase 8: 防暴力破解机制
 
-- [ ] 22. 实现账户锁定服务
+- [x] 22. 实现账户锁定服务
   - File: server/core/src/services/auth/account_lock.rs
   - 创建 AccountLockService 结构体
   - 实现 lock_account() 和 is_locked() 方法
@@ -218,7 +218,7 @@
   - _Leverage: Redis缓存_
   - _Requirements: 6.2, 6.3_
 
-- [ ] 23. 实现延迟响应机制
+- [x] 23. 实现延迟响应机制
   - File: server/core/src/services/auth/delay_response.rs
   - 创建渐进式延迟算法
   - 实现 calculate_delay() 基于失败次数
@@ -226,7 +226,7 @@
   - _Leverage: 速率限制服务_
   - _Requirements: 6.1_
 
-- [ ] 24. 添加分布式攻击检测
+- [x] 24. 添加分布式攻击检测
   - File: server/core/src/services/auth/attack_detector.rs
   - 创建 AttackDetector 服务
   - 实现 IP 范围异常检测逻辑

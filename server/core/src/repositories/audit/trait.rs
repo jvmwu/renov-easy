@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
-use crate::domain::entities::audit::AuditLog;
+use crate::domain::entities::audit::{AuditLog, AuditEventType};
 use crate::errors::DomainError;
 
 /// Repository trait for AuditLog entity persistence operations
@@ -101,4 +101,22 @@ pub trait AuditLogRepository: Send + Sync {
     /// # Returns
     /// * Number of records deleted
     async fn delete_archived_logs(&self) -> Result<usize, DomainError>;
+    
+    /// Find audit logs by event types within a time range
+    ///
+    /// # Arguments
+    /// * `event_types` - List of event types to filter by
+    /// * `from` - Start time for the query
+    /// * `to` - End time for the query
+    /// * `limit` - Optional maximum number of records to return
+    ///
+    /// # Returns
+    /// * List of audit logs matching the criteria, ordered by created_at descending
+    async fn find_by_event_types(
+        &self,
+        event_types: Vec<AuditEventType>,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        limit: Option<usize>,
+    ) -> Result<Vec<AuditLog>, DomainError>;
 }

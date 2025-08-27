@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
-use crate::domain::entities::audit::AuditLog;
+use crate::domain::entities::audit::{AuditLog, AuditEventType};
 use crate::errors::DomainError;
 
 use super::AuditLogRepository;
@@ -128,7 +128,7 @@ impl AuditLogRepository for MockAuditLogRepository {
                     && !log.success
                     && log.created_at >= since
                     && (phone_hash.is_none() || log.phone_hash.as_deref() == phone_hash)
-                    && (ip_address.is_none() || log.ip_address.as_deref() == ip_address)
+                    && (ip_address.is_none() || log.ip_address == ip_address.unwrap_or_default())
             })
             .count();
         
@@ -195,5 +195,38 @@ impl AuditLogRepository for MockAuditLogRepository {
         let deleted_count = initial_count - logs.len();
         
         Ok(deleted_count)
+    }
+    
+    async fn find_by_event_types(
+        &self,
+        event_types: Vec<AuditEventType>,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        limit: Option<usize>,
+    ) -> Result<Vec<AuditLog>, DomainError> {
+        if *self.should_fail.lock().unwrap() {
+            return Err(DomainError::Internal {
+                message: "Mock repository error".to_string(),
+            });
+        }
+        
+        let logs = self.logs.lock().unwrap();
+        let mut result: Vec<AuditLog> = logs
+            .iter()
+            .filter(|log| {
+                log.created_at >= from
+                    && log.created_at <= to
+                    && event_types.contains(&log.event_type)
+            })
+            .cloned()
+            .collect();
+        
+        result.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        
+        if let Some(limit) = limit {
+            result.truncate(limit);
+        }
+        
+        Ok(result)
     }
 }
