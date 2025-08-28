@@ -1,0 +1,71 @@
+# General error messages in English
+
+[validation_error]
+message = "{message}"
+code = "validation_error"
+http_status = 400
+
+[business_rule_violation]
+message = "{message}"
+code = "business_rule_violation"
+http_status = 400
+
+[not_found]
+message = "{resource} not found"
+code = "not_found"
+http_status = 404
+
+[unauthorized]
+message = "Unauthorized access"
+code = "unauthorized"
+http_status = 401
+
+[internal_error]
+message = "An internal server error occurred"
+code = "internal_error"
+http_status = 500
+
+[service_unavailable]
+message = "Service temporarily unavailable"
+code = "service_unavailable"
+http_status = 503
+
+[bad_request]
+message = "Bad request"
+code = "bad_request"
+http_status = 400
+
+[forbidden]
+message = "Access forbidden"
+code = "forbidden"
+http_status = 403
+
+[method_not_allowed]
+message = "Method not allowed"
+code = "method_not_allowed"
+http_status = 405
+
+[conflict]
+message = "Resource conflict"
+code = "conflict"
+http_status = 409
+
+[too_many_requests]
+message = "Too many requests"
+code = "too_many_requests"
+http_status = 429
+
+[request_timeout]
+message = "Request timeout"
+code = "request_timeout"
+http_status = 408
+
+[payload_too_large]
+message = "Request payload too large"
+code = "payload_too_large"
+http_status = 413
+
+[unprocessable_entity]
+message = "Unprocessable entity"
+code = "unprocessable_entity"
+http_status = 422

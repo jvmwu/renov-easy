@@ -1,0 +1,51 @@
+# Validation error messages in English
+
+[required_field]
+message = "Required field: {field}"
+code = "required_field"
+http_status = 400
+
+[invalid_format]
+message = "Invalid format for field: {field}"
+code = "invalid_format"
+http_status = 400
+
+[out_of_range]
+message = "Field {field} out of range (min: {min}, max: {max})"
+code = "out_of_range"
+http_status = 400
+
+[invalid_length]
+message = "Invalid length for field {field} (expected: {expected}, actual: {actual})"
+code = "invalid_length"
+http_status = 400
+
+[pattern_mismatch]
+message = "Pattern mismatch for field: {field}"
+code = "pattern_mismatch"
+http_status = 400
+
+[invalid_email]
+message = "Invalid email format"
+code = "invalid_email"
+http_status = 400
+
+[invalid_url]
+message = "Invalid URL format"
+code = "invalid_url"
+http_status = 400
+
+[invalid_date]
+message = "Invalid date format"
+code = "invalid_date"
+http_status = 400
+
+[duplicate_value]
+message = "Duplicate value for field: {field}"
+code = "duplicate_value"
+http_status = 409
+
+[business_rule_violation]
+message = "Business rule violation: {rule}"
+code = "business_rule_violation"
+http_status = 400

@@ -1,0 +1,56 @@
+# 令牌错误消息 (中文)
+
+[token_expired]
+message = "令牌已过期"
+code = "token_expired"
+http_status = 401
+
+[invalid_token_format]
+message = "令牌格式无效"
+code = "invalid_token_format"
+http_status = 401
+
+[invalid_signature]
+message = "令牌签名无效"
+code = "invalid_signature"
+http_status = 401
+
+[token_not_yet_valid]
+message = "令牌尚未生效"
+code = "token_not_yet_valid"
+http_status = 401
+
+[invalid_claims]
+message = "令牌声明无效"
+code = "invalid_claims"
+http_status = 401
+
+[token_revoked]
+message = "令牌已被撤销"
+code = "token_revoked"
+http_status = 401
+
+[refresh_token_expired]
+message = "刷新令牌已过期"
+code = "refresh_token_expired"
+http_status = 401
+
+[invalid_refresh_token]
+message = "刷新令牌无效"
+code = "invalid_refresh_token"
+http_status = 401
+
+[token_generation_failed]
+message = "生成令牌失败"
+code = "token_generation_failed"
+http_status = 500
+
+[missing_claim]
+message = "缺少必需的声明：{claim}"
+code = "missing_claim"
+http_status = 400
+
+[key_load_error]
+message = "加载加密密钥失败：{message}"
+code = "key_load_error"
+http_status = 500

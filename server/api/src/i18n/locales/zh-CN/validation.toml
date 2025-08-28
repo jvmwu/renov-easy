@@ -1,0 +1,51 @@
+# 验证错误消息 (中文)
+
+[required_field]
+message = "必填字段：{field}"
+code = "required_field"
+http_status = 400
+
+[invalid_format]
+message = "字段格式无效：{field}"
+code = "invalid_format"
+http_status = 400
+
+[out_of_range]
+message = "字段{field}超出范围（最小值：{min}，最大值：{max}）"
+code = "out_of_range"
+http_status = 400
+
+[invalid_length]
+message = "字段{field}长度无效（期望：{expected}，实际：{actual}）"
+code = "invalid_length"
+http_status = 400
+
+[pattern_mismatch]
+message = "字段格式不匹配：{field}"
+code = "pattern_mismatch"
+http_status = 400
+
+[invalid_email]
+message = "邮箱格式无效"
+code = "invalid_email"
+http_status = 400
+
+[invalid_url]
+message = "URL格式无效"
+code = "invalid_url"
+http_status = 400
+
+[invalid_date]
+message = "日期格式无效"
+code = "invalid_date"
+http_status = 400
+
+[duplicate_value]
+message = "字段值重复：{field}"
+code = "duplicate_value"
+http_status = 409
+
+[business_rule_violation]
+message = "违反业务规则：{rule}"
+code = "business_rule_violation"
+http_status = 400

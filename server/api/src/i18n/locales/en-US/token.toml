@@ -1,0 +1,56 @@
+# Token error messages in English
+
+[token_expired]
+message = "Token has expired"
+code = "token_expired"
+http_status = 401
+
+[invalid_token_format]
+message = "Invalid token format"
+code = "invalid_token_format"
+http_status = 401
+
+[invalid_signature]
+message = "Invalid token signature"
+code = "invalid_signature"
+http_status = 401
+
+[token_not_yet_valid]
+message = "Token is not yet valid"
+code = "token_not_yet_valid"
+http_status = 401
+
+[invalid_claims]
+message = "Invalid token claims"
+code = "invalid_claims"
+http_status = 401
+
+[token_revoked]
+message = "Token has been revoked"
+code = "token_revoked"
+http_status = 401
+
+[refresh_token_expired]
+message = "Refresh token has expired"
+code = "refresh_token_expired"
+http_status = 401
+
+[invalid_refresh_token]
+message = "Invalid refresh token"
+code = "invalid_refresh_token"
+http_status = 401
+
+[token_generation_failed]
+message = "Failed to generate token"
+code = "token_generation_failed"
+http_status = 500
+
+[missing_claim]
+message = "Missing required claim: {claim}"
+code = "missing_claim"
+http_status = 400
+
+[key_load_error]
+message = "Failed to load cryptographic key: {message}"
+code = "key_load_error"
+http_status = 500

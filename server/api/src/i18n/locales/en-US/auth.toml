@@ -1,0 +1,131 @@
+# Authentication error messages in English
+
+[invalid_phone_format]
+message = "Invalid phone number format. Must include country code (e.g., +86 for China, +61 for Australia): {phone}"
+code = "invalid_phone_format"
+http_status = 400
+
+[invalid_chinese_phone]
+message = "Invalid Chinese phone number. Must be 11 digits starting with 13-19 after +86"
+code = "invalid_chinese_phone"
+http_status = 400
+
+[invalid_australian_phone]
+message = "Invalid Australian phone number. Must be 9 digits starting with 4 after +61"
+code = "invalid_australian_phone"
+http_status = 400
+
+[missing_country_code]
+message = "Phone number must include country code (e.g., +86 for China, +61 for Australia)"
+code = "missing_country_code"
+http_status = 400
+
+[rate_limit_exceeded]
+message = "Too many requests. Please try again in {minutes} minutes"
+code = "rate_limit_exceeded"
+http_status = 429
+
+[sms_service_failure]
+message = "SMS service is temporarily unavailable. Please try again later"
+code = "sms_service_failure"
+http_status = 503
+
+[invalid_verification_code]
+message = "Invalid or expired verification code"
+code = "invalid_verification_code"
+http_status = 400
+
+[verification_code_expired]
+message = "Verification code has expired"
+code = "verification_code_expired"
+http_status = 400
+
+[max_attempts_exceeded]
+message = "Maximum verification attempts exceeded. Please request a new code"
+code = "max_attempts_exceeded"
+http_status = 429
+
+[user_not_found]
+message = "User not found"
+code = "user_not_found"
+http_status = 404
+
+[user_already_exists]
+message = "User already exists"
+code = "user_already_exists"
+http_status = 409
+
+[authentication_failed]
+message = "Authentication failed"
+code = "authentication_failed"
+http_status = 401
+
+[insufficient_permissions]
+message = "Insufficient permissions"
+code = "insufficient_permissions"
+http_status = 403
+
+[account_suspended]
+message = "Account has been suspended"
+code = "account_suspended"
+http_status = 403
+
+[session_expired]
+message = "Session has expired. Please login again"
+code = "session_expired"
+http_status = 401
+
+[registration_disabled]
+message = "Registration is currently disabled"
+code = "registration_disabled"
+http_status = 503
+
+[user_blocked]
+message = "User account has been blocked"
+code = "user_blocked"
+http_status = 403
+
+[phone_locked]
+message = "Too many requests. Please try again in {minutes} minutes"
+code = "phone_locked"
+http_status = 429
+
+[sms_rate_limit_exceeded]
+message = "Too many SMS requests. Please try again in {minutes} minutes"
+code = "sms_rate_limit_exceeded"
+http_status = 429
+
+[account_locked]
+message = "Account temporarily locked. Please try again in {minutes} minutes"
+code = "account_locked"
+http_status = 429
+
+[rate_limit_error]
+message = "Unable to check rate limit"
+code = "rate_limit_error"
+http_status = 500
+
+[invalid_chinese_phone_format]
+message = "Invalid Chinese phone number format. Must be +86 followed by 11 digits"
+code = "invalid_chinese_phone_format"
+http_status = 400
+
+[invalid_australian_phone_format]
+message = "Invalid Australian phone number format. Must be +61 followed by 9 digits"
+code = "invalid_australian_phone_format"
+http_status = 400
+
+[unsupported_country_code]
+message = "Unsupported country code. Currently supporting China (+86) and Australia (+61)"
+code = "unsupported_country_code"
+http_status = 400
+
+[verification_failed]
+message = "Verification failed. Please try again"
+code = "verification_failed"
+http_status = 400
+
+[unknown_error]
+message = "An unknown error occurred"
+code = "unknown_error"
+http_status = 500

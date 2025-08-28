@@ -6,7 +6,6 @@
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use serde_json::Value as JsonValue;
 use sqlx::{MySqlPool, Row};
 use uuid::Uuid;
 
@@ -402,5 +401,50 @@ impl AuditLogRepository for MySqlAuditLogRepository {
             })?;
 
         Ok(result.rows_affected() as usize)
+    }
+
+    async fn find_by_event_types(
+        &self,
+        event_types: Vec<AuditEventType>,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        limit: Option<usize>,
+    ) -> Result<Vec<AuditLog>, DomainError> {
+        let event_type_strings: Vec<String> = event_types.iter().map(|e| e.as_str().to_string()).collect();
+        let placeholders = vec!["?"; event_type_strings.len()].join(", ");
+        
+        let query = format!(
+            r#"
+            SELECT id, event_type, user_id, phone_masked, phone_hash,
+                   ip_address, user_agent, device_info, action, success,
+                   error_message, failure_reason, token_id, rate_limit_type,
+                   event_data, created_at, archived, archived_at
+            FROM auth_audit_log
+            WHERE event_type IN ({})
+            AND created_at >= ?
+            AND created_at <= ?
+            ORDER BY created_at DESC
+            {}
+            "#,
+            placeholders,
+            if let Some(l) = limit { format!("LIMIT {}", l) } else { String::new() }
+        );
+
+        let mut query_builder = sqlx::query(&query);
+        for event_type in event_type_strings {
+            query_builder = query_builder.bind(event_type);
+        }
+        query_builder = query_builder.bind(from).bind(to);
+
+        let rows = query_builder
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| DomainError::Internal {
+                message: format!("Failed to find audit logs by event types: {}", e),
+            })?;
+
+        rows.iter()
+            .map(Self::row_to_audit_log)
+            .collect::<Result<Vec<_>, _>>()
     }
 }

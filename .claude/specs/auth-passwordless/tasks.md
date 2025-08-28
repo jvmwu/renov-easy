@@ -236,7 +236,7 @@
 
 ### Phase 9: 国际化和错误处理
 
-- [ ] 25. 创建认证错误消息的中文翻译
+- [x] 25. 创建认证错误消息的中文翻译
   - File: server/api/src/i18n/locales/zh-CN/auth.toml
   - 添加所有认证相关错误消息的中文翻译
   - 包含速率限制、验证码错误等消息
@@ -244,7 +244,7 @@
   - _Leverage: 现有 i18n 系统_
   - _Requirements: 1.2_
 
-- [ ] 26. 创建认证错误消息的英文翻译
+- [x] 26. 创建认证错误消息的英文翻译
   - File: server/api/src/i18n/locales/en-US/auth.toml
   - 添加所有认证相关错误消息的英文版本
   - 确保消息清晰可操作

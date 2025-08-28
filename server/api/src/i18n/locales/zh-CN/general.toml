@@ -1,0 +1,71 @@
+# 通用错误消息 (中文)
+
+[validation_error]
+message = "验证错误"
+code = "validation_error"
+http_status = 400
+
+[business_rule_violation]
+message = "业务规则违反"
+code = "business_rule_violation"
+http_status = 400
+
+[not_found]
+message = "{resource}不存在"
+code = "not_found"
+http_status = 404
+
+[unauthorized]
+message = "未授权访问"
+code = "unauthorized"
+http_status = 401
+
+[internal_error]
+message = "发生内部服务器错误"
+code = "internal_error"
+http_status = 500
+
+[service_unavailable]
+message = "服务暂时不可用"
+code = "service_unavailable"
+http_status = 503
+
+[bad_request]
+message = "请求错误"
+code = "bad_request"
+http_status = 400
+
+[forbidden]
+message = "访问被禁止"
+code = "forbidden"
+http_status = 403
+
+[method_not_allowed]
+message = "方法不允许"
+code = "method_not_allowed"
+http_status = 405
+
+[conflict]
+message = "资源冲突"
+code = "conflict"
+http_status = 409
+
+[too_many_requests]
+message = "请求过多"
+code = "too_many_requests"
+http_status = 429
+
+[request_timeout]
+message = "请求超时"
+code = "request_timeout"
+http_status = 408
+
+[payload_too_large]
+message = "请求内容过大"
+code = "payload_too_large"
+http_status = 413
+
+[unprocessable_entity]
+message = "无法处理的实体"
+code = "unprocessable_entity"
+http_status = 422
