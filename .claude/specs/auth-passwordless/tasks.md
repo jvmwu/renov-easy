@@ -252,7 +252,7 @@
   - _Leverage: 现有 i18n 系统_
   - _Requirements: 1.2_
 
-- [ ] 27. 实现错误响应标准化
+- [x] 27. 实现错误响应标准化
   - File: server/api/src/handlers/error.rs (修改现有)
   - 添加认证特定错误处理
   - 实现恒定时间响应逻辑

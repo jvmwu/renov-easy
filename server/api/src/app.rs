@@ -7,7 +7,14 @@ use std::sync::Arc;
 use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 
 use crate::middleware::{cors::create_cors, security::SecurityMiddleware, auth::JwtAuth};
-use crate::routes::auth::{send_code, verify_code, select_type, refresh_token, logout, AppState};
+use crate::routes::auth::{
+    send_code::send_code, 
+    verify_code::verify_code, 
+    select_type::select_type, 
+    refresh::refresh as refresh_token, 
+    logout::logout,
+    AppState
+};
 
 use re_core::services::auth::{AuthService, AuthServiceConfig, RateLimiterTrait};
 use re_core::services::verification::{VerificationService, SmsServiceTrait, CacheServiceTrait};
